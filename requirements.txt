@@ -1,0 +1,23 @@
+# AI Daily Collector - Python Dependencies
+
+# HTTP 请求
+requests>=2.31.0
+
+# RSS 解析
+feedparser>=6.0.10
+
+# 日期处理
+python-dateutil>=2.8.2
+
+# YAML 解析
+PyYAML>=6.0.1
+
+# 路径处理
+pathlib2>=2.3.7; python_version < "3.4"
+
+# 加密（可选，用于 API Key）
+cryptography>=41.0.0
+
+# 测试
+pytest>=7.4.0
+pytest-cov>=4.1.0

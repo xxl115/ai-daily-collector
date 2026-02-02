@@ -1,0 +1,143 @@
+# AI Daily Collector - RSS 源配置
+# https://github.com/xxl115/ai-daily-collector
+
+sources:
+  # 英文源
+  - name: "MIT Tech Review"
+    url: "https://www.technologyreview.com/feed/"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|artificial intelligence|machine learning"
+      hours: 24
+      max_articles: 10
+
+  - name: "TechCrunch"
+    url: "https://techcrunch.com/feed/"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|artificial intelligence|machine learning"
+      hours: 24
+      max_articles: 20
+
+  - name: "Hacker News"
+    url: "https://news.ycombinator.com/rss"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|ml|agent|mcp|llm"
+      hours: 24
+      max_articles: 30
+
+  - name: "OpenAI Blog"
+    url: "https://openai.com/blog/rss.xml"
+    enabled: false  # API 限制，经常失败
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  - name: "Google AI"
+    url: "https://blog.google/technology/ai/rss"
+    enabled: false
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  # 中文源
+  - name: "36氪"
+    url: "https://www.36kr.com/feed/"
+    enabled: true
+    language: "zh"
+    filters:
+      keyword: "AI|人工智能|大模型|AIGC"
+      hours: 24
+      max_articles: 30
+
+  - name: "机器之心"
+    url: "https://www.jiqizhixin.com/rss"
+    enabled: true
+    language: "zh"
+    filters:
+      keyword: "AI|人工智能"
+      hours: 24
+      max_articles: 20
+
+  - name: "钛媒体"
+    url: "https://www.tmtpost.com/feed"
+    enabled: true
+    language: "zh"
+    filters:
+      keyword: "AI|人工智能|大模型"
+      hours: 24
+      max_articles: 20
+
+  - name: "雷锋网"
+    url: "https://www.leiphone.com/feed"
+    enabled: true
+    language: "zh"
+    filters:
+      keyword: "AI|人工智能"
+      hours: 24
+      max_articles: 20
+
+  # 量子位 API（特殊处理）
+  - name: "量子位"
+    type: "api"
+    url: "https://api.qbitai.com/v1/articles"
+    enabled: true
+    language: "zh"
+    filters:
+      keyword: "AI"
+      hours: 24
+      max_articles: 30
+
+# 分类关键词配置
+categories:
+  focus_keywords:
+    - "deepseek"
+    - "mcp"
+    - "a2a"
+    - "gemini"
+    - "claude"
+    - "gpt-5"
+    - "breakthrough"
+    - "sora"
+    - "opus"
+
+  agent_keywords:
+    - "agent"
+    - "mcp"
+    - "a2a"
+    - "workflow"
+    - "autogen"
+    - "langchain"
+    - "crewai"
+    - "multi-agent"
+
+  coding_keywords:
+    - "cursor"
+    - "windsurf"
+    - "cline"
+    - "copilot"
+    - "ide"
+    - "vscode"
+
+  content_keywords:
+    - "writing"
+    - "video"
+    - "audio"
+    - "image"
+    - "midjourney"
+    - "suno"
+
+  security_keywords:
+    - "security"
+    - "vulnerability"
+    - "malware"
+    - "deepfake"
+    - "fake"
