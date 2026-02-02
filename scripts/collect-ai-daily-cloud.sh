@@ -17,7 +17,9 @@ KEYWORDS="AI|Claude|llm|agent|cursor|programming|developer|machine learning|soft
 # 提取文章内容函数 (使用 jina.ai)
 extract_content() {
     local URL="$1"
-    local CONTENT=$(curl -s --max-time 15 "https://r.jina.ai/http://${URL#http://}" 2>/dev/null)
+    # 移除协议头，只保留域名和路径
+    local CLEAN_URL=$(echo "$URL" | sed 's|https://||' | sed 's|http://||')
+    local CONTENT=$(curl -s --max-time 15 "https://r.jina.ai/http://${CLEAN_URL}" 2>/dev/null)
     echo "$CONTENT"
 }
 
