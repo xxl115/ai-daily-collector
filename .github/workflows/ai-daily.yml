@@ -1,0 +1,47 @@
+name: AI Daily Collection
+
+on:
+  # 每天凌晨 3 点（北京时间 11 点）执行
+  schedule:
+    - cron: '0 3 * * *'
+  # 手动触发
+  workflow_dispatch:
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests jq
+
+      - name: Run AI Daily Collection
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
+        run: |
+          chmod +x scripts/collect-ai-daily-cloud.sh
+          ./scripts/collect-ai-daily-cloud.sh
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-articles
+          path: ai/articles/original/
+
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ai/articles/original/
+          git commit -m "AI Daily: $(date +%Y-%m-%d)" || echo "No changes"
+          git push
