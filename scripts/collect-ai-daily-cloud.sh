@@ -1,5 +1,5 @@
 #!/bin/bash
-# AI Daily Collector - 云端增强版 (获取原文内容)
+# AI Daily Collector - 云端增强版 (使用 jina.ai 提取原文)
 
 DATE=$(date +%Y-%m-%d)
 OUTPUT_DIR="ai/articles/original/${DATE}"
@@ -13,6 +13,13 @@ echo ""
 mkdir -p "$OUTPUT_DIR"
 TOTAL_COUNT=0
 KEYWORDS="AI|Claude|llm|agent|cursor|programming|developer|machine learning|software"
+
+# 提取文章内容函数 (使用 jina.ai)
+extract_content() {
+    local URL="$1"
+    local CONTENT=$(curl -s --max-time 15 "https://r.jina.ai/http://${URL#http://}" 2>/dev/null)
+    echo "$CONTENT"
+}
 
 # ========== 1. Hacker News ==========
 echo "📥 采集 Hacker News..."
@@ -36,8 +43,11 @@ for ID in $IDS; do
         TIMESTAMP=$(date +%s)
         FILENAME="HN_${SCORE}_${ID}.md"
         
-        # 获取原文摘要
-        TEXT="HN 上评分 ${SCORE} 的热门项目"
+        # 提取原文
+        CONTENT=""
+        if [ -n "$URL" ]; then
+            CONTENT=$(extract_content "$URL")
+        fi
         
         cat > "$OUTPUT_DIR/$FILENAME" << EOF
 ---
@@ -53,13 +63,12 @@ author: "$BY"
 
 **来源**: [Hacker News](https://news.ycombinator.com/item?id=$ID) | **评分**: $SCORE | **作者**: @$BY
 
-## 摘要
+## 原文内容
 
-$TEXT
+$CONTENT
 
-## 原文链接
-
-[$URL]($URL)
+---
+*自动采集于 $DATE*
 EOF
         echo "   ✅ [HN] $TITLE"
     fi
@@ -94,9 +103,15 @@ if [ -n "$GH_TOKEN" ]; then
                 TIMESTAMP=$(date +%s)
                 FILENAME="GH_${STARS}_${TIMESTAMP}_${i}.md"
                 
+                # 提取 README 内容
+                CONTENT=""
+                if [ -n "$URL" ]; then
+                    CONTENT=$(extract_content "$URL")
+                fi
+                
                 cat > "$OUTPUT_DIR/$FILENAME" << EOF
 ---
-title: "$NAME - $DESC"
+title: "$NAME"
 url: "$URL"
 source: "GitHub"
 date: "$DATE"
@@ -112,9 +127,12 @@ author: "$FULL_NAME"
 
 $DESC
 
-## 原文链接
+## 原文 README
 
-[$URL]($URL)
+$CONTENT
+
+---
+*自动采集于 $DATE*
 EOF
                 echo "   ✅ [GH] ⭐$STARS $NAME"
             fi
@@ -133,7 +151,6 @@ if [ -n "$HF_DATA" ] && echo "$HF_DATA" | grep -q '<item>'; then
     for i in 0 1 2 3 4; do
         TITLE=$(echo "$HF_DATA" | grep -oP '<title>\K[^<]+' 2>/dev/null | sed -n "$((i+2))p")
         LINK=$(echo "$HF_DATA" | grep -oP '<link>\K[^<]+' 2>/dev/null | sed -n "$((i+1))p")
-        DESC=$(echo "$HF_DATA" | grep -oP '<description>\K[^<]+' 2>/dev/null | sed -n "$((i+1))p" | sed 's/<[^>]*>//g')
         
         if [ -n "$TITLE" ] && [ -n "$LINK" ]; then
             ((HF_COUNT++))
@@ -141,8 +158,8 @@ if [ -n "$HF_DATA" ] && echo "$HF_DATA" | grep -q '<item>'; then
             TIMESTAMP=$(date +%s)
             FILENAME="HF_${TIMESTAMP}_${i}.md"
             
-            # 获取内容摘要
-            SUMMARY=$(echo "$DESC" | head -c 300)
+            # 提取内容
+            CONTENT=$(extract_content "$LINK")
             
             cat > "$OUTPUT_DIR/$FILENAME" << EOF
 ---
@@ -156,13 +173,12 @@ date: "$DATE"
 
 **来源**: [Hugging Face]($LINK)
 
-## 摘要
+## 原文内容
 
-$SUMMARY...
+$CONTENT
 
-## 原文链接
-
-[$LINK]($LINK)
+---
+*自动采集于 $DATE*
 EOF
             echo "   ✅ [HF] $TITLE"
         fi
@@ -180,13 +196,15 @@ if [ -n "$MIT_DATA" ] && echo "$MIT_DATA" | grep -q '<item>'; then
     for i in 0 1 2 3 4; do
         TITLE=$(echo "$MIT_DATA" | grep -oP '<title>\K[^<]+' 2>/dev/null | sed -n "$((i+2))p")
         LINK=$(echo "$MIT_DATA" | grep -oP '<link>\K[^<]+' 2>/dev/null | sed -n "$((i+1))p")
-        DESC=$(echo "$MIT_DATA" | grep -oP '<description>\K[^<]+' 2>/dev/null | sed -n "$((i+1))p" | sed 's/<[^>]*>//g' | head -c 500)
         
         if [ -n "$TITLE" ] && [ -n "$LINK" ]; then
             ((MIT_COUNT++))
             TOTAL_COUNT=$((TOTAL_COUNT + 1))
             TIMESTAMP=$(date +%s)
             FILENAME="MIT_${TIMESTAMP}_${i}.md"
+            
+            # 提取内容
+            CONTENT=$(extract_content "$LINK")
             
             cat > "$OUTPUT_DIR/$FILENAME" << EOF
 ---
@@ -200,13 +218,12 @@ date: "$DATE"
 
 **来源**: [MIT Technology Review]($LINK)
 
-## 摘要
+## 原文内容
 
-$DESC...
+$CONTENT
 
-## 原文链接
-
-[$LINK]($LINK)
+---
+*自动采集于 $DATE*
 EOF
             echo "   ✅ [MIT] $TITLE"
         fi
@@ -234,6 +251,9 @@ if [ -n "$DEVTO_DATA" ]; then
             TIMESTAMP=$(date +%s)
             FILENAME="DT_${REACTIONS}_${TIMESTAMP}_${i}.md"
             
+            # 提取内容
+            CONTENT=$(extract_content "$URL")
+            
             cat > "$OUTPUT_DIR/$FILENAME" << EOF
 ---
 title: "$TITLE"
@@ -252,9 +272,12 @@ author: "$AUTHOR"
 
 $DESC
 
-## 原文链接
+## 原文内容
 
-[$URL]($URL)
+$CONTENT
+
+---
+*自动采集于 $DATE*
 EOF
             echo "   ✅ [DT] $TITLE"
         fi
@@ -262,59 +285,20 @@ EOF
 fi
 echo "   → Dev.to: $DEVTO_COUNT 条"
 
-# ========== 6. ArXiv ==========
-echo ""
-echo "📥 采集 ArXiv AI 论文..."
-ARXIV_DATA=$(curl -s --connect-timeout 20 -L \
-    "https://export.arxiv.org/api/query?search_query=cat:cs.AI&sortBy=submittedDate&sortOrder=descending&max_results=6" 2>/dev/null)
-ARXIV_COUNT=0
-
-if [ -n "$ARXIV_DATA" ] && echo "$ARXIV_DATA" | grep -q '<entry>'; then
-    for i in 0 1 2 3 4 5; do
-        TITLE=$(echo "$ARXIV_DATA" | grep -oP '<title>\K[^<]+' 2>/dev/null | sed -n "$((i*4+1))p")
-        URL=$(echo "$ARXIV_DATA" | grep -oP '<id>\K[^<]+' 2>/dev/null | sed -n "$((i+1))p")
-        SUMMARY=$(echo "$ARXIV_DATA" | grep -oP '<summary>\K[^<]+' 2>/dev/null | sed -n "$((i+1))p" | tr '\n' ' ' | head -c 500)
-        AUTHORS=$(echo "$ARXIV_DATA" | grep -oP '<author><name>\K[^<]+' 2>/dev/null | sed -n "$((i+1))p")
-        
-        if [ -n "$TITLE" ] && [ -n "$URL" ]; then
-            ((ARXIV_COUNT++))
-            TOTAL_COUNT=$((TOTAL_COUNT + 1))
-            TIMESTAMP=$(date +%s)
-            FILENAME="ARXIV_${TIMESTAMP}_${i}.md"
-            
-            cat > "$OUTPUT_DIR/$FILENAME" << EOF
----
-title: "$TITLE"
-url: "$URL"
-source: "ArXiv"
-date: "$DATE"
-author: "$AUTHORS"
----
-
-# $TITLE
-
-**来源**: [ArXiv]($URL) | **作者**: $AUTHORS
-
-## 摘要
-
-$SUMMARY...
-
-## 原文链接
-
-[$URL]($URL)
-EOF
-            echo "   ✅ [ArXiv] $TITLE"
-        fi
-    done
-fi
-echo "   → ArXiv: $ARXIV_COUNT 条"
-
 echo ""
 echo "============================================"
 echo "📊 采集完成! 总计: $TOTAL_COUNT 条"
 echo "   - HN: $HN_COUNT | GH: $GH_COUNT | HF: $HF_COUNT"
-echo "   - MIT: $MIT_COUNT | DT: $DEVTO_COUNT | ArXiv: $ARXIV_COUNT"
+echo "   - MIT: $MIT_COUNT | DT: $DEVTO_COUNT"
 echo "============================================"
 
 echo ""
 echo "✅ 完成! 文件保存于: $OUTPUT_DIR/"
+echo ""
+echo "🔄 提交到 GitHub..."
+git add $OUTPUT_DIR/
+git commit -m "AI Daily: $DATE - $TOTAL_COUNT 条内容" || echo "无新内容"
+git push origin master || echo "推送失败"
+
+echo ""
+echo "✅ 全部完成!"
