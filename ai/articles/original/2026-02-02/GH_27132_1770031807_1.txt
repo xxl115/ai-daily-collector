@@ -1,0 +1,5 @@
+Title: oh-my-opencode - The Best Agent Harness. Meet Sisyphus: The Batteries-Included Agent that codes like you.
+URL: https://github.com/code-yeongyu/oh-my-opencode
+Score: 27132
+Source: GitHub
+Date: 2026-02-02

@@ -1,0 +1,5 @@
+Title: vibe-tools - Give Cursor Agent an AI Team and Advanced Skills
+URL: https://github.com/eastlondoner/vibe-tools
+Score: 4692
+Source: GitHub
+Date: 2026-02-02

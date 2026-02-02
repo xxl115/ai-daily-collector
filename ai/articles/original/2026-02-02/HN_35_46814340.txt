@@ -1,0 +1,6 @@
+Title: Ratchets in Software Development
+URL: https://qntm.org/ratchet
+Score: 35
+Author: nvader
+Source: Hacker News
+Date: 2026-02-02

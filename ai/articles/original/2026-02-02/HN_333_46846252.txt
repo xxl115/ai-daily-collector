@@ -1,0 +1,6 @@
+Title: Adventure Game Studio: OSS software for creating adventure games
+URL: https://www.adventuregamestudio.co.uk/
+Score: 333
+Author: doener
+Source: Hacker News
+Date: 2026-02-02

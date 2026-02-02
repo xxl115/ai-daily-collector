@@ -1,0 +1,5 @@
+Title: Figma-Context-MCP - MCP server to provide Figma layout information to AI coding agents like Cursor
+URL: https://github.com/GLips/Figma-Context-MCP
+Score: 12931
+Source: GitHub
+Date: 2026-02-02

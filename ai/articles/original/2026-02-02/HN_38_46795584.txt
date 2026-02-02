@@ -1,0 +1,6 @@
+Title: Show HN: Sandbox Agent SDK – unified API for automating coding agents
+URL: https://github.com/rivet-dev/sandbox-agent
+Score: 38
+Author: NathanFlurry
+Source: Hacker News
+Date: 2026-02-02

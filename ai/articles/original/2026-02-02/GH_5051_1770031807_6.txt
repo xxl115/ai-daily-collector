@@ -1,0 +1,5 @@
+Title: how-to-build-a-coding-agent - A workshop that teaches you how to build your own coding agent. Similar to Roo code, Cline, Amp, Cursor, Windsurf or OpenCode.
+URL: https://github.com/ghuntley/how-to-build-a-coding-agent
+Score: 5051
+Source: GitHub
+Date: 2026-02-02
