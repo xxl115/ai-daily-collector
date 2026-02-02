@@ -1,6 +1,9 @@
 name: AI Daily Collection
 
 on:
+  # push 时触发（用于初始化）
+  push:
+    branches: [master]
   # 每天凌晨 3 点（北京时间 11 点）执行
   schedule:
     - cron: '0 3 * * *'
