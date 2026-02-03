@@ -400,9 +400,3 @@ jobs:
         run: |
           echo "✅ Cloudflare Pages 部署完成!"
           echo "🌐 URL: https://ai-daily-collector.pages.dev"
-
-  # ============ 部署通知 ============
-  notify-deploy:
-    runs-on: ubuntu-latest
-    needs: [deploy-cloudflare, deploy-cloudflare-pages]
-    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/master'
