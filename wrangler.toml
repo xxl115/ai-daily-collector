@@ -1,4 +1,4 @@
-name = "ai-daily-collector"
+name = "ai-daily-collector-xxl185"
 main = "./api/cloudflare_worker.js"
 compatibility_date = "2024-01-01"
 
