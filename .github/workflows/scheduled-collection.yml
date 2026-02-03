@@ -6,6 +6,11 @@ on:
     - cron: '0 14 * * *'
     - cron: '0 22 * * *'
   workflow_dispatch:
+    inputs:
+      reason:
+        description: '触发原因'
+        required: false
+        default: 'Manual trigger'
 
 env:
   PYTHON_VERSION: '3.11'
@@ -14,7 +19,7 @@ jobs:
   collect-and-deploy:
     runs-on: ubuntu-latest
     name: Collect & Deploy
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,34 +41,73 @@ jobs:
           mkdir -p data/
           python3 scripts/collect-real.py
 
+      - name: Show results
+        run: |
+          echo "📊 采集结果预览:"
+          if [ -f "data/daily.json" ]; then
+            head -50 data/daily.json
+            echo ""
+            echo "✅ 数据文件已生成"
+          else
+            echo "❌ 数据文件未生成"
+            exit 1
+          fi
+
       - name: Commit results
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -f "data/daily.json" ] && [ -s "data/daily.json" ]; then
             git add data/
-            git commit -m "Daily update: $(date '+%Y-%m-%d %H:%M')" || echo "No changes"
+            git commit -m "AI Daily: $(date '+%Y-%m-%d %H:%M')" || echo "No changes to commit"
             git push origin master || echo "Push failed"
+          else
+            echo "⚠️ No data to commit"
           fi
 
       - name: Setup Node.js
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Install Wrangler
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: npm install -g wrangler
 
-      - name: Deploy to Cloudflare Workers
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+      - name: Extract Worker Name
+        id: worker-name
         run: |
-          echo "Deploying to Cloudflare Workers..."
+          WORKER_NAME=$(grep "^name = " wrangler.toml | sed 's/name = "\(.*\)"/\1/' | tr -d '"')
+          echo "name=$WORKER_NAME" >> $GITHUB_OUTPUT
+          echo "📦 Worker 名称: $WORKER_NAME"
+
+      - name: Deploy to Cloudflare Workers
+        run: |
+          echo "🚀 部署到 Cloudflare Workers..."
           wrangler deploy
-          echo ""
-          echo "Done! Worker: https://${{ secrets.CF_WORKER_NAME }}.workers.dev"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
+      - name: Verify Deployment
+        run: |
+          WORKER_NAME="${{ steps.worker-name.outputs.name }}"
+          echo ""
+          echo "================================================"
+          echo "✅ 采集与部署完成!"
+          echo ""
+          echo "📝 访问地址:"
+          echo "   - Worker: https://${WORKER_NAME}.workers.dev"
+          echo "   - API: https://${WORKER_NAME}.workers.dev/api/hotspots"
+          echo "   - Frontend: https://ai-daily-collector.pages.dev"
+          echo "================================================"
+
+      - name: Workflow Summary
+        if: always()
+        run: |
+          WORKER_NAME="${{ steps.worker-name.outputs.name }}"
+          echo "## 📊 AI Daily 数据采集" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **触发时间**: $(date '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **触发方式**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Worker**: https://${WORKER_NAME}.workers.dev" >> $GITHUB_STEP_SUMMARY
+          echo "- **前端**: https://ai-daily-collector.pages.dev" >> $GITHUB_STEP_SUMMARY
