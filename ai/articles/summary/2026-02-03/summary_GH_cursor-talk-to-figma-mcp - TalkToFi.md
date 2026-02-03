@@ -11,7 +11,7 @@ date: "2026-02-03"
 
 ## 中文总结
 
-TalkToFigma是Cursor与Figma的MCP集成工具，支持Cursor Agentic AI与Figma双向通信，可读取设计内容并程序化修改设计。该工具提升了AI在设计流程中的交互能力，实现设计数据的自动化处理。
+cursor-talk-to-figma-mcp是Cursor与Figma的MCP集成工具，允许Cursor的AI代理通过编程方式读取和修改Figma设计。该工具实现了AI与设计工具的自动化交互，提升了设计开发的效率与智能化水平。
 
 ---
 

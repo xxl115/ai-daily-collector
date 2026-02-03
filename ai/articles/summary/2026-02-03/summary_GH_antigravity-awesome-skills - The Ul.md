@@ -11,7 +11,7 @@ date: "2026-02-03"
 
 ## 中文总结
 
-本文介绍了一个名为“antigravity-awesome-skills”的GitHub项目，汇集了600多个经过实战测试的高性能AI智能体技能，适用于Claude Code、Antigravity和Cursor等平台。该项目包含Anthropic和Vercel官方技能，旨在为AI开发者提供丰富的工具集，提升智能体的性能和功能。
+这是一个名为"antigravity-awesome-skills"的GitHub项目，汇集了600多个经过实战验证的高性能AI代理技能，专为Claude Code、Antigravity和Cursor设计。技能包含Anthropic和Vercel官方技能，旨在提升AI代理的执行效率和能力。该项目评分高达6292，表明其受到广泛认可和实用价值。
 
 ---
 
