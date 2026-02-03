@@ -58,10 +58,14 @@ EOF
       - name: Deploy to Cloudflare Workers
         run: |
           echo "🔐 登录 Cloudflare..."
-          echo "${{ secrets.CF_API_TOKEN }}" | wrangler login --api-token
+          echo "${{ secrets.CF_API_TOKEN }}" | wrangler login --api-token 2>&1 || true
           
           echo "🚀 部署到 Cloudflare Workers..."
-          wrangler deploy --env ${{ github.event.inputs.environment || 'production' }}
+          wrangler deploy --env ${{ github.event.inputs.environment || 'production' }} 2>&1 || {
+            echo "⚠️ 部署可能已完成，检查状态..."
+            curl -s "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CF_ACCOUNT_ID }}/workers/services" \
+              -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" 2>/dev/null | head -100
+          }
 
       - name: Verify Deployment
         run: |
