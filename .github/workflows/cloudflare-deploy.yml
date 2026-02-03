@@ -1,0 +1,90 @@
+name: Deploy Cloudflare (Manual)
+
+# 手动触发或代码推送时部署
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'api/cloudflare_worker.js'
+      - 'wrangler.toml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  CF_WORKER_NAME: ${{ secrets.CF_WORKER_NAME }}
+
+jobs:
+  deploy-cloudflare:
+    runs-on: ubuntu-latest
+    name: Deploy to Cloudflare Workers
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Wrangler
+        run: |
+          npm install -g wrangler
+
+      - name: Configure Wrangler
+        run: |
+          cat > wrangler.toml << 'EOF'
+# Cloudflare Workers 配置
+name = "ai-daily-collector"
+main = "api/cloudflare_worker.js"
+compatibility_date = "2024-01-01"
+
+# 环境变量
+[vars]
+TZ = "Asia/Shanghai"
+LOG_LEVEL = "INFO"
+EOF
+          echo "✅ Wrangler 配置已更新"
+
+      - name: Deploy to Cloudflare Workers
+        run: |
+          echo "🔐 登录 Cloudflare..."
+          echo "${{ secrets.CF_API_TOKEN }}" | wrangler login --api-token
+          
+          echo "🚀 部署到 Cloudflare Workers..."
+          wrangler deploy --env ${{ github.event.inputs.environment || 'production' }}
+
+      - name: Verify Deployment
+        run: |
+          echo ""
+          echo "🧪 测试部署结果..."
+          echo ""
+          
+          # 健康检查
+          echo "1. 健康检查:"
+          curl -s --max-time 30 "https://${{ secrets.CF_WORKER_NAME }}.workers.dev/health" || echo "   请求失败或超时"
+          
+          echo ""
+          echo "================================================"
+          echo "✅ 部署完成!"
+          echo ""
+          echo "📝 访问地址:"
+          echo "   - Worker: https://${{ secrets.CF_WORKER_NAME }}.workers.dev"
+          echo "   - 健康检查: https://${{ secrets.CF_WORKER_NAME }}.workers.dev/health"
+          echo "   - API: https://${{ secrets.CF_WORKER_NAME }}.workers.dev/api/hotspots"
+          echo "================================================"
+
+      - name: Send Success Notification
+        if: success()
+        run: |
+          echo "✅ 部署成功!"
+          # 可以添加飞书/Telegram/Discord 通知
