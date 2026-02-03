@@ -52,6 +52,29 @@ from .tech_media import (
     MEDIA as TECH_MEDIA,
 )
 
+from .youtube import (
+    YouTubeFetcher,
+    youtube_fetcher,
+    fetch_youtube_trending,
+    fetch_youtube_search,
+    fetch_youtube_ai_trending,
+    fetch_youtube_hotspots,
+    get_ai_channels,
+    AI_CHANNELS,
+)
+
+from .podcasts import (
+    PodcastFetcher,
+    SpotifyFetcher,
+    podcast_fetcher,
+    spotify_fetcher,
+    fetch_podcasts,
+    fetch_ai_podcasts,
+    fetch_podcast_hotspots,
+    get_supported_podcasts,
+    PODCASTS,
+)
+
 __all__ = [
     # Base
     'FetcherStatus',
@@ -98,12 +121,42 @@ __all__ = [
     'fetch_tech_media_hotspots',
     'get_supported_media',
     'TECH_MEDIA',
+    
+    # YouTube
+    'YouTubeFetcher',
+    'youtube_fetcher',
+    'fetch_youtube_trending',
+    'fetch_youtube_search',
+    'fetch_youtube_ai_trending',
+    'fetch_youtube_hotspots',
+    'get_ai_channels',
+    'AI_CHANNELS',
+    
+    # Podcasts
+    'PodcastFetcher',
+    'SpotifyFetcher',
+    'podcast_fetcher',
+    'spotify_fetcher',
+    'fetch_podcasts',
+    'fetch_ai_podcasts',
+    'fetch_podcast_hotspots',
+    'get_supported_podcasts',
+    'PODCASTS',
 ]
 
 
 # 数据源统计
 SOURCE_STATS = {
-    "total_sources": len(NEWSNOW_PLATFORMS) + 1 + 1 + len(DEFAULT_SUBREDDITS) + len(AI_BLOGS) + len(TECH_MEDIA),
+    "total_sources": (
+        len(NEWSNOW_PLATFORMS) +  # NewsNow
+        1 +  # V2EX
+        len(DEFAULT_SUBREDDITS) +  # Reddit
+        len(AI_BLOGS) +  # AI Blogs
+        len(TECH_MEDIA) +  # Tech Media
+        1 +  # YouTube (Trending)
+        len(AI_CHANNELS) +  # YouTube Channels
+        len(PODCASTS)  # Podcasts
+    ),
     "by_category": {
         "newsnow": {
             "name": "NewsNow 中文热点",
@@ -129,6 +182,16 @@ SOURCE_STATS = {
             "name": "科技媒体",
             "count": len(TECH_MEDIA),
             "type": "rss/html",
+        },
+        "youtube": {
+            "name": "YouTube",
+            "count": 1 + len(AI_CHANNELS),
+            "type": "html",
+        },
+        "podcasts": {
+            "name": "播客",
+            "count": len(PODCASTS),
+            "type": "rss",
         },
     }
 }
