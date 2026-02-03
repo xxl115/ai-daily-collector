@@ -2,6 +2,16 @@ name = "ai-daily-collector"
 main = "./api/cloudflare_worker.js"
 compatibility_date = "2024-01-01"
 
+# Worker 路由配置 (可选 - 用于绑定自定义域名)
+# routes = [
+#   { pattern = "api.yourdomain.com/*", zone_name = "yourdomain.com" }
+# ]
+
 [vars]
 TZ = "Asia/Shanghai"
 LOG_LEVEL = "INFO"
+
+# 开发环境配置
+# [env.development]
+# name = "ai-daily-collector-dev"
+# vars = { LOG_LEVEL = "DEBUG" }

@@ -1,4 +1,4 @@
-name: Deploy Cloudflare (Manual)
+name: Deploy Cloudflare Worker
 
 on:
   push:
@@ -6,25 +6,14 @@ on:
     paths:
       - 'api/cloudflare_worker.js'
       - 'wrangler.toml'
+      - '.github/workflows/cloudflare-deploy.yml'
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - staging
-
-env:
-  CF_WORKER_NAME: ${{ secrets.CF_WORKER_NAME }}
 
 jobs:
   deploy-cloudflare:
     runs-on: ubuntu-latest
     name: Deploy to Cloudflare Workers
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,23 +28,66 @@ jobs:
 
       - name: Deploy to Cloudflare Workers
         run: |
+          echo "🚀 开始部署 Cloudflare Worker..."
           wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
+      - name: Extract Worker Name
+        id: worker-name
+        run: |
+          # 从 wrangler.toml 提取 worker 名称
+          WORKER_NAME=$(grep "^name = " wrangler.toml | sed 's/name = "\(.*\)"/\1/' | tr -d '"')
+          echo "name=$WORKER_NAME" >> $GITHUB_OUTPUT
+          echo "📦 Worker 名称: $WORKER_NAME"
+
       - name: Verify Deployment
         run: |
+          WORKER_NAME="${{ steps.worker-name.outputs.name }}"
+          WORKER_URL="https://${WORKER_NAME}.workers.dev"
+
+          echo ""
+          echo "⏳ 等待 Worker 生效..."
+          sleep 5
+
+          echo "🧪 健康检查..."
+          HEALTH=$(curl -s --max-time 30 "${WORKER_URL}/health" || echo "failed")
+          echo "响应: $HEALTH"
+
+          if echo "$HEALTH" | grep -q "ok"; then
+            echo "✅ 健康检查通过!"
+          else
+            echo "⚠️ 健康检查失败，但部署可能已完成"
+          fi
+
           echo ""
           echo "================================================"
           echo "✅ 部署完成!"
           echo ""
           echo "📝 访问地址:"
-          echo "   - Worker: https://${{ secrets.CF_WORKER_NAME }}.workers.dev"
-          echo "   - Health: https://${{ secrets.CF_WORKER_NAME }}.workers.dev/health"
-          echo "   - API: https://${{ secrets.CF_WORKER_NAME }}.workers.dev/api/hotspots"
-          echo "   - RSS: https://${{ secrets.CF_WORKER_NAME }}.workers.dev/rss/latest.xml"
+          echo "   - Worker: $WORKER_URL"
+          echo "   - Health: ${WORKER_URL}/health"
+          echo "   - API: ${WORKER_URL}/api/hotspots"
+          echo "   - RSS: ${WORKER_URL}/rss/latest.xml"
           echo ""
-          echo "🧪 手动测试:"
-          echo "   curl https://${{ secrets.CF_WORKER_NAME }}.workers.dev/health"
+          echo "🧪 本地测试命令:"
+          echo "   curl ${WORKER_URL}/health"
+          echo "   curl ${WORKER_URL}/api/hotspots?limit=3"
           echo "================================================"
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          WORKER_NAME="${{ steps.worker-name.outputs.name }}"
+          echo "## 🚀 Cloudflare Worker 部署" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Worker 名称**: \`$WORKER_NAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **部署地址**: https://${WORKER_NAME}.workers.dev" >> $GITHUB_STEP_SUMMARY
+          echo "- **API 端点**: https://${WORKER_NAME}.workers.dev/api/hotspots" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🧪 测试命令" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "curl https://${WORKER_NAME}.workers.dev/health" >> $GITHUB_STEP_SUMMARY
+          echo "curl https://${WORKER_NAME}.workers.dev/api/hotspots?limit=3" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

@@ -195,7 +195,7 @@
     <button class="refresh-btn" onclick="loadData()" title="刷新">🔄</button>
     
     <script>
-        const API_URL = 'https://ai-daily-collector.workers.dev/api/hotspots?limit=50';
+        const API_URL = 'https://ai-daily-collector.workers.dev/api/hotspots?limit=50';  // 如果 Worker 名称改变，需同步更新此 URL
         
         async function loadData() {
             const list = document.getElementById('hotspot-list');
