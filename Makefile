@@ -152,6 +152,61 @@ clean:
 	rm -rf *.whl 2>/dev/null || true
 	@echo "✨ 清理完成!"
 
+# 测试推送
+test-notification:
+	@echo "📱 测试推送功能..."
+	@echo "请选择测试平台:"
+	@echo "  1. 飞书"
+	@echo "  2. 钉钉"
+	@echo "  3. 企业微信"
+	@echo "  4. Telegram"
+	@read -p "请选择 (1-4): " PLATFORM; \
+	if [ "$$PLATFORM" = "1" ]; then \
+		python -c "from utils.notification import notification_manager; print('飞书配置状态:', notification_manager.get_config_status()['feishu'])"; \
+	elif [ "$$PLATFORM" = "2" ]; then \
+		python -c "from utils.notification import notification_manager; print('钉钉配置状态:', notification_manager.get_config_status()['dingtalk'])"; \
+	elif [ "$$PLATFORM" = "3" ]; then \
+		python -c "from utils.notification import notification_manager; print('企业微信配置状态:', notification_manager.get_config_status()['wework'])"; \
+	elif [ "$$PLATFORM" = "4" ]; then \
+		python -c "from utils.notification import notification_manager; print('Telegram配置状态:', notification_manager.get_config_status()['telegram'])"; \
+	fi
+
+# 测试关键词过滤
+test-filter:
+	@echo "🔍 测试关键词过滤..."
+	python -c "
+from utils.filter import keyword_filter, filter_articles
+
+# 测试文章
+articles = [
+    {'title': 'OpenAI 发布新的 GPT-4.5 模型', 'url': 'https://example.com/1'},
+    {'title': 'Google 发布 Gemini 2.0', 'url': 'https://example.com/2'},
+    {'title': '如何玩好英雄联盟', 'url': 'https://example.com/3'},
+    {'title': '今天天气不错', 'url': 'https://example.com/4'},
+]
+
+matched, filtered = filter_articles(articles)
+print(f'匹配: {len(matched)} 篇')
+print(f'过滤: {len(filtered)} 篇')
+print()
+print('过滤统计:', keyword_filter.get_stats())
+"
+
+# 查看配置状态
+status:
+	@echo "📊 项目状态..."
+	@echo ""
+	@echo "依赖检查:"
+	@python -c "import utils.notification; print('  ✅ notification 模块正常')" 2>/dev/null || echo "  ❌ notification 模块异常"
+	@python -c "import utils.filter; print('  ✅ filter 模块正常')" 2>/dev/null || echo "  ❌ filter 模块异常"
+	@python -c "import utils.rss; print('  ✅ rss 模块正常')" 2>/dev/null || echo "  ❌ rss 模块异常"
+	@echo ""
+	@echo "推送配置:"
+	@python -c "from utils.notification import notification_manager; import json; print(json.dumps(notification_manager.get_config_status(), indent=2))" 2>/dev/null || echo "  无法获取配置状态"
+	@echo ""
+	@echo "过滤配置:"
+	@python -c "from utils.filter import keyword_filter; import json; print(json.dumps(keyword_filter.get_stats(), indent=2))" 2>/dev/null || echo "  无法获取过滤状态"
+
 # Docker
 docker-build:
 	@echo "🐳 构建 Docker 镜像..."

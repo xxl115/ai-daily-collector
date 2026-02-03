@@ -26,6 +26,24 @@ from .rss import (
     generate_rss_from_articles,
     generate_atom_from_articles,
 )
+from .notification import (
+    PushPlatform,
+    PushMessage,
+    FeishuPusher,
+    DingTalkPusher,
+    WeWorkPusher,
+    TelegramPusher,
+    NotificationManager,
+    notification_manager,
+    send_daily_report,
+)
+from .filter import (
+    WordGroup,
+    KeywordFilter,
+    keyword_filter,
+    filter_articles,
+    sort_by_hotness,
+)
 
 __all__ = [
     # Logger
@@ -58,4 +76,22 @@ __all__ = [
     'AtomGenerator',
     'generate_rss_from_articles',
     'generate_atom_from_articles',
+    
+    # Notification
+    'PushPlatform',
+    'PushMessage',
+    'FeishuPusher',
+    'DingTalkPusher',
+    'WeWorkPusher',
+    'TelegramPusher',
+    'NotificationManager',
+    'notification_manager',
+    'send_daily_report',
+    
+    # Filter
+    'WordGroup',
+    'KeywordFilter',
+    'keyword_filter',
+    'filter_articles',
+    'sort_by_hotness',
 ]
