@@ -30,7 +30,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests jq
+          pip install requests beautifulsoup4 pyyaml
+          sudo apt-get install -y jq
 
       - name: Run AI Daily Collection
         env:
