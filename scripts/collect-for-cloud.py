@@ -1,117 +1,184 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-AI Daily Collector - 云端采集辅助脚本
-
-从 sources.yaml 读取配置，输出 bash 可用的数据格式
-
-输出格式:
-SOURCE|TITLE|URL|SCORE|AUTHOR
-
-用法:
-    python scripts/collect-for-cloud.py
-
-输出示例:
-    Hacker News|Agent Skills|https://example.com|100|john
-    GitHub|awesome-ai|https://github.com/...|500|octocat
+AI Daily Collector - 云端采集脚本（含原文提取）
+从 sources.yaml 读取配置，提取原文并保存到文件
 """
 
 import json
+import re
 import sys
+import yaml
+from datetime import datetime
 from pathlib import Path
 
-# 添加项目根目录
+# 添加项目根目录到路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from utils.logger import setup_logger, get_logger
-from utils.filter import keyword_filter
+try:
+    import requests
+    IMPORTS_OK = True
+except ImportError:
+    IMPORTS_OK = False
+    print("ERROR: requests 未安装", file=sys.stderr)
+    sys.exit(1)
 
-# 导入 fetchers
-from fetchers import (
-    fetch_by_config,
-)
-
-# 导入配置
-import yaml
+from fetchers import fetch_by_config
 
 
 def load_sources_config():
-    """加载 sources.yaml 配置"""
+    """加载 sources.yaml"""
     config_path = project_root / "config" / "sources.yaml"
     with open(config_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
 
-def collect_from_sources():
-    """从配置的数据源采集"""
-    sources_config = load_sources_config()
-    all_articles = []
-
-    for source in sources_config.get('sources', []):
-        if not source.get('enabled', False):
-            continue
-
-        source_name = source.get('name', 'Unknown')
-        source_type = source.get('type', '')
-
-        try:
-            items = fetch_by_config(source)
-            if items:
-                all_articles.extend(items)
-                print(f"✅ {source_name}: {len(items)} 条", file=sys.stderr)
-            else:
-                print(f"⚠️ {source_name}: 无数据", file=sys.stderr)
-        except Exception as e:
-            print(f"❌ {source_name}: {e}", file=sys.stderr)
-
-    return all_articles
+def extract_content(url, max_length=5000):
+    """使用 jina.ai 提取原文内容"""
+    try:
+        clean_url = url.replace('https://', '').replace('http://', '')
+        api_url = "https://r.jina.ai/http://" + clean_url
+        response = requests.get(api_url, timeout=15)
+        if response.ok:
+            content = response.text
+            content = re.sub(r'<[^>]+>', '\n', content)
+            content = re.sub(r'\n{3,}', '\n\n', content)
+            return content.strip()[:max_length]
+    except:
+        pass
+    return ""
 
 
-def filter_articles(articles):
-    """过滤文章"""
-    if not articles:
-        return []
+def save_article(article, output_dir):
+    """保存单篇文章到文件"""
+    source = article['source']
+    title = article['title']
+    url = article['url']
+    score = article.get('score', 0)
 
-    matched, _ = keyword_filter.filter_articles(
-        articles,
-        title_field="title",
-    )
+    timestamp = int(datetime.now().timestamp())
+    source_short = source.split()[0] if ' ' in source else source[:3]
+    filename = f"{source_short}_{score}_{timestamp}.md"
 
-    return matched
+    print(f"   📄 {source}: {title[:50]}")
+    content = extract_content(url)
 
+    file_content = f"""---
+title: "{title}"
+url: "{url}"
+source: "{source}"
+date: {datetime.now().strftime('%Y-%m-%d')}
+score: {score}
+---
 
-def output_for_bash(articles):
-    """输出 bash 可用的格式"""
-    # 按热度排序
-    articles.sort(key=lambda x: x.get('hot_score', 0), reverse=True)
+# {title}
 
-    for article in articles:
-        source = article.get('source', 'Unknown')
-        title = article.get('title', '').replace('|', '\\|').replace('\n', ' ')
-        url = article.get('url', '')
-        score = article.get('hot_score', 0)
-        author = article.get('author', article.get('source_id', ''))
+**来源**: [{source}]({url}) | **热度**: {score}
 
-        # 输出: SOURCE|TITLE|URL|SCORE|AUTHOR
-        print(f"{source}|{title}|{url}|{score}|{author}")
+## 原文内容
+
+{content if content else "*内容提取失败*"}
+
+---
+*自动采集于 {datetime.now().strftime('%Y-%m-%d')}*
+"""
+
+    filepath = output_dir / filename
+    try:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(file_content)
+        return True
+    except Exception as e:
+        print(f"ERROR: 保存文件失败 {filepath}: {e}", file=sys.stderr)
+        return False
 
 
 def main():
-    """主函数"""
-    print("📥 开始采集...", file=sys.stderr)
+    import argparse
 
-    # 采集数据
-    articles = collect_from_sources()
-    print(f"\n📊 总计采集: {len(articles)} 条", file=sys.stderr)
+    parser = argparse.ArgumentParser(description="采集 AI 热点资讯（云端版）")
+    parser.add_argument('--output-dir', type=str, help='输出目录')
+    parser.add_argument('--limit', type=int, help='每源文章数量限制')
+    parser.add_argument('--total-limit', type=int, default=50, help='总文章数量限制')
 
-    # 过滤
-    articles = filter_articles(articles)
-    print(f"🔍 过滤后: {len(articles)} 条", file=sys.stderr)
+    args = parser.parse_args()
 
-    # 输出
-    output_for_bash(articles)
+    # 配置输出目录
+    if args.output_dir:
+        output_dir = Path(args.output_dir)
+    else:
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        output_dir = project_root / 'ai' / 'articles' / 'original' / date_str
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # 加载配置
+    config = load_sources_config()
+
+    print("============================================")
+    print("AI Daily Collector (Cloud Enhanced)")
+    print(f"日期: {datetime.now().strftime('%Y-%m-%d')}")
+    print(f"输出目录: {output_dir}")
+    print("============================================")
+    print()
+
+    total_count = 0
+    source_counts = {}
+
+    # 采集每个数据源
+    for source in config.get('sources', []):
+        if not source.get('enabled', False):
+            continue
+
+        source_name = source['name']
+        print(f"📥 采集 {source_name}...", flush=True)
+
+        try:
+            items = fetch_by_config(source)
+
+            # 限制每源文章数量
+            if args.limit:
+                items = items[:args.limit]
+
+            # 保存文章
+            source_count = 0
+            for item in items:
+                if total_count >= args.total_limit:
+                    break
+
+                article = {
+                    'source': source_name,
+                    'title': item.get('title', ''),
+                    'url': item.get('url', ''),
+                    'score': item.get('hot_score', 0),
+                }
+
+                if save_article(article, output_dir):
+                    source_count += 1
+                    total_count += 1
+
+            source_counts[source_name] = source_count
+            print(f"   -> {source_name}: {source_count} 条", flush=True)
+
+        except Exception as e:
+            print(f"   ❌ {source_name}: {e}", flush=True)
+
+        print()
+
+        if total_count >= args.total_limit:
+            break
+
+    print("============================================")
+    print(f"📊 采集完成! 总计: {total_count} 条")
+    for source, count in source_counts.items():
+        print(f"   - {source}: {count}")
+    print("============================================")
+    print()
+    print(f"✅ 完成! 文件保存于: {output_dir}/")
+
+    return 0
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    sys.exit(main())
