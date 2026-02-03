@@ -14,6 +14,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set
 from dataclasses import dataclass, field
 
+from .logger import get_logger
+logger = get_logger(__name__)
+
 
 @dataclass
 class WordGroup:

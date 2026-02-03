@@ -22,13 +22,64 @@ import requests
 from bs4 import BeautifulSoup
 from pytz import timezone
 
-from .logger import get_logger
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 # 媒体配置
 MEDIA = {
+    # ===== 中文科技媒体 =====
+    "36kr": {
+        "name": "36氪",
+        "url": "https://36kr.com/",
+        "rss": "https://36kr.com/feed",
+        "language": "zh",
+        "selectors": {
+            "article": ".item-item",
+            "title": ".item-title a",
+            "link": ".item-title a",
+            "summary": ".item-desc",
+        }
+    },
+    "jiqizhixin": {
+        "name": "机器之心",
+        "url": "https://www.jiqizhixin.com/",
+        "rss": "https://www.jiqizhixin.com/rss",
+        "language": "zh",
+        "selectors": {
+            "article": "article",
+            "title": "h2 a",
+            "link": "h2 a",
+            "summary": ".summary",
+        }
+    },
+    "tmtpost": {
+        "name": "钛媒体",
+        "url": "https://www.tmtpost.com/",
+        "rss": "https://www.tmtpost.com/feed",
+        "language": "zh",
+        "selectors": {
+            "article": ".post-item",
+            "title": ".post-title a",
+            "link": ".post-title a",
+            "summary": ".post-excerpt",
+        }
+    },
+    "leiphone": {
+        "name": "雷锋网",
+        "url": "https://www.leiphone.com/",
+        "rss": "https://www.leiphone.com/feed",
+        "language": "zh",
+        "selectors": {
+            "article": "article",
+            "title": "h2 a",
+            "link": "h2 a",
+            "summary": ".summary",
+        }
+    },
+
+    # ===== 英文科技媒体 =====
     "techcrunch": {
         "name": "TechCrunch",
         "url": "https://techcrunch.com/",

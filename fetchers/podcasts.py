@@ -18,7 +18,7 @@ import requests
 from bs4 import BeautifulSoup
 from pytz import timezone
 
-from .logger import get_logger
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 

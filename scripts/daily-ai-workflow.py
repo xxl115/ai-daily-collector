@@ -31,9 +31,6 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from config.settings import (
-    RSS_SOURCES,
-    GITHUB_TRENDING_REPOS,
-    HACKER_NEWS_TOP_STORIES,
     DEFAULT_CONFIG,
 )
 from utils.logger import setup_logger, get_logger
@@ -44,18 +41,21 @@ from utils.cache import cache
 from utils.rate_limit import limiter
 from utils.errors import retry, FallbackManager, fallback_return_empty
 
-# 导入抓取器
+# 导入抓取器（使用 fetchers 模块）
 from fetchers import (
+    fetch_by_config,           # 统一调度接口
     fetch_newsnow_hotspots,
     fetch_v2ex_hotspots,
     fetch_reddit_hotspots,
+    fetch_tech_media_hotspots,  # 替代原来的 RSS 采集
+    fetch_ai_blog_hotspots,     # AI 博客
 )
 
-# 导入现有的采集器
-from collectors.github import fetch_github_trending
-from collectors.hackernews import fetch_hacker_news
-from collectors.producthunt import fetch_product_hunt
-from collectors.rss_collector import fetch_rss_sources
+# GitHub Trending 需要单独实现或使用第三方服务
+# 暂时注释掉，后续可以添加
+# from collectors.github import fetch_github_trending
+# from collectors.hackernews import fetch_hacker_news
+# from collectors.producthunt import fetch_product_hunt
 
 
 def setup_logging(verbose: bool = False):
@@ -72,111 +72,79 @@ def setup_logging(verbose: bool = False):
 
 def collect_all_sources(config: Dict) -> Dict[str, List[Dict]]:
     """
-    采集所有数据源
-    
+    采集所有数据源（从 sources.yaml 读取配置）
+
     Returns:
         采集结果字典
     """
+    import yaml
+    from pathlib import Path
+
     logger = get_logger(__name__)
     results = {
-        "rss": [],
-        "github": [],
-        "hackernews": [],
-        "producthunt": [],
-        "newsnow": [],
-        "v2ex": [],
-        "reddit": [],
+        "tech_media": [],    # 科技媒体（包括中文）
+        "ai_blogs": [],      # AI 官方博客
+        "newsnow": [],       # NewsNow 中文热点
+        "v2ex": [],          # V2EX
+        "reddit": [],        # Reddit
     }
-    
+
     logger.info("=" * 60)
     logger.info("开始采集 AI 热点资讯")
     logger.info("=" * 60)
-    
-    # 1. RSS 订阅
-    if config.get("enable_rss", True):
-        logger.info("\n📡 采集 RSS 订阅源...")
+
+    # 加载 sources.yaml 配置
+    config_path = Path(__file__).parent.parent / "config" / "sources.yaml"
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            sources_config = yaml.safe_load(f)
+    except Exception as e:
+        logger.error(f"加载配置文件失败: {e}")
+        return results
+
+    # 遍历配置中的每个数据源
+    for source in sources_config.get('sources', []):
+        if not source.get('enabled', False):
+            continue
+
+        source_name = source['name']
+        source_type = source.get('type', '')
+
+        logger.info(f"\n📡 采集: {source_name}")
+
         try:
-            results["rss"] = fetch_rss_sources(
-                sources=config.get("rss_sources", RSS_SOURCES),
-                limit=config.get("rss_limit", 50),
-            )
-            logger.info(f"   RSS: {len(results['rss'])} 条")
+            # 使用统一调度接口
+            items = fetch_by_config(source)
+
+            if items:
+                # 根据类型归类
+                if source_type == 'tech_media':
+                    results['tech_media'].extend(items)
+                elif source_type == 'ai_blogs':
+                    results['ai_blogs'].extend(items)
+                elif source_type == 'newsnow':
+                    results['newsnow'].extend(items)
+                elif source_type == 'v2ex':
+                    results['v2ex'].extend(items)
+                elif source_type == 'reddit':
+                    results['reddit'].extend(items)
+                else:
+                    # 未知类型，放入 tech_media
+                    results['tech_media'].extend(items)
+
+                logger.info(f"   ✅ {source_name}: {len(items)} 条")
+            else:
+                logger.info(f"   ⚠️ {source_name}: 无数据")
+
         except Exception as e:
-            logger.error(f"RSS 采集失败: {e}")
-    
-    # 2. GitHub Trending
-    if config.get("enable_github", True):
-        logger.info("\n🐙 采集 GitHub Trending...")
-        try:
-            results["github"] = fetch_github_trending(
-                languages=config.get("github_languages", ["python", "typescript"]),
-                limit=config.get("github_limit", 20),
-            )
-            logger.info(f"   GitHub: {len(results['github'])} 条")
-        except Exception as e:
-            logger.error(f"GitHub 采集失败: {e}")
-    
-    # 3. Hacker News
-    if config.get("enable_hackernews", True):
-        logger.info("\n📰 采集 Hacker News...")
-        try:
-            results["hackernews"] = fetch_hacker_news(
-                story_type=config.get("hn_story_type", "top"),
-                limit=config.get("hackernews_limit", 20),
-            )
-            logger.info(f"   Hacker News: {len(results['hackernews'])} 条")
-        except Exception as e:
-            logger.error(f"Hacker News 采集失败: {e}")
-    
-    # 4. Product Hunt
-    if config.get("enable_producthunt", True):
-        logger.info("\n🚀 采集 Product Hunt...")
-        try:
-            results["producthunt"] = fetch_product_hunt(limit=10)
-            logger.info(f"   Product Hunt: {len(results['producthunt'])} 条")
-        except Exception as e:
-            logger.error(f"Product Hunt 采集失败: {e}")
-    
-    # 5. NewsNow (中文热点)
-    if config.get("enable_newsnow", True):
-        logger.info("\n🇨🇳 采集 NewsNow 中文热点...")
-        try:
-            platforms = config.get("newsnow_platforms", None)
-            results["newsnow"] = fetch_newsnow_hotspots(
-                platforms=platforms,
-                limit=config.get("newsnow_limit", 30),
-            )
-            logger.info(f"   NewsNow: {len(results['newsnow'])} 条")
-        except Exception as e:
-            logger.error(f"NewsNow 采集失败: {e}")
-    
-    # 6. V2EX 热门
-    if config.get("enable_v2ex", True):
-        logger.info("\n💬 采集 V2EX 热门...")
-        try:
-            results["v2ex"] = fetch_v2ex_hotspots(limit=config.get("v2ex_limit", 20))
-            logger.info(f"   V2EX: {len(results['v2ex'])} 条")
-        except Exception as e:
-            logger.error(f"V2EX 采集失败: {e}")
-    
-    # 7. Reddit 热门
-    if config.get("enable_reddit", True):
-        logger.info("\n🤖 采集 Reddit 热门...")
-        try:
-            results["reddit"] = fetch_reddit_hotspots(
-                subreddits=config.get("reddit_subreddits", None),
-                limit=config.get("reddit_limit", 20),
-            )
-            logger.info(f"   Reddit: {len(results['reddit'])} 条")
-        except Exception as e:
-            logger.error(f"Reddit 采集失败: {e}")
-    
+            logger.error(f"   ❌ {source_name}: {e}")
+
     # 统计
     total = sum(len(v) for v in results.values())
     logger.info("\n" + "=" * 60)
     logger.info(f"采集完成! 总计: {total} 条")
     logger.info("=" * 60)
-    
+
     return results
 
 

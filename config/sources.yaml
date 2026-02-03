@@ -2,8 +2,10 @@
 # https://github.com/xxl115/ai-daily-collector
 
 sources:
-  # 英文源
+  # ===== 英文科技媒体 =====
   - name: "MIT Tech Review"
+    type: "tech_media"
+    media_id: "mit-tech"
     url: "https://www.technologyreview.com/feed/"
     enabled: true
     language: "en"
@@ -13,6 +15,8 @@ sources:
       max_articles: 10
 
   - name: "TechCrunch"
+    type: "tech_media"
+    media_id: "techcrunch"
     url: "https://techcrunch.com/feed/"
     enabled: true
     language: "en"
@@ -21,8 +25,10 @@ sources:
       hours: 24
       max_articles: 20
 
+  # ===== API/社区源 =====
   - name: "Hacker News"
-    url: "https://news.ycombinator.com/rss"
+    type: "hackernews"
+    url: "https://news.ycombinator.com/"
     enabled: true
     language: "en"
     filters:
@@ -31,6 +37,8 @@ sources:
       max_articles: 30
 
   - name: "OpenAI Blog"
+    type: "ai_blogs"
+    media_id: "openai"
     url: "https://openai.com/blog/rss.xml"
     enabled: false  # API 限制，经常失败
     language: "en"
@@ -40,6 +48,8 @@ sources:
       max_articles: 5
 
   - name: "Google AI"
+    type: "ai_blogs"
+    media_id: "googleai"
     url: "https://blog.google/technology/ai/rss"
     enabled: false
     language: "en"
@@ -48,9 +58,11 @@ sources:
       hours: 24
       max_articles: 5
 
-  # 中文源
+  # ===== 中文科技媒体 =====
   - name: "36氪"
-    url: "https://www.36kr.com/feed/"
+    type: "tech_media"
+    media_id: "36kr"
+    url: "https://36kr.com/feed"
     enabled: true
     language: "zh"
     filters:
@@ -59,6 +71,8 @@ sources:
       max_articles: 30
 
   - name: "机器之心"
+    type: "tech_media"
+    media_id: "jiqizhixin"
     url: "https://www.jiqizhixin.com/rss"
     enabled: true
     language: "zh"
@@ -68,6 +82,8 @@ sources:
       max_articles: 20
 
   - name: "钛媒体"
+    type: "tech_media"
+    media_id: "tmtpost"
     url: "https://www.tmtpost.com/feed"
     enabled: true
     language: "zh"
@@ -77,6 +93,8 @@ sources:
       max_articles: 20
 
   - name: "雷锋网"
+    type: "tech_media"
+    media_id: "leiphone"
     url: "https://www.leiphone.com/feed"
     enabled: true
     language: "zh"
@@ -85,59 +103,16 @@ sources:
       hours: 24
       max_articles: 20
 
-  # 量子位 API（特殊处理）
+  # ===== API 源 =====
   - name: "量子位"
     type: "api"
     url: "https://api.qbitai.com/v1/articles"
-    enabled: true
+    enabled: false  # API 不存在，暂时禁用
     language: "zh"
     filters:
       keyword: "AI"
       hours: 24
       max_articles: 30
 
-# 分类关键词配置
-categories:
-  focus_keywords:
-    - "deepseek"
-    - "mcp"
-    - "a2a"
-    - "gemini"
-    - "claude"
-    - "gpt-5"
-    - "breakthrough"
-    - "sora"
-    - "opus"
-
-  agent_keywords:
-    - "agent"
-    - "mcp"
-    - "a2a"
-    - "workflow"
-    - "autogen"
-    - "langchain"
-    - "crewai"
-    - "multi-agent"
-
-  coding_keywords:
-    - "cursor"
-    - "windsurf"
-    - "cline"
-    - "copilot"
-    - "ide"
-    - "vscode"
-
-  content_keywords:
-    - "writing"
-    - "video"
-    - "audio"
-    - "image"
-    - "midjourney"
-    - "suno"
-
-  security_keywords:
-    - "security"
-    - "vulnerability"
-    - "malware"
-    - "deepfake"
-    - "fake"
+# 全局配置
+max_articles: 100  # 总文章数量限制
