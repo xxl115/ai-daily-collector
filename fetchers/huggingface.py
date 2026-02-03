@@ -23,8 +23,8 @@ class HuggingFaceFetcher:
 
     def __init__(
         self,
-        timeout: int = 30,
-        max_retries: int = 2,
+        timeout: int = 60,  # 增加超时时间到 60 秒
+        max_retries: int = 3,  # 增加重试次数到 3 次
     ):
         self.timeout = timeout
         self.max_retries = max_retries
@@ -50,7 +50,11 @@ class HuggingFaceFetcher:
 
             except Exception as e:
                 if attempt < self.max_retries - 1:
-                    time.sleep(2)
+                    # 增加重试延迟
+                    import time
+                    wait_time = (attempt + 1) * 5  # 5秒, 10秒, 15秒
+                    logger.warning(f"[Hugging Face] 尝试 {attempt + 1} 失败: {e}，{wait_time}秒后重试...")
+                    time.sleep(wait_time)
                 else:
                     logger.warning(f"[Hugging Face] RSS 抓取失败: {e}")
 

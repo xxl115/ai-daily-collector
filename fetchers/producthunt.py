@@ -57,7 +57,7 @@ class ProductHuntFetcher:
         return []
 
     def _parse_rss(self, content: str) -> List[Dict]:
-        """解析 RSS"""
+        """解析 Atom 格式 (Product Hunt 使用 Atom 而非 RSS)"""
         from xml.etree import ElementTree as ET
 
         articles = []
@@ -66,16 +66,32 @@ class ProductHuntFetcher:
 
         try:
             root = ET.fromstring(content)
-            for item in root.findall(".//item")[:10]:
-                title = item.findtext("title", "")
-                link = item.findtext("link", "")
-                desc = item.findtext("description", "")
-                pub_date = item.findtext("pubDate", "")
+            # Product Hunt 使用 Atom 格式，命名空间为 http://www.w3.org/2005/Atom
+            ns = {"atom": "http://www.w3.org/2005/Atom"}
 
-                # 清理描述
+            for entry in root.findall("atom:entry", ns)[:10]:
+                title = entry.findtext("atom:title", "", ns)
+                # Atom 的 link 在 href 属性中
+                link_elem = entry.find("atom:link", ns)
+                link = link_elem.get("href", "") if link_elem is not None else ""
+
+                # 获取 alternate link
+                if not link:
+                    for link_elem in entry.findall("atom:link", ns):
+                        if link_elem.get("rel") == "alternate":
+                            link = link_elem.get("href", "")
+                            break
+
+                # Atom 使用 content 而非 description
+                content_elem = entry.find("atom:content", ns)
+                desc = content_elem.text if content_elem is not None else ""
+
+                # 清理描述中的 HTML
                 if desc:
                     soup = BeautifulSoup(desc, "html.parser")
-                    desc = soup.get_text()[:300]
+                    desc = soup.get_text(strip=True)[:300]
+
+                pub_date = entry.findtext("atom:published", "", ns)
 
                 articles.append({
                     "title": title.strip(),
@@ -88,7 +104,7 @@ class ProductHuntFetcher:
                     "hot_score": self._calculate_score(pub_date),
                 })
         except Exception as e:
-            logger.warning(f"Product Hunt RSS 解析失败: {e}")
+            logger.warning(f"Product Hunt Atom 解析失败: {e}")
 
         return articles
 

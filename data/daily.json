@@ -1,197 +1,1145 @@
 {
   "success": true,
-  "title": "AI Daily - 2026-02-03",
-  "generated_at": "2026-02-03T14:47:07.744911",
-  "total_collected": 27,
+  "title": "AI Daily - 2026-02-04",
+  "generated_at": "2026-02-04T05:59:53.340140",
+  "total_collected": 103,
   "hotspots": [
-    {
-      "title": "xAI joins SpaceX",
-      "url": "https://www.spacex.com/updates#xai-joins-spacex",
-      "source": "Hacker News",
-      "hot_score": 789,
-      "timestamp": "2026-02-02T21:51:22"
-    },
-    {
-      "title": "Todd C. Miller – Sudo maintainer for over 30 years",
-      "url": "https://www.millert.dev/",
-      "source": "Hacker News",
-      "hot_score": 529,
-      "timestamp": "2026-02-02T17:25:26"
-    },
     {
       "title": "Archive.today is directing a DDoS attack against my blog?",
       "url": "https://gyrovague.com/2026/02/01/archive-today-is-directing-a-ddos-attack-against-my-blog/",
+      "summary": "",
       "source": "Hacker News",
-      "hot_score": 232,
-      "timestamp": "2026-02-01T05:11:53"
-    },
-    {
-      "title": "Banning lead in gas worked. The proof is in our hair",
-      "url": "https://attheu.utah.edu/health-medicine/banning-lead-in-gas-worked-the-proof-is-in-our-hair/",
-      "source": "Hacker News",
-      "hot_score": 139,
-      "timestamp": "2026-02-03T01:52:21"
-    },
-    {
-      "title": "[GitHub] trufflesecurity/trufflehog",
-      "url": "https://github.com/trufflesecurity/trufflehog",
-      "source": "GitHub Trending",
-      "hot_score": 100,
-      "timestamp": "2026-02-03T14:47:05.714601"
-    },
-    {
-      "title": "[GitHub] activepieces/activepieces",
-      "url": "https://github.com/activepieces/activepieces",
-      "source": "GitHub Trending",
-      "hot_score": 100,
-      "timestamp": "2026-02-03T14:47:05.714864"
-    },
-    {
-      "title": "[GitHub] tailscale/tailscale",
-      "url": "https://github.com/tailscale/tailscale",
-      "source": "GitHub Trending",
-      "hot_score": 100,
-      "timestamp": "2026-02-03T14:47:05.715094"
-    },
-    {
-      "title": "[GitHub] k3s-io/k3s",
-      "url": "https://github.com/k3s-io/k3s",
-      "source": "GitHub Trending",
-      "hot_score": 100,
-      "timestamp": "2026-02-03T14:47:05.715323"
-    },
-    {
-      "title": "[GitHub] juicedata/juicefs",
-      "url": "https://github.com/juicedata/juicefs",
-      "source": "GitHub Trending",
-      "hot_score": 100,
-      "timestamp": "2026-02-03T14:47:05.715528"
-    },
-    {
-      "title": "[GitHub] 9001/copyparty",
-      "url": "https://github.com/9001/copyparty",
-      "source": "GitHub Trending",
-      "hot_score": 100,
-      "timestamp": "2026-02-03T14:47:05.715797"
-    },
-    {
-      "title": "[GitHub] docker/compose",
-      "url": "https://github.com/docker/compose",
-      "source": "GitHub Trending",
-      "hot_score": 100,
-      "timestamp": "2026-02-03T14:47:05.716000"
-    },
-    {
-      "title": "[GitHub] ClickHouse/ClickHouse",
-      "url": "https://github.com/ClickHouse/ClickHouse",
-      "source": "GitHub Trending",
-      "hot_score": 100,
-      "timestamp": "2026-02-03T14:47:05.716212"
-    },
-    {
-      "title": "[GitHub] milvus-io/milvus",
-      "url": "https://github.com/milvus-io/milvus",
-      "source": "GitHub Trending",
-      "hot_score": 100,
-      "timestamp": "2026-02-03T14:47:05.716461"
-    },
-    {
-      "title": "[GitHub] nlohmann/json",
-      "url": "https://github.com/nlohmann/json",
-      "source": "GitHub Trending",
-      "hot_score": 100,
-      "timestamp": "2026-02-03T14:47:05.716716"
-    },
-    {
-      "title": "LNAI – Define AI coding tool configs once, sync to Claude, Cursor, Codex, etc.",
-      "url": "https://github.com/KrystianJonca/lnai",
-      "source": "Hacker News",
-      "hot_score": 46,
-      "timestamp": "2026-02-03T08:45:57"
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-01T13:11:53",
+      "hot_score": 331
     },
     {
       "title": "Agent Skills",
       "url": "https://agentskills.io/home",
+      "summary": "",
       "source": "Hacker News",
-      "hot_score": 33,
-      "timestamp": "2026-02-03T14:09:54"
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-03T22:09:54",
+      "hot_score": 317
+    },
+    {
+      "title": "Banning lead in gas worked. The proof is in our hair",
+      "url": "https://attheu.utah.edu/health-medicine/banning-lead-in-gas-worked-the-proof-is-in-our-hair/",
+      "summary": "",
+      "source": "Hacker News",
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-03T09:52:21",
+      "hot_score": 301
+    },
+    {
+      "title": "X offices raided in France",
+      "url": "https://apnews.com/article/france-x-investigation-seach-elon-musk-1116be84d84201011219086ecfd4e0bc",
+      "summary": "",
+      "source": "Hacker News",
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-04T00:14:17",
+      "hot_score": 208
+    },
+    {
+      "title": "Xcode 26.3 unlocks the power of agentic coding",
+      "url": "https://www.apple.com/newsroom/2026/02/xcode-26-point-3-unlocks-the-power-of-agentic-coding/",
+      "summary": "",
+      "source": "Hacker News",
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-04T02:04:08",
+      "hot_score": 186
+    },
+    {
+      "title": "The End of Database-Backed Workflow Engines: Building GraphRAG on Object Storage",
+      "url": "https://dev.to/tensorlake/the-end-of-database-backed-workflow-engines-building-graphrag-on-object-storage-295b",
+      "summary": "GraphRAG sounds elegant in theory: build a knowledge graph from your documents, traverse it...",
+      "source": "Dev.to",
+      "source_id": "devto",
+      "published_at": "2026-02-03T14:09:26Z",
+      "timestamp": "2026-02-04T05:59:03.819360+08:00",
+      "hot_score": 179,
+      "author": "Diptanu Gon Choudhury"
+    },
+    {
+      "title": "Data Brokers Can Fuel Violence Against Public Servants",
+      "url": "https://www.wired.com/story/how-data-brokers-can-fuel-violence-against-public-servants/",
+      "summary": "",
+      "source": "Hacker News",
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-03T23:28:59",
+      "hot_score": 83
     },
     {
       "title": "How AI Is Reshaping Open Source Contributions",
       "url": "https://dev.to/jaideepparashar/how-ai-is-reshaping-open-source-contributions-1p0",
+      "summary": "As the Founder of ReThynk AI, I’ve been watching a quiet shift happen in open source:  AI is not...",
       "source": "Dev.to",
-      "hot_score": 16,
-      "timestamp": "2026-02-03T02:51:17Z"
+      "source_id": "devto",
+      "published_at": "2026-02-03T02:51:17Z",
+      "timestamp": "2026-02-04T05:59:03.819360+08:00",
+      "hot_score": 69,
+      "author": "Jaideep Parashar"
+    },
+    {
+      "title": "Realtime Multimodal AI on Ray-Ban Meta Glasses with Gemini Live & LiveKit",
+      "url": "https://dev.to/googleai/realtime-multimodal-ai-on-ray-ban-meta-glasses-with-gemini-live-livekit-45mn",
+      "summary": "Imagine walking down the street, asking your glasses what kind of plant you're looking at, and...",
+      "source": "Dev.to",
+      "source_id": "devto",
+      "published_at": "2026-02-03T16:27:34Z",
+      "timestamp": "2026-02-04T05:59:03.819360+08:00",
+      "hot_score": 66,
+      "author": "Thor 雷神 Schaeff"
+    },
+    {
+      "title": "China Moon Mission: Aiming for 2030 Lunar Landing",
+      "url": "https://spectrum.ieee.org/china-moon-mission-mengzhou-artemis",
+      "summary": "",
+      "source": "Hacker News",
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-04T03:32:11",
+      "hot_score": 65
     },
     {
       "title": "Above the API: What Developers Contribute When AI Can Code",
       "url": "https://dev.to/dannwaneri/above-the-api-what-developers-contribute-when-ai-can-code-5025",
+      "summary": "An AI researcher told me something that won't leave my head:   \"If a human cannot outperform or...",
       "source": "Dev.to",
-      "hot_score": 9,
-      "timestamp": "2026-02-03T04:48:49Z"
+      "source_id": "devto",
+      "published_at": "2026-02-03T04:48:49Z",
+      "timestamp": "2026-02-04T05:59:03.819360+08:00",
+      "hot_score": 64,
+      "author": "Daniel Nwaneri"
+    },
+    {
+      "title": "The 48-Hour Collapse of Moltbook",
+      "url": "https://dev.to/narnaiezzsshaa/the-48-hour-collapse-of-moltbook-4625",
+      "summary": "What Happens When You Deploy Agents Without Governance   Moltbook was live for 48 hours. In...",
+      "source": "Dev.to",
+      "source_id": "devto",
+      "published_at": "2026-02-03T19:33:52Z",
+      "timestamp": "2026-02-04T05:59:03.819360+08:00",
+      "hot_score": 61,
+      "author": "Narnaiezzsshaa Truong"
+    },
+    {
+      "title": "The next steps for Airbus' big bet on open rotor engines",
+      "url": "https://aerospaceamerica.aiaa.org/the-next-steps-for-airbus-big-bet-on-open-rotor-engines/",
+      "summary": "",
+      "source": "Hacker News",
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-03T23:31:40",
+      "hot_score": 57
     },
     {
       "title": "Semantic Caching for RubyLLM: Cut Your AI Costs by 70%",
       "url": "https://dev.to/stokry/semantic-caching-for-rubyllm-cut-your-ai-costs-by-70-2ibn",
+      "summary": "If you're using RubyLLM to build AI-powered applications in Ruby, you're already enjoying a clean,...",
       "source": "Dev.to",
-      "hot_score": 5,
-      "timestamp": "2026-02-03T07:39:36Z"
+      "source_id": "devto",
+      "published_at": "2026-02-03T07:39:36Z",
+      "timestamp": "2026-02-04T05:59:03.819360+08:00",
+      "hot_score": 55,
+      "author": "Stokry"
     },
     {
-      "title": "Building a TUI with Pieces SDK - Part 3: Advanced Features",
-      "url": "https://dev.to/getpieces/building-a-tui-with-pieces-sdk-part-3-advanced-features-3i0o",
-      "source": "Dev.to",
-      "hot_score": 5,
-      "timestamp": "2026-02-02T17:57:24Z"
-    },
-    {
-      "title": "Show HN: Inverting Agent Model (App as Clients, Chat as Server and Reflection)",
-      "url": "https://github.com/RAIL-Suite/RAIL",
+      "title": "Sandboxing AI Agents in Linux",
+      "url": "https://blog.senko.net/sandboxing-ai-agents-in-linux",
+      "summary": "",
       "source": "Hacker News",
-      "hot_score": 4,
-      "timestamp": "2026-02-03T14:16:49"
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-04T01:35:37",
+      "hot_score": 54
     },
     {
-      "title": "Stop Sending Sensitive Health Data to Servers: Build a Private AI Health Assistant with WebLLM & Transformers.js",
-      "url": "https://dev.to/wellallytech/stop-sending-sensitive-health-data-to-servers-build-a-private-ai-health-assistant-with-webllm--34kh",
+      "title": "How I Used Algolia to Build a 'Mind-Reading' Support Portal",
+      "url": "https://dev.to/briian365/how-i-used-algolia-to-build-a-mind-reading-support-portal-25ei",
+      "summary": "This is a submission for the Algolia Agent Studio Challenge: Consumer-Facing Non-Conversational...",
       "source": "Dev.to",
-      "hot_score": 2,
-      "timestamp": "2026-02-03T01:30:00Z"
+      "source_id": "devto",
+      "published_at": "2026-02-03T07:14:46Z",
+      "timestamp": "2026-02-04T05:59:03.819360+08:00",
+      "hot_score": 54,
+      "author": "brian"
     },
     {
       "title": "Claude Code: Personal Practical Notes",
       "url": "https://dev.to/shusukedev/claude-code-personal-practical-notes-2o5h",
+      "summary": "My workflow, prompting tips, and lessons learned from writing 99% of code through Claude Code",
       "source": "Dev.to",
-      "hot_score": 1,
-      "timestamp": "2026-02-02T23:38:22Z"
+      "source_id": "devto",
+      "published_at": "2026-02-02T23:38:22Z",
+      "timestamp": "2026-02-04T05:59:03.819360+08:00",
+      "hot_score": 51,
+      "author": "shusukeO"
     },
     {
-      "title": "llms.txt: The File Your Website Probably Doesn't Have",
-      "url": "https://dev.to/mohaniyer/llmstxt-the-file-your-website-probably-doesnt-have-3dd5",
+      "title": "OpenAI's Codex App Wants to Replace Your IDE. I'm Not Sure It Should.",
+      "url": "https://dev.to/sudheer_singh_3329d404bb1/openais-codex-app-wants-to-replace-your-ide-im-not-sure-it-should-3cm0",
+      "summary": "OpenAI shipped a desktop app for Codex yesterday. It lets you run multiple coding agents in parallel,...",
       "source": "Dev.to",
-      "hot_score": 1,
-      "timestamp": "2026-02-03T00:26:35Z"
+      "source_id": "devto",
+      "published_at": "2026-02-03T08:26:31Z",
+      "timestamp": "2026-02-04T05:59:03.819360+08:00",
+      "hot_score": 51,
+      "author": "sudheer singh"
+    },
+    {
+      "title": "The Download: squeezing more metal out of aging mines, and AI’s truth crisis",
+      "url": "https://www.technologyreview.com/2026/02/03/1132105/the-download-squeezing-more-metal-out-of-aging-mines-and-ais-truth-crisis/",
+      "summary": "This is today’s edition of The Download, our weekday newsletter that provides a daily dose of what’s going on in the world of technology. Microbes could extract the metal needed for cleantech In a pine forest on Michigan’s Upper Peninsula, the only active nickel mine in the US is nearing the end of ",
+      "source": "MIT Technology Review",
+      "source_id": "mit-tech",
+      "published_at": "Tue, 03 Feb 2026 13:10:00 +0000",
+      "timestamp": "2026-02-04T05:58:24.764035+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Microbes could extract the metal needed for cleantech",
+      "url": "https://www.technologyreview.com/2026/02/03/1132047/microbes-extract-metal-cleantech/",
+      "summary": "In a pine forest on Michigan’s Upper Peninsula, the only active nickel mine in the US is nearing the end of its life. At a time when carmakers want the metal for electric-vehicle batteries, nickel concentration at Eagle Mine is falling and could soon drop too low to warrant digging. But earlier this",
+      "source": "MIT Technology Review",
+      "source_id": "mit-tech",
+      "published_at": "Tue, 03 Feb 2026 10:00:00 +0000",
+      "timestamp": "2026-02-04T05:58:24.764035+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "What we’ve been getting wrong about AI’s truth crisis",
+      "url": "https://www.technologyreview.com/2026/02/02/1132068/what-weve-been-getting-wrong-about-ais-truth-crisis/",
+      "summary": "This story originally appeared in The Algorithm, our weekly newsletter on AI. To get stories like this in your inbox first, sign up here. What would it take to convince you that the era of truth decay we were long warned about—where AI content dupes us, shapes our beliefs even when we catch the lie,",
+      "source": "MIT Technology Review",
+      "source_id": "mit-tech",
+      "published_at": "Mon, 02 Feb 2026 18:09:57 +0000",
+      "timestamp": "2026-02-04T05:58:24.764035+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "The crucial first step for designing a successful enterprise AI system",
+      "url": "https://www.technologyreview.com/2026/02/02/1131822/the-crucial-first-step-for-designing-a-successful-enterprise-ai-system/",
+      "summary": "Many organizations rushed into generative AI, only to see pilots fail to deliver value. Now, companies want measurable outcomes—but how do you design for success? At Mistral AI, we partner with global industry leaders to co-design tailored AI solutions that solve their most difficult problems. Wheth",
+      "source": "MIT Technology Review",
+      "source_id": "mit-tech",
+      "published_at": "Mon, 02 Feb 2026 14:20:29 +0000",
+      "timestamp": "2026-02-04T05:58:24.764035+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "The Download: inside a deepfake marketplace, and EV batteries’ future",
+      "url": "https://www.technologyreview.com/2026/02/02/1132049/the-download-inside-a-deepfake-marketplace-and-ev-batteries-future/",
+      "summary": "This is today’s edition of The Download, our weekday newsletter that provides a daily dose of what’s going on in the world of technology. Inside the marketplace powering bespoke AI deepfakes of real women Civitai—an online marketplace for buying and selling AI-generated content, backed by the ventur",
+      "source": "MIT Technology Review",
+      "source_id": "mit-tech",
+      "published_at": "Mon, 02 Feb 2026 13:10:00 +0000",
+      "timestamp": "2026-02-04T05:58:24.764035+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "What’s next for EV batteries in 2026",
+      "url": "https://www.technologyreview.com/2026/02/02/1132042/whats-next-for-ev-batteries-in-2026/",
+      "summary": "MIT Technology Review’s What’s Next series looks across industries, trends, and technologies to give you a first look at the future. You can read the rest of them here. Demand for electric vehicles and the batteries that power them has never been hotter. In 2025, EVs made up over a quarter of new ve",
+      "source": "MIT Technology Review",
+      "source_id": "mit-tech",
+      "published_at": "Mon, 02 Feb 2026 10:00:00 +0000",
+      "timestamp": "2026-02-04T05:58:24.764035+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Inside the marketplace powering bespoke AI deepfakes of real women",
+      "url": "https://www.technologyreview.com/2026/01/30/1131945/inside-the-marketplace-powering-bespoke-ai-deepfakes-of-real-women/",
+      "summary": "Civitai—an online marketplace for buying and selling AI-generated content, backed by the venture capital firm Andreessen Horowitz—is letting users buy custom instruction files for generating celebrity deepfakes. Some of these files were specifically designed to make pornographic images banned by the",
+      "source": "MIT Technology Review",
+      "source_id": "mit-tech",
+      "published_at": "Fri, 30 Jan 2026 16:32:31 +0000",
+      "timestamp": "2026-02-04T05:58:24.764035+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "The Download: US immigration agencies’ AI videos, and inside the Vitalism movement",
+      "url": "https://www.technologyreview.com/2026/01/30/1132022/the-download-us-immigration-agencies-ai-videos-and-inside-the-vitalism-movement/",
+      "summary": "This is today’s edition of The Download, our weekday newsletter that provides a daily dose of what’s going on in the world of technology. DHS is using Google and Adobe AI to make videos The news: The US Department of Homeland Security is using AI video generators from Google and Adobe to make and ed",
+      "source": "MIT Technology Review",
+      "source_id": "mit-tech",
+      "published_at": "Fri, 30 Jan 2026 13:10:00 +0000",
+      "timestamp": "2026-02-04T05:58:24.764035+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "How the sometimes-weird world of lifespan extension is gaining influence",
+      "url": "https://www.technologyreview.com/2026/01/30/1131933/weird-world-lifespan-extension-gaining-influence-oneill-arpa-h/",
+      "summary": "For the last couple of years, I’ve been following the progress of a group of individuals who believe death is humanity’s “core problem.” Put simply, they say death is wrong—for everyone. They’ve even said it’s morally wrong. They established what they consider a new philosophy, and they called it Vi",
+      "source": "MIT Technology Review",
+      "source_id": "mit-tech",
+      "published_at": "Fri, 30 Jan 2026 10:00:00 +0000",
+      "timestamp": "2026-02-04T05:58:24.764035+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "The AI Hype Index: Grok makes porn, and Claude Code nails your job",
+      "url": "https://www.technologyreview.com/2026/01/29/1131787/the-ai-hype-index-grok-makes-porn-claude-code-nails-your-job/",
+      "summary": "Everyone is panicking because AI is very bad; everyone is panicking because AI is very good. It’s just that you never know which one you’re going to get. Grok is a pornography machine. Claude Code can do anything from building websites to reading your MRI. So of course Gen Z is spooked by what this…",
+      "source": "MIT Technology Review",
+      "source_id": "mit-tech",
+      "published_at": "Thu, 29 Jan 2026 20:56:23 +0000",
+      "timestamp": "2026-02-04T05:58:24.764035+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Intel will start making GPUs, a market dominated by Nvidia",
+      "url": "https://techcrunch.com/2026/02/03/intel-will-start-making-gpus-a-market-dominated-by-nvidia/",
+      "summary": "Intel has been bulking up a team to focus on this effort and will develop its GPU strategy around customer needs.",
+      "source": "TechCrunch",
+      "source_id": "techcrunch",
+      "published_at": "Tue, 03 Feb 2026 21:01:34 +0000",
+      "timestamp": "2026-02-04T05:58:26.090859+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "YC startups can now receive investment in stablecoin",
+      "url": "https://techcrunch.com/2026/02/03/yc-startups-can-now-recieve-investment-in-stablecoin/",
+      "summary": "All startups accepted into YC will soon have the option to receive their seed checks via stablecoins.",
+      "source": "TechCrunch",
+      "source_id": "techcrunch",
+      "published_at": "Tue, 03 Feb 2026 19:54:12 +0000",
+      "timestamp": "2026-02-04T05:58:26.090859+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "2026 plans: What’s next for Startup Battlefield 200",
+      "url": "https://techcrunch.com/2026/02/03/looking-ahead-to-2026-whats-next-for-startup-battlefield-200/",
+      "summary": "See what to expect for Startup Battlefield 200 in 2026, the ultimate startup pitch competition on the global stage at TechCrunch Disrupt. Join the mailing list to be the first to know when applications drop.",
+      "source": "TechCrunch",
+      "source_id": "techcrunch",
+      "published_at": "Tue, 03 Feb 2026 18:57:30 +0000",
+      "timestamp": "2026-02-04T05:58:26.090859+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Homeland Security is trying to force tech companies to hand over data about Trump critics",
+      "url": "https://techcrunch.com/2026/02/03/homeland-security-is-trying-to-force-tech-companies-to-hand-over-data-about-trump-critics/",
+      "summary": "The use of administrative subpoenas, which are not subject to judicial oversight, are used to demand a wealth of information from tech companies, including the owners of anonymous online accounts documenting ICE operations. ",
+      "source": "TechCrunch",
+      "source_id": "techcrunch",
+      "published_at": "Tue, 03 Feb 2026 18:35:19 +0000",
+      "timestamp": "2026-02-04T05:58:26.090859+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Skyryse lands another $300M to make flying, even helicopters, simple and safe",
+      "url": "https://techcrunch.com/2026/02/03/skyryse-lands-another-300m-to-make-flying-even-helicopters-simple-and-safe/",
+      "summary": "Skyrsye, now valued at $1.15 billion, is pushing to get FAA certification for its universal operating system for flight. ",
+      "source": "TechCrunch",
+      "source_id": "techcrunch",
+      "published_at": "Tue, 03 Feb 2026 18:21:23 +0000",
+      "timestamp": "2026-02-04T05:58:26.090859+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Xcode moves into agentic coding with deeper OpenAI and Anthropic integrations",
+      "url": "https://techcrunch.com/2026/02/03/xcode-moves-into-agentic-coding-with-deeper-openai-and-anthropic-integrations/",
+      "summary": "Xcode 26.3 offers agentic coding capabilities with Anthropic's Claude Agent and OpenAI's Codex.",
+      "source": "TechCrunch",
+      "source_id": "techcrunch",
+      "published_at": "Tue, 03 Feb 2026 18:00:00 +0000",
+      "timestamp": "2026-02-04T05:58:26.090859+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Gradient’s heat pumps get new smarts to enable old-building retrofits",
+      "url": "https://techcrunch.com/2026/02/03/gradients-heat-pumps-get-new-smarts-to-enable-old-building-retrofits/",
+      "summary": "Gradient's heat pumps fit in windows, minimizing installation times. Now, it is introducing software to make those units more intelligent.",
+      "source": "TechCrunch",
+      "source_id": "techcrunch",
+      "published_at": "Tue, 03 Feb 2026 17:56:45 +0000",
+      "timestamp": "2026-02-04T05:58:26.090859+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Watch Club is producing short video dramas and building a social network around them",
+      "url": "https://techcrunch.com/2026/02/03/watch-club-microdrama-video-social-network/",
+      "summary": "Watch Club will house microdramas and fan discussions in the same app, creating a fandom-focused social media experience.",
+      "source": "TechCrunch",
+      "source_id": "techcrunch",
+      "published_at": "Tue, 03 Feb 2026 17:44:49 +0000",
+      "timestamp": "2026-02-04T05:58:26.090859+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Lotus Health nabs $35M for AI doctor that sees patients for free",
+      "url": "https://techcrunch.com/2026/02/03/lotus-health-nabs-35m-for-ai-doctor-that-sees-patients-for-free/",
+      "summary": "This AI doctor is licensed in all 50 states, the startup says. The deal was led by CRV and Kleiner Perkins. ",
+      "source": "TechCrunch",
+      "source_id": "techcrunch",
+      "published_at": "Tue, 03 Feb 2026 17:14:27 +0000",
+      "timestamp": "2026-02-04T05:58:26.090859+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "French police search X office in Paris, summon Elon Musk for questioning",
+      "url": "https://techcrunch.com/2026/02/03/french-police-search-x-office-in-paris-summon-elon-musk-for-questioning/",
+      "summary": "The Paris prosecutor’s office announced that it is expanding a criminal investigation into X for alleged crimes, including the possession and distribution of child sexual exploitation material.",
+      "source": "TechCrunch",
+      "source_id": "techcrunch",
+      "published_at": "Tue, 03 Feb 2026 16:55:11 +0000",
+      "timestamp": "2026-02-04T05:58:26.090859+08:00",
+      "hot_score": 50
     },
     {
       "title": "Switch Claude Code providers in seconds with claude-provider (Plugin + CLI)",
       "url": "https://dev.to/rashed_iqbal/switch-claude-code-providers-in-seconds-with-claude-provider-plugin-cli-3719",
+      "summary": "If you use Claude Code in your terminal but you sometimes need a different provider (or a different...",
       "source": "Dev.to",
-      "hot_score": 0,
-      "timestamp": "2026-02-02T22:49:22Z"
+      "source_id": "devto",
+      "published_at": "2026-02-02T22:49:22Z",
+      "timestamp": "2026-02-04T05:59:03.819360+08:00",
+      "hot_score": 50,
+      "author": "Rashed Iqbal"
     },
     {
-      "title": "I built a PC game library that unifies Steam, Epic, Xbox & more and i am looking for feedback",
-      "url": "https://dev.to/olmzgamer/i-built-a-pc-game-library-that-unifies-steam-epic-xbox-more-and-i-am-looking-for-feedback-436g",
-      "source": "Dev.to",
-      "hot_score": 0,
-      "timestamp": "2026-02-02T22:46:24Z"
+      "title": "24CallDesk",
+      "url": "https://www.producthunt.com/products/24calldesk",
+      "summary": "AI call agent and workflow automations for small businessesDiscussion|Link",
+      "source": "Product Hunt",
+      "source_id": "producthunt",
+      "published_at": "2026-02-01T14:38:55-08:00",
+      "timestamp": "2026-02-04T05:59:05.604451+08:00",
+      "hot_score": 50
     },
     {
-      "title": "AI & Tech News Briefing - 2026-02-03",
-      "url": "https://dev.to/andrew_collins/ai-tech-news-briefing-2026-02-03-hf0",
-      "source": "Dev.to",
-      "hot_score": 0,
-      "timestamp": "2026-02-03T00:35:43Z"
+      "title": "findable.",
+      "url": "https://www.producthunt.com/products/findable-3",
+      "summary": "A full Answer Engine Optimization (AEO) platform for freeDiscussion|Link",
+      "source": "Product Hunt",
+      "source_id": "producthunt",
+      "published_at": "2026-02-02T03:45:03-08:00",
+      "timestamp": "2026-02-04T05:59:05.604451+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Hugo",
+      "url": "https://www.producthunt.com/products/crisp",
+      "summary": "The AI Agent that doesn't charge 1$ per support ticketDiscussion|Link",
+      "source": "Product Hunt",
+      "source_id": "producthunt",
+      "published_at": "2026-02-02T05:43:37-08:00",
+      "timestamp": "2026-02-04T05:59:05.604451+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Helply",
+      "url": "https://www.producthunt.com/products/helply",
+      "summary": "65% AI resolution rate in 90 days, or you pay nothingDiscussion|Link",
+      "source": "Product Hunt",
+      "source_id": "producthunt",
+      "published_at": "2026-01-26T13:06:08-08:00",
+      "timestamp": "2026-02-04T05:59:05.604451+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Atoms",
+      "url": "https://www.producthunt.com/products/atoms-5",
+      "summary": "Turn your ideas into products that sellDiscussion|Link",
+      "source": "Product Hunt",
+      "source_id": "producthunt",
+      "published_at": "2026-01-28T05:36:50-08:00",
+      "timestamp": "2026-02-04T05:59:05.604451+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "AI Doc Writer by Trupeer",
+      "url": "https://www.producthunt.com/products/trupeer",
+      "summary": "Create finished, on-brand docs from simple recordings.Discussion|Link",
+      "source": "Product Hunt",
+      "source_id": "producthunt",
+      "published_at": "2026-02-02T01:15:29-08:00",
+      "timestamp": "2026-02-04T05:59:05.604451+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Moltcraft",
+      "url": "https://www.producthunt.com/products/moltcraft",
+      "summary": "Visualize your AI agents work in a pixel worldDiscussion|Link",
+      "source": "Product Hunt",
+      "source_id": "producthunt",
+      "published_at": "2026-01-29T08:14:23-08:00",
+      "timestamp": "2026-02-04T05:59:05.604451+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Yavy",
+      "url": "https://www.producthunt.com/products/yavy",
+      "summary": "Turn any website into an MCP server for AIDiscussion|Link",
+      "source": "Product Hunt",
+      "source_id": "producthunt",
+      "published_at": "2026-01-28T13:01:54-08:00",
+      "timestamp": "2026-02-04T05:59:05.604451+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Codex by OpenAI",
+      "url": "https://www.producthunt.com/products/openai",
+      "summary": "A command center for working with agentsDiscussion|Link",
+      "source": "Product Hunt",
+      "source_id": "producthunt",
+      "published_at": "2026-02-02T10:29:41-08:00",
+      "timestamp": "2026-02-04T05:59:05.604451+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Relay.app Agents",
+      "url": "https://www.producthunt.com/products/relay-app",
+      "summary": "Build an AI team that works for youDiscussion|Link",
+      "source": "Product Hunt",
+      "source_id": "producthunt",
+      "published_at": "2026-01-26T09:10:33-08:00",
+      "timestamp": "2026-02-04T05:59:05.604451+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Reward-free Alignment for Conflicting Objectives",
+      "url": "http://arxiv.org/abs/2602.02495v1",
+      "summary": "Direct alignment methods are increasingly used to align large language models (LLMs) with human preferences. However, many real-world alignment problems involve multiple conflicting objectives, where naive aggregation of preferences can lead to unstable training and poor trade-offs. In particular, weighted loss methods may fail to identify update directions that simultaneously improve all objectives, and existing multi-objective approaches often rely on explicit reward models, introducing additi",
+      "source": "ArXiv (cs.AI)",
+      "source_id": "arxiv_cs_ai",
+      "authors": [
+        "Peter Chen",
+        "Xiaopeng Li",
+        "Xi Chen",
+        "Tianyi Lin"
+      ],
+      "published_at": "2026-02-02T18:59:52Z",
+      "timestamp": "2026-02-04T05:59:07.007911+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "PixelGen: Pixel Diffusion Beats Latent Diffusion with Perceptual Loss",
+      "url": "http://arxiv.org/abs/2602.02493v1",
+      "summary": "Pixel diffusion generates images directly in pixel space in an end-to-end manner, avoiding the artifacts and bottlenecks introduced by VAEs in two-stage latent diffusion. However, it is challenging to optimize high-dimensional pixel manifolds that contain many perceptually irrelevant signals, leaving existing pixel diffusion methods lagging behind latent diffusion models. We propose PixelGen, a simple pixel diffusion framework with perceptual supervision. Instead of modeling the full image manif",
+      "source": "ArXiv (cs.AI)",
+      "source_id": "arxiv_cs_ai",
+      "authors": [
+        "Zehong Ma",
+        "Ruihan Xu",
+        "Shiliang Zhang"
+      ],
+      "published_at": "2026-02-02T18:59:42Z",
+      "timestamp": "2026-02-04T05:59:07.007911+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "RE-TRAC: REcursive TRAjectory Compression for Deep Search Agents",
+      "url": "http://arxiv.org/abs/2602.02486v1",
+      "summary": "LLM-based deep research agents are largely built on the ReAct framework. This linear design makes it difficult to revisit earlier states, branch into alternative search directions, or maintain global awareness under long contexts, often leading to local optima, redundant exploration, and inefficient search. We propose Re-TRAC, an agentic framework that performs cross-trajectory exploration by generating a structured state representation after each trajectory to summarize evidence, uncertainties,",
+      "source": "ArXiv (cs.AI)",
+      "source_id": "arxiv_cs_ai",
+      "authors": [
+        "Jialiang Zhu",
+        "Gongrui Zhang",
+        "Xiaolong Ma",
+        "Lin Xu",
+        "Miaosen Zhang",
+        "Ruiqi Yang",
+        "Song Wang",
+        "Kai Qiu",
+        "Zhirong Wu",
+        "Qi Dai",
+        "Ruichun Ma",
+        "Bei Liu",
+        "Yifan Yang",
+        "Chong Luo",
+        "Zhengyuan Yang",
+        "Linjie Li",
+        "Lijuan Wang",
+        "Weizhu Chen",
+        "Xin Geng",
+        "Baining Guo"
+      ],
+      "published_at": "2026-02-02T18:58:07Z",
+      "timestamp": "2026-02-04T05:59:07.007911+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Flow Policy Gradients for Robot Control",
+      "url": "http://arxiv.org/abs/2602.02481v1",
+      "summary": "Likelihood-based policy gradient methods are the dominant approach for training robot control policies from rewards. These methods rely on differentiable action likelihoods, which constrain policy outputs to simple distributions like Gaussians. In this work, we show how flow matching policy gradients -- a recent framework that bypasses likelihood computation -- can be made effective for training and fine-tuning more expressive policies in challenging robot control settings. We introduce an impro",
+      "source": "ArXiv (cs.AI)",
+      "source_id": "arxiv_cs_ai",
+      "authors": [
+        "Brent Yi",
+        "Hongsuk Choi",
+        "Himanshu Gaurav Singh",
+        "Xiaoyu Huang",
+        "Takara E. Truong",
+        "Carmelo Sferrazza",
+        "Yi Ma",
+        "Rocky Duan",
+        "Pieter Abbeel",
+        "Guanya Shi",
+        "Karen Liu",
+        "Angjoo Kanazawa"
+      ],
+      "published_at": "2026-02-02T18:56:49Z",
+      "timestamp": "2026-02-04T05:59:07.007911+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "AgentRx: Diagnosing AI Agent Failures from Execution Trajectories",
+      "url": "http://arxiv.org/abs/2602.02475v1",
+      "summary": "AI agents often fail in ways that are difficult to localize because executions are probabilistic, long-horizon, multi-agent, and mediated by noisy tool outputs. We address this gap by manually annotating failed agent runs and release a novel benchmark of 115 failed trajectories spanning structured API workflows, incident management, and open-ended web/file tasks. Each trajectory is annotated with a critical failure step and a category from a grounded-theory derived, cross-domain failure taxonomy",
+      "source": "ArXiv (cs.AI)",
+      "source_id": "arxiv_cs_ai",
+      "authors": [
+        "Shraddha Barke",
+        "Arnav Goyal",
+        "Alind Khare",
+        "Avaljot Singh",
+        "Suman Nath",
+        "Chetan Bansal"
+      ],
+      "published_at": "2026-02-02T18:54:07Z",
+      "timestamp": "2026-02-04T05:59:07.007911+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "MEG-XL: Data-Efficient Brain-to-Text via Long-Context Pre-Training",
+      "url": "http://arxiv.org/abs/2602.02494v1",
+      "summary": "Clinical brain-to-text interfaces are designed for paralysed patients who cannot provide extensive training recordings. Pre-training improves data-efficient generalisation by learning statistical priors across subjects, but these priors critically depend on context. While natural speech might unfold gradually over minutes, most methods pre-train with only a few seconds of context. Thus, we propose MEG-XL, a model pre-trained with 2.5 minutes of MEG context per sample, 5-300x longer than prior wo",
+      "source": "ArXiv (cs.LG)",
+      "source_id": "arxiv_cs_lg",
+      "authors": [
+        "Dulhan Jayalath",
+        "Oiwi Parker Jones"
+      ],
+      "published_at": "2026-02-02T18:59:50Z",
+      "timestamp": "2026-02-04T05:59:07.422409+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "RLAnything: Forge Environment, Policy, and Reward Model in Completely Dynamic RL System",
+      "url": "http://arxiv.org/abs/2602.02488v1",
+      "summary": "We propose RLAnything, a reinforcement learning framework that dynamically forges environment, policy, and reward models through closed-loop optimization, amplifying learning signals and strengthening the overall RL system for any LLM or agentic scenarios. Specifically, the policy is trained with integrated feedback from step-wise and outcome signals, while the reward model is jointly optimized via consistency feedback, which in turn further improves policy training. Moreover, our theory-motivat",
+      "source": "ArXiv (cs.LG)",
+      "source_id": "arxiv_cs_lg",
+      "authors": [
+        "Yinjie Wang",
+        "Tianbao Xie",
+        "Ke Shen",
+        "Mengdi Wang",
+        "Ling Yang"
+      ],
+      "published_at": "2026-02-02T18:59:04Z",
+      "timestamp": "2026-02-04T05:59:07.422409+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Expanding the Capabilities of Reinforcement Learning via Text Feedback",
+      "url": "http://arxiv.org/abs/2602.02482v1",
+      "summary": "The success of RL for LLM post-training stems from an unreasonably uninformative source: a single bit of information per rollout as binary reward or preference label. At the other extreme, distillation offers dense supervision but requires demonstrations, which are costly and difficult to scale. We study text feedback as an intermediate signal: richer than scalar rewards, yet cheaper than complete demonstrations. Textual feedback is a natural mode of human interaction and is already abundant in ",
+      "source": "ArXiv (cs.LG)",
+      "source_id": "arxiv_cs_lg",
+      "authors": [
+        "Yuda Song",
+        "Lili Chen",
+        "Fahim Tajwar",
+        "Remi Munos",
+        "Deepak Pathak",
+        "J. Andrew Bagnell",
+        "Aarti Singh",
+        "Andrea Zanette"
+      ],
+      "published_at": "2026-02-02T18:56:56Z",
+      "timestamp": "2026-02-04T05:59:07.422409+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "MemSkill: Learning and Evolving Memory Skills for Self-Evolving Agents",
+      "url": "http://arxiv.org/abs/2602.02474v1",
+      "summary": "Most Large Language Model (LLM) agent memory systems rely on a small set of static, hand-designed operations for extracting memory. These fixed procedures hard-code human priors about what to store and how to revise memory, making them rigid under diverse interaction patterns and inefficient on long histories. To this end, we present \\textbf{MemSkill}, which reframes these operations as learnable and evolvable memory skills, structured and reusable routines for extracting, consolidating, and pru",
+      "source": "ArXiv (cs.LG)",
+      "source_id": "arxiv_cs_lg",
+      "authors": [
+        "Haozhen Zhang",
+        "Quanyu Long",
+        "Jianzhu Bao",
+        "Tao Feng",
+        "Weizhi Zhang",
+        "Haodong Yue",
+        "Wenya Wang"
+      ],
+      "published_at": "2026-02-02T18:53:28Z",
+      "timestamp": "2026-02-04T05:59:07.422409+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Training LLMs for Divide-and-Conquer Reasoning Elevates Test-Time Scalability",
+      "url": "http://arxiv.org/abs/2602.02477v1",
+      "summary": "Large language models (LLMs) have demonstrated strong reasoning capabilities through step-by-step chain-of-thought (CoT) reasoning. Nevertheless, at the limits of model capability, CoT often proves insufficient, and its strictly sequential nature constrains test-time scalability. A potential alternative is divide-and-conquer (DAC) reasoning, which decomposes a complex problem into subproblems to facilitate more effective exploration of the solution. Although promising, our analysis reveals a fun",
+      "source": "ArXiv (cs.CL)",
+      "source_id": "arxiv_cs_cl",
+      "authors": [
+        "Xiao Liang",
+        "Zhong-Zhi Li",
+        "Zhenghao Lin",
+        "Eric Hancheng Jiang",
+        "Hengyuan Zhang",
+        "Yelong Shen",
+        "Kai-Wei Chang",
+        "Ying Nian Wu",
+        "Yeyun Gong",
+        "Weizhu Chen"
+      ],
+      "published_at": "2026-02-02T18:54:54Z",
+      "timestamp": "2026-02-04T05:59:07.833399+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "氪星晚报｜北京2026年首场土拍揽金85.6亿元，字节跳动28亿拿下海淀地块；全球最快人形机器人发布；2025年我国有色金属主要产品产量再创新高",
+      "url": "https://36kr.com/p/3665582095016579?f=rss",
+      "summary": "\n大公司：\n采埃孚与宝马签署乘用车传动系统长期供应协议，合同金额数十亿欧元\n2月2日，采埃孚集团宣布与宝马集团正式签署乘用车传动系统长期供应协议。协议核心内容为成熟的8挡自动变速器的长期供应及后续研发，合同金额达数十亿欧元，合同有效期将持续至本世纪三十年代末期。（界面）\n目标2027年实现量产，三星将半导体玻璃基板项目移交业务部门\n三星电机已着手推进半导体玻璃基板商业化项目，据确认，公司已将相关业务从原有的前沿技术研发组织转移至业务部门。一位熟悉内情的业内人士表示，此举意味着三星已开始为正式商用化做准备。不仅是在确保相关核心技术可用，同时也是在为量产和市场供货做准备。公司预计2027年以后实现",
+      "source": "36氪",
+      "source_id": "36kr",
+      "published_at": "2026-02-03 20:27:59  +0800",
+      "timestamp": "2026-02-04T05:59:09.003458+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "机器人扎堆上春晚，花一亿元，抢行业“卡位赛”",
+      "url": "https://36kr.com/p/3667482319987334?f=rss",
+      "summary": "\n文｜富充\n编辑｜苏建勋\n2025年8月，在一家机器人公司任市场总监的周乐来到央视，询价2026年马年春晚登台费用。年初，宇树机器人穿着花棉袄转手绢，在2025年春晚“一夜火出圈”。\n那一刻，周乐心里埋下一个念头：总有一天，也要把自家机器人推上春晚。\n可现实让周乐迅速冷静下来：登上2026年马年春晚的“起步价”，高达1亿元。\n“太贵了”，这是周乐和其公司CEO共同的第一反应。\n不少具身智能公司正处于剧烈烧钱阶段，某具身大脑公司CEO曾和我们算过一笔账：训一个模型，团队需要10个人，年薪2000万元左右；如果用英伟达H200的卡，单月成本就要900万元（包括存储）。\n到底是花亿元去春晚一搏，还是",
+      "source": "36氪",
+      "source_id": "36kr",
+      "published_at": "2026-02-03 19:20:22  +0800",
+      "timestamp": "2026-02-04T05:59:09.003458+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "年轻人，疯抢「健康福」",
+      "url": "https://36kr.com/p/3667359645705090?f=rss",
+      "summary": "\n撰文｜岑促\n2月1日晚，歌手于文文在一场演出中晕倒被紧急送医。2日，她给大家报平安说，“除了健康什么都不是你的”，这一观点直接冲上热搜。 \n巧的是，2月3日，“电子年俗”支付宝集福活动正式开始。今年新增的“健康福”成为网友抢的第一个“头福”，代替“敬业福”成了今年福气里的新顶流。\n“爱你老己”，已成共识，无论是明星还是普通人，都开始把健康放到第一位。\n埃森哲近期的报告也印证了这一点：相比2021年，中国消费者对健康和财富的重视程度明显上升，对事业、爱情的重视程度下降。其中，对健康的重视度从78%上升到了87%，位列第一。更重要的是，00后和95后，成为健康重视度上升幅度最大的人群，分别上升了",
+      "source": "36氪",
+      "source_id": "36kr",
+      "published_at": "2026-02-03 17:12:06  +0800",
+      "timestamp": "2026-02-04T05:59:09.003458+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "最前线｜「天顿数据」获福田资本8亿元战略投资，粤港湾控股加速转型AI智算",
+      "url": "https://36kr.com/p/3667233081221763?f=rss",
+      "summary": "\n文｜张子怡\n编辑｜袁斯来\n36氪获悉，深圳天顿数据科技有限公司（以下简称「天顿数据」）已于近日完成新一轮融资，获得深圳市福田区国资委全资控股的福田资本运营集团有限公司（以下简称“福田资本”）8亿元人民币战略投资。本轮资金将主要用于加强AI智算基础设施建设、拓展多元异构算力服务能力及补充流动资金。\n「天顿数据」是港股上市公司粤港湾控股（01396.HK）旗下的核心子公司，定位为智算建设运营服务商。公司主要提供“绿能智算”全生命周期服务，包括AIDC（人工智能数据中心）建设运营与多源异构算力服务。\n随着AIGC（生成式人工智能）产业的爆发，算力已成为继数据、算法之后的第三大核心要素。IDC预测，",
+      "source": "36氪",
+      "source_id": "36kr",
+      "published_at": "2026-02-03 15:03:01  +0800",
+      "timestamp": "2026-02-04T05:59:09.003458+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "磁悬浮输送线第一梯队，FRT无线供电技术行业领先，这家公司完成首轮千万元融资",
+      "url": "https://36kr.com/p/3667222616056709?f=rss",
+      "summary": "\n \n作者 | 乔钰杰\n编辑 | 袁斯来\n硬氪获悉，昆山纳博旺精工科技有限公司（以下简称“纳博旺”）近日完成Pre-A轮融资，融资金额2500万元，由金雨茂物、中鑫资本及关联方、九合深宏、国泰君安创新投共同投资，资金将主要用于研发投入、海内外拓展及团队建设。\n纳博旺成立于2018年，总部位于江苏省昆山市。公司创始人Tom，曾在工业自动化领域全球知名外企担任高管和中国公司项目总负责人。经过超二十年的工业自动化领域深厚积淀，具备扎实的技术背景、丰富的管理实践和敏锐的市场洞察。\n目前，公司围绕磁悬浮柔性轨道传输系统，构建了覆盖核心部件到整线系统的完整产品体系，实现了“软硬一体化”设计。公司在磁悬浮输",
+      "source": "36氪",
+      "source_id": "36kr",
+      "published_at": "2026-02-03 14:53:06  +0800",
+      "timestamp": "2026-02-04T05:59:09.003458+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "DAU破亿后，豆包正让毕加索 “开口说话”｜最前线",
+      "url": "https://36kr.com/p/3661841941013126?f=rss",
+      "summary": "\n近日的上海浦东美术馆，人流比往常更为密集。\n展厅中，有人举着手机与屏幕里的豆包实时视频，聆听关于卢浮宫馆藏陶瓷的纹样解读；有人对着毕加索的画作拍照发送，几秒后便收到分层讲解的文字回复。\n当 DAU突破亿级的 AI 应用，遇上卢浮宫 300 件跨洲馆藏与毕加索 80 幅代表作，一场关于技术壁垒、文化赋能与用户增长的跨界实验正在上海浦东美术馆上演。\n1月20日，字节跳动旗下豆包与上海浦东美术馆达成合作，成为该馆两项国际大展——“图案的奇迹：卢浮宫印度、伊朗与奥斯曼的艺术杰作”与“非常毕加索：保罗•史密斯的新视角”的官方AI讲解员。双方通过独家数据合作和定向搜索优化，进一步提升了豆包识别和讲解的准",
+      "source": "36氪",
+      "source_id": "36kr",
+      "published_at": "2026-02-03 10:20:18  +0800",
+      "timestamp": "2026-02-04T05:59:09.003458+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "上交+清华团队做端侧AI：连续两轮融资过亿、服务苹果比亚迪宁德丨36氪首发",
+      "url": "https://36kr.com/p/3666915646218885?f=rss",
+      "summary": "\n作者丨欧雪\n编辑丨袁斯来\n硬氪获悉，端侧AI领军应用企业上海辛米尔科技有限公司（以下简称“辛米尔”）近日宣布连续完成亿元A轮及A+轮融资。国泰君安创新投资、国经资本、同鑫资本参与投资；毅仁资本担任独家财务顾问。\n融资资金将主要用于下一代感算一体芯片架构研发；加速全球化商业落地，将国内高端制造领域已验证的方案系统化推向欧美、日韩及东南亚市场；扩充高端产能并引进关键人才，以支撑未来两年强劲增长的订单预期。\n辛米尔成立于2019年，总部位于上海。公司核心产品为基于“感算一体”技术底座的平台化、全栈式产品矩阵，涵盖芯片层（感算一体AI SoC芯片与IP设计）、模块层（面向视频、音频、控��、传感的系",
+      "source": "36氪",
+      "source_id": "36kr",
+      "published_at": "2026-02-03 09:39:46  +0800",
+      "timestamp": "2026-02-04T05:59:09.003458+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "8点1氪丨“杰我睿”后，水贝又一黄金平台现兑付异常；马斯克否认上过爱泼斯坦私人小岛；SpaceX宣布收购人工智能企业xAI",
+      "url": "https://36kr.com/p/3666826665075331?f=rss",
+      "summary": "\n今日热点导览\n李强清任茅台酒销售公司总经理\n华谊兄弟王中磊再次被限消，华谊兄弟股价重挫面临退市风险\n奔驰品牌已调整部分车型厂商建议零售价，调整幅度10%左右\n传闻提“IPO现场检查比例上调、投行项目批量暂停”等多个政策变化，多方求证：旧闻拼接“小作文”\n上海黄金交易所：调整白银延期合约保证金水平和涨跌停板\nTOP3大新闻\n“杰我睿”后，水贝又一黄金平台现兑付异常\n据报道，继“杰我睿”出现兑付危机后，深圳水贝又一黄金交易平台“云点当”陷入异常。多名用户反映，该平台无法正常打开，账户内黄金存料与余额均不能提现，其运营主体为深圳市云点当网络科技有限公司。2月1日，记者实地探访该公司办公地址，工作人",
+      "source": "36氪",
+      "source_id": "36kr",
+      "published_at": "2026-02-03 08:11:42  +0800",
+      "timestamp": "2026-02-04T05:59:09.003458+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "邵氏兄弟：百年港牌，今成华人文化上市跳板",
+      "url": "https://36kr.com/p/3666200370143873?f=rss",
+      "summary": "\n作者｜宋婉心\n编辑｜张帆\n香港娱乐业正逐步改姓“黎”。\n近日香港头部电影集团绍氏兄弟发布了一条公告，表示拟收购其主要股东华人文化旗下的核心影视资产。\n核心影视资产主要是，华人文化通过全资附属公司HoldCo间接控制的CMC Moon Holdings所持业务。\nCMC Moon几乎涵盖了华人文化最核心的影视内容与渠道资源，包括剧集制作龙头正午阳光、电影投资制作公司上海华人影业、海外发行业务CMC Pictures，以及以UME品牌运营的影院网络和华人文化电影院线等。\n公布后第二个交易日收盘，邵氏兄弟报0.32港元/股，大跌15.79%。\n以资产规模计，截至2025年9月末，邵氏兄弟经审核资产",
+      "source": "36氪",
+      "source_id": "36kr",
+      "published_at": "2026-02-02 21:32:32  +0800",
+      "timestamp": "2026-02-04T05:59:09.003458+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "氪星晚报｜智元机器人将举办全球首个大型机器人晚会“机器人奇妙夜”；黄金一度暴跌1000美元，业内提示警惕抄底风险；中共中央、国务院：培育京津雄地区创新三角",
+      "url": "https://36kr.com/p/3665581867737728?f=rss",
+      "summary": "\n大公司：\n特斯拉实现干电极电池规模化生产\n马斯克在社交平台表示：“实现干电极工艺的规模化生产，这在锂电池生产技术上是一项重大突破，难度极高。祝贺特斯拉工程、生产和供应链团队以及我们的战略合作伙伴供应商取得的卓越成就。”特斯拉回应称，干电极制造工艺可降低成本、能源消耗和工厂复杂性，同时显著提高可扩展性。（财联社）\n智元机器人将举办全球首个大型机器人晚会“机器人奇妙夜”\n据知情人士称，智元将不参加2026年马年春晚。原因是预算有限的前提下，智元优先保障具身智能技术及产品研发的费用。另据知情人士透露，智元机器人正在彩排全球首个大型机器人晚会“机器人奇妙夜”，该晚会由数百台各类机器人主导，集合唱歌、",
+      "source": "36氪",
+      "source_id": "36kr",
+      "published_at": "2026-02-02 20:04:00  +0800",
+      "timestamp": "2026-02-04T05:59:09.003458+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "大道至简，何恺明团队新作pMF开启像素级「无潜、单步」生成范式",
+      "url": "https://www.jiqizhixin.com/articles/2026-02-03-10",
+      "summary": " ",
+      "source": "机器之心",
+      "source_id": "jiqizhixin",
+      "published_at": "Tue, 03 Feb 2026 23:29:46 +0800",
+      "timestamp": "2026-02-04T05:59:43.404547+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "谷歌给「AI解数学题」神话降温：能摘低垂果实，但过程依然痛苦",
+      "url": "https://www.jiqizhixin.com/articles/2026-02-03-9",
+      "summary": " ",
+      "source": "机器之心",
+      "source_id": "jiqizhixin",
+      "published_at": "Tue, 03 Feb 2026 23:25:17 +0800",
+      "timestamp": "2026-02-04T05:59:43.404547+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "ICLR 2026 | Rebuttal 是一场「带着镣铐的舞蹈」？港科 RebuttalAgent 用心智理论「读懂」审稿人",
+      "url": "https://www.jiqizhixin.com/articles/2026-02-03-8",
+      "summary": " ",
+      "source": "机器之心",
+      "source_id": "jiqizhixin",
+      "published_at": "Tue, 03 Feb 2026 23:21:45 +0800",
+      "timestamp": "2026-02-04T05:59:43.404547+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "刚刚，腾讯姚顺雨署名首篇论文发布，「下半场」先搞上下文学习",
+      "url": "https://www.jiqizhixin.com/articles/2026-02-03-7",
+      "summary": " ",
+      "source": "机器之心",
+      "source_id": "jiqizhixin",
+      "published_at": "Tue, 03 Feb 2026 19:01:33 +0800",
+      "timestamp": "2026-02-04T05:59:43.404547+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "致敬Kimi K2：基于slime的全流程INT4量化感知RL训练",
+      "url": "https://www.jiqizhixin.com/articles/2026-02-03-6",
+      "summary": " ",
+      "source": "机器之心",
+      "source_id": "jiqizhixin",
+      "published_at": "Tue, 03 Feb 2026 18:54:12 +0800",
+      "timestamp": "2026-02-04T05:59:43.404547+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "将高质量内容融入AI生态，威立以科研智能塑造出版行业未来",
+      "url": "https://www.jiqizhixin.com/articles/2026-02-03-5",
+      "summary": " ",
+      "source": "机器之心",
+      "source_id": "jiqizhixin",
+      "published_at": "Tue, 03 Feb 2026 14:26:57 +0800",
+      "timestamp": "2026-02-04T05:59:43.404547+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "国产版Ollama来了，Clawdbot终于不只属于Mac和英伟达",
+      "url": "https://www.jiqizhixin.com/articles/2026-02-03-4",
+      "summary": " ",
+      "source": "机器之心",
+      "source_id": "jiqizhixin",
+      "published_at": "Tue, 03 Feb 2026 11:49:24 +0800",
+      "timestamp": "2026-02-04T05:59:43.404547+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "刚刚，马斯克收购了马斯克",
+      "url": "https://www.jiqizhixin.com/articles/2026-02-03-3",
+      "summary": " ",
+      "source": "机器之心",
+      "source_id": "jiqizhixin",
+      "published_at": "Tue, 03 Feb 2026 11:38:45 +0800",
+      "timestamp": "2026-02-04T05:59:43.404547+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "重新定义“实时在线交互”，Soul App开源实时数字人生成模型SoulX-FlashTalk",
+      "url": "https://www.jiqizhixin.com/articles/2026-02-03-2",
+      "summary": " ",
+      "source": "机器之心",
+      "source_id": "jiqizhixin",
+      "published_at": "Tue, 03 Feb 2026 10:33:00 +0800",
+      "timestamp": "2026-02-04T05:59:43.404547+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "全球304个中文大模型实测：没有“全能王者”，ReLE凭70%降本方案破解评估困局",
+      "url": "https://www.jiqizhixin.com/articles/2026-02-03",
+      "summary": " ",
+      "source": "机器之心",
+      "source_id": "jiqizhixin",
+      "published_at": "Tue, 03 Feb 2026 10:32:00 +0800",
+      "timestamp": "2026-02-04T05:59:43.404547+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "人形机器人概念股拟收购金旺达70%股权，完善具身智能产业链布局；淄博算力企业筹划购买灵明光子控制权；【并购一线】",
+      "url": "https://www.tmtpost.com/7865917.html",
+      "summary": "2月3日最新并购信息及价值分析。",
+      "source": "钛媒体",
+      "source_id": "tmtpost",
+      "published_at": "Wed, 04 Feb 2026 00:07:07 +0800",
+      "timestamp": "2026-02-04T05:59:50.286372+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "2亿美元结盟，Snowflake×OpenAI深度合作：AI没有独霸者，只有生态赢家",
+      "url": "https://www.tmtpost.com/7865117.html",
+      "summary": "云数据巨头Snowflake与AI领头羊OpenAI达成多年期战略合作。",
+      "source": "钛媒体",
+      "source_id": "tmtpost",
+      "published_at": "Tue, 03 Feb 2026 20:01:09 +0800",
+      "timestamp": "2026-02-04T05:59:50.286372+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "连续3年业绩不达标后，芯导科技4亿并购设宽松盈利对赌｜并购一线",
+      "url": "https://www.tmtpost.com/7865691.html",
+      "summary": "主业不够并购来凑？",
+      "source": "钛媒体",
+      "source_id": "tmtpost",
+      "published_at": "Tue, 03 Feb 2026 19:36:35 +0800",
+      "timestamp": "2026-02-04T05:59:50.286372+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "印奇「中年」突围",
+      "url": "https://www.tmtpost.com/7865520.html",
+      "summary": "印奇在旷视和千里积累的技术体系、商业资源和战略视野，或许会助力阶跃星辰形成单一模型公司或终端厂商无法实现的壁垒。",
+      "source": "钛媒体",
+      "source_id": "tmtpost",
+      "published_at": "Tue, 03 Feb 2026 19:32:54 +0800",
+      "timestamp": "2026-02-04T05:59:50.286372+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "人类最后的2000天，文科生绝地反击？",
+      "url": "https://www.tmtpost.com/7865684.html",
+      "summary": "人文觉醒，是所有人的绝地反击。",
+      "source": "钛媒体",
+      "source_id": "tmtpost",
+      "published_at": "Tue, 03 Feb 2026 19:17:12 +0800",
+      "timestamp": "2026-02-04T05:59:50.286372+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "德勤取消头衔，AI时代的新激励？",
+      "url": "https://www.tmtpost.com/7865033.html",
+      "summary": "应对未来最好的方式，是直面未来。",
+      "source": "钛媒体",
+      "source_id": "tmtpost",
+      "published_at": "Tue, 03 Feb 2026 19:17:11 +0800",
+      "timestamp": "2026-02-04T05:59:50.286372+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "叶国富应该打造一个全新永辉",
+      "url": "https://www.tmtpost.com/7865596.html",
+      "summary": "叶国富或许是该给永辉制定一个B计划了。‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍‍",
+      "source": "钛媒体",
+      "source_id": "tmtpost",
+      "published_at": "Tue, 03 Feb 2026 19:17:09 +0800",
+      "timestamp": "2026-02-04T05:59:50.286372+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "SpaceX鲸吞xAI，未来要发射百万颗卫星",
+      "url": "https://www.tmtpost.com/7865184.html",
+      "summary": "把AI数据中心发射到地球轨道去。",
+      "source": "钛媒体",
+      "source_id": "tmtpost",
+      "published_at": "Tue, 03 Feb 2026 19:17:08 +0800",
+      "timestamp": "2026-02-04T05:59:50.286372+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "当AI席卷一切，这些10+年创始人如何打出自己的王牌？",
+      "url": "https://www.tmtpost.com/7865237.html",
+      "summary": "几位来自人工智能行业的领军者，鲜少出现在聚光灯下的“名利场”上，却是读懂产业深层巨变的关键。",
+      "source": "钛媒体",
+      "source_id": "tmtpost",
+      "published_at": "Tue, 03 Feb 2026 19:17:06 +0800",
+      "timestamp": "2026-02-04T05:59:50.286372+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "瑞士生物科技公司InCephalo研发能局部作用于胶质母细胞瘤的生物制剂，提升药物局部停留时间与浓度",
+      "url": "https://www.tmtpost.com/7865409.html",
+      "summary": "首次实现了真正局部和专属的脑部治疗。",
+      "source": "钛媒体",
+      "source_id": "tmtpost",
+      "published_at": "Tue, 03 Feb 2026 19:17:05 +0800",
+      "timestamp": "2026-02-04T05:59:50.286372+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "上交大智能计算研究院论文：不只算对答案，大模型如何真正学会运筹建模丨ICLR 2026",
+      "url": "https://www.leiphone.com/category/ai/heJYGxOK45DMXWv8.html",
+      "summary": "在大语言模型逐步从通用推理工具走向专业领域应用的过程中，运筹优化（OR）成为一个极具吸引力、同时也极具挑战性的方向。一方面，运筹优化问题天然具备清晰的数学结构和可验证的求解结果，看似非常适合由模型自动完成建模与求解；另一方面，真实运筹建模高度依赖变量定义、约束设计与目标函数之间的整体一致性，其推理过程往往呈现出强步骤依赖和强耦合特征，远非算出一个正确答案所能覆盖。正是在这一张力之下，当前运筹建模大模型研究逐渐暴露出一个核心困境：模型在求解器层面得到正确结果，并不意味着其完成了正确的建模。在现有主流训练范式中，无论是仅依据最终求解结果进行奖励，还是对中间步骤进行局部、逐步的过程监督，都难以准确刻",
+      "source": "雷锋网",
+      "source_id": "leiphone",
+      "published_at": "Tue, 03 Feb 2026 22:01:00 +0800",
+      "timestamp": "2026-02-04T05:59:52.801515+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "越疆开启第三批全尺寸工业人形机器人ATOM的2026年量产交付",
+      "url": "https://www.leiphone.com/category/industrynews/rzffXV4IAMyxVAaB.html",
+      "summary": "整齐的钢铁方阵动作划一，从稳定行走、群体协同、强动态平衡以及高精度装配能力，越疆ATOM人形机器人队列正以工业级的可靠性和群体智能能力，开启2026年的大规模交付进程。全国影院中，越疆人形机器人全自主上岗的热潮仍在持续。近日，越疆开启第三批全尺寸工业人形机器人ATOM的2026年量产交付，并分批投入产业一线应用。公司发布的交付现场视频如同科幻场景：整齐列队的机器人动作一致，全尺寸工业人形机器人稳定行走、完成高难度动态平衡动作、高难度舞蹈、高精度装配，震撼力十足。这不仅是越疆开启2026大规模交付目标节点，更意味着其人形机器人加速迈入规模化场景应用的全新阶段。在全球人形机器人从实验室走向商业应用",
+      "source": "雷锋网",
+      "source_id": "leiphone",
+      "published_at": "Tue, 03 Feb 2026 18:15:00 +0800",
+      "timestamp": "2026-02-04T05:59:52.801515+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "全产业大模型如何穿越概念迷雾？万联易达成立产业AI专委会破难题",
+      "url": "https://www.leiphone.com/category/ai/uPh6RbYDRG2USea4.html",
+      "summary": "2026年，人工智能行业正站在关键十字路口——一面是通用大模型的“Scaling Law”红利渐趋见顶，资本重压世界模型；一面是产业场景的碎片化、非标化，AI落地困难重重。在此背景下，一场以“应用破局、生态聚力”为主题的研讨会在北京悄然召开，主角是产业互联网公司万联易达，以及其旗下全产业AI大模型“万联摩尔”。会上正式揭牌成立由清华大学人工智能研究院常务副院长、欧洲科学院外籍院士孙茂松领衔的“产业人工智能研究与应用专家委员会”，汇聚哈工大、国科大、北理工、东北大学等顶尖高校AI科研力量，释放双方将共同推动万联摩尔未来研发与应用工作的信号。 孙茂松担任产业人工智能研究与应用专家委员会首席顾问“A",
+      "source": "雷锋网",
+      "source_id": "leiphone",
+      "published_at": "Tue, 03 Feb 2026 16:39:00 +0800",
+      "timestamp": "2026-02-04T05:59:52.801515+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "冲刺年货节，影视飓风Tim、黄圣依、杨子、冯唐等主播入淘开播",
+      "url": "https://www.leiphone.com/category/industrynews/ddd37QM9Nv0eIlCo.html",
+      "summary": "农历新年前两周，淘宝直播迎来新一轮“懂行“主播入淘开播。 2月4日18点，影视飓风创始人Tim在淘宝开启直播首秀，通过运行《黑神话：悟空》等热门游戏，对比DLSS 4.5开启前后的帧率、画质和响应速度，实机展示该技术的效果。  Tim还将在直播间展示视频剪辑、3D建模和AI特效等创作流程，如何借助搭载该技术的显卡加速。直播期间，支持DLSS 4.5的RTX 50系列游戏本将同步开售，覆盖华硕、惠普、联想、机械革命等主流品牌，享国家补贴立减15%。 天猫年货节期间，淘宝直播还迎来一批不同领域的“懂行”主播。演员黄圣依、杨子、作家冯唐、武汉大学教师陈铭入淘开播，黄圣依分享红毯级新春妆造，冯唐围绕健",
+      "source": "雷锋网",
+      "source_id": "leiphone",
+      "published_at": "Tue, 03 Feb 2026 14:58:00 +0800",
+      "timestamp": "2026-02-04T05:59:52.801515+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "极兔出海的现实分叉：高光与暗礁",
+      "url": "https://www.leiphone.com/category/industrynews/Wlwp6fbTgd94GPYR.html",
+      "summary": "近期，顺丰与极兔完成约83亿港元的相互持股，在业内引发持续关注。随着合作落地，极兔计划于今年进入美国市场，直面GOFO、UniUni等现有玩家。业内人士高冬指出，GOFO和UniUni已经在美国跑通了基本模型，极兔的策略大概率就是直接复制。只要极兔给出的报价低于GOFO，订单就有可能发生转移；而GOFO必然也会通过降价应对。这意味着，在现有玩家尚未分出明显胜负的情况下，极兔的潜在入局，或将让美国末派市场进入一个更长期、更高强度的博弈阶段。（了解更多内幕，欢迎添加微信 xl120429 交流。）从整体规模来看，美国末派市场仍存在显著入局空间。尽管近几年已有多家华人背景的配送公司进入美国，但其业务",
+      "source": "雷锋网",
+      "source_id": "leiphone",
+      "published_at": "Tue, 03 Feb 2026 10:17:00 +0800",
+      "timestamp": "2026-02-04T05:59:52.801515+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "雷军怒斥说小米二手车崩盘的人：保值率第一，超特斯拉保时捷；元宝红包刷屏被指「双标」，腾讯：非诱导分享；马斯克旗下SpaceX已收购xAI",
+      "url": "https://www.leiphone.com/category/zaobao/OlJhTaugA2QjJjZL.html",
+      "summary": "要闻提示1.马斯克宣布：SpaceX已收购xAI，新公司估值1.25万亿美元2.雷军怒斥说小米二手车崩盘的人：SU7保值率第一，超特斯拉保时捷3.被指“双标”？腾讯内部信回应元宝红包刷屏：称非诱导分享！此前微信曾封杀同类裂变营销4.山姆中国前总裁文安德“跳槽”麦德龙5.Mate 80卖爆！华为拿到1月中国手机市场份额第一名：份额提升至18.6%6.奔驰部分车型开启官降，调整幅度10%左右7.特斯拉第三代人形机器人官宣 2026 年亮相：支持观察人类行为学习新技能，预计年产百万台8.三星、SK 海力士计划扩大尖端 NAND 产能，月产晶圆规模可达 4-5 万片今日头条马斯克宣布：SpaceX已收",
+      "source": "雷锋网",
+      "source_id": "leiphone",
+      "published_at": "Tue, 03 Feb 2026 09:06:00 +0800",
+      "timestamp": "2026-02-04T05:59:52.801515+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "溯源百大优质产业带：淘宝国货严选让产业带生意在直播间爆发，在货架沉淀",
+      "url": "https://www.leiphone.com/category/industrynews/h48xfyoqCKb2RHUb.html",
+      "summary": "非遗大师手作、大漆珠手串1分钟403人连续下单，永春鹅梨帐中香在非遗大师和主播的溯源讲解中热销 1000件，德化白瓷仅播1小时卖出100万元……为天猫年货节挖掘好质好价新供给，1月28日，淘宝国货严选联合泉州产业带发起了一场“茶瓷香”产地溯源直播活动。据了解，这也是淘宝国货严选“百大产业带” 2026 年第一场溯源直播，在淘宝主播和非遗传承人等加持下，大师制作、新工艺的泉州特色供给都成为这届年轻年货主理人的心头好，也让泉州质优价美的永春香薰、德化白瓷和安溪茶深入了数百万在线消费消费者心。 图说：1月 28日，蜜蜂惊喜社在泉州德化溯源直播淘宝国货严选“茶瓷香”产业带年货。 淘宝国货严选数据显示，",
+      "source": "雷锋网",
+      "source_id": "leiphone",
+      "published_at": "Mon, 02 Feb 2026 19:37:00 +0800",
+      "timestamp": "2026-02-04T05:59:52.801515+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "机械臂明星公司大内斗，创始人驱逐两兄弟；学者为15%股份与研究院反目成仇；头部厂商，产品拉胯订单靠人情 | AI 情报局 VOL.1",
+      "url": "https://www.leiphone.com/category/industrynews/D0SqnaeA8ID4QLig.html",
+      "summary": "雷峰网讯 机械臂明星公司大内斗，创始人驱逐两兄弟某机械臂明星公司早期的创业团队在机器人圈曾是佳话：师兄弟与同窗老友结义，从软件、算法到结构实现全栈互补。创业早期，核心团队拿着远低于行业平均水平的微薄月薪，在简陋的实验室里生磕核心部件。随着具身智能浪潮爆发，他们敏锐捕捉风口，迅速突围，拿下了不少市场份额。然“飞鸟尽，良弓藏”。当业绩增长、融资顺利的时候，剧情却滑向了最俗套的内斗。创始人 H 开启了系统性的“去联创化”：先将技术元老调离核心岗位，完成权力架空；随后祭出“股权改革”名义，强行要求老兄弟放弃股东身份，由其个人统一代持。双方撕破脸后，更上演了令人唏嘘的“清算”戏码：面对估值过亿的股权，创",
+      "source": "雷锋网",
+      "source_id": "leiphone",
+      "published_at": "Mon, 02 Feb 2026 18:01:00 +0800",
+      "timestamp": "2026-02-04T05:59:52.801515+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "对话千寻智能韩峰涛：真正的机器人是生产力，不是展品和玩具",
+      "url": "https://www.leiphone.com/category/industrynews/CIWOT1FWVt7JCbjp.html",
+      "summary": "雷峰网讯 “就在这栋楼下面，26年就会有一个上千人的数据采集团队，冲击100万小时数据大关。”韩峰涛忽地探身，手指地面，仿佛下一代具身模型已经被他攥在掌心。1月12日，千寻智能宣布开源具身模型Spirit v1.5。在RobotChallenge的最新榜单中，它超越此前国际标杆Pi0.5，成为迄今为止，全球最强开源具身模型。开源前两天，我们在千寻智能北京总部，见到了创始人韩峰涛，进行了一次深度对话。具身智能技术的繁荣背后有另一番景象：花样迭出的演示demo层出不穷，但实验室外一项叠衣服任务就可以难住大多数厂商。在这种背景下，Spirit v1.5让人看到了具身智能真正解放人类生产力的可能。Ro",
+      "source": "雷锋网",
+      "source_id": "leiphone",
+      "published_at": "Mon, 02 Feb 2026 17:54:00 +0800",
+      "timestamp": "2026-02-04T05:59:52.801515+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "第九届中关村国际前沿科技大赛AI应用领域复赛在模数世界成功举办",
+      "url": "https://www.leiphone.com/category/industrynews/1mWSMc9WvKQYOvcG.html",
+      "summary": "雷峰网讯 1月29日，2026中关村论坛系列活动——第九届中关村国际前沿科技大赛AI应用领域复赛经开区会场在模数世界成功举办。由北京市科学技术委员会、中关村科技园区管理委员会主办，中关村高科技产业促进中心、北京经济技术开发区管理委员会信息技术产业局、北京中关村科技服务有限公司、北京国际算力服务有限公司承办。北京经开区管委会信息技术产业局副局长吕昊出席并致辞。他表示，中关村国际前沿科技大赛作为中关村论坛体系内的重要品牌赛事，是展示北京科技创新实力、汇聚全球前沿成果的重要窗口。重大前沿赛事落地模数世界，是对北京经开区人工智能产业承载能力的集中检验，也是对模数世界作为市区两级标杆孵化器和人工智能核心",
+      "source": "雷锋网",
+      "source_id": "leiphone",
+      "published_at": "Mon, 02 Feb 2026 16:44:00 +0800",
+      "timestamp": "2026-02-04T05:59:52.801515+08:00",
+      "hot_score": 50
+    },
+    {
+      "title": "Anthropic AI Tool Sparks Selloff from Software to Broader Market",
+      "url": "https://www.bloomberg.com/news/articles/2026-02-03/legal-software-stocks-plunge-as-anthropic-releases-new-ai-tool",
+      "summary": "",
+      "source": "Hacker News",
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-04T04:21:21",
+      "hot_score": 40
+    },
+    {
+      "title": "Bruce Schneier: AI and the scaling of betrayal",
+      "url": "https://www.schneier.com/blog/archives/2023/12/ai-and-trust.html",
+      "summary": "",
+      "source": "Hacker News",
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-04T04:49:30",
+      "hot_score": 33
+    },
+    {
+      "title": "Migrate Wizard – IMAP Based Email Migration Tool",
+      "url": "https://migratewizard.com/#features",
+      "summary": "",
+      "source": "Hacker News",
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-04T01:19:47",
+      "hot_score": 21
+    },
+    {
+      "title": "Show HN: I built \"AI Wattpad\" to eval LLMs on fiction",
+      "url": "https://narrator.sh/llm-leaderboard",
+      "summary": "",
+      "source": "Hacker News",
+      "source_id": "hackernews",
+      "published_at": "",
+      "timestamp": "2026-02-04T01:08:43",
+      "hot_score": 18
     }
   ]
 }

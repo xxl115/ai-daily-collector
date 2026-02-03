@@ -70,7 +70,7 @@ sources:
   - name: "Hugging Face"
     type: "huggingface"
     url: "https://huggingface.co/blog/feed.xml"
-    enabled: true
+    enabled: false  # 连接问题，暂时禁用
     language: "en"
     filters:
       keyword: "AI"
