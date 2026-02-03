@@ -1,0 +1,45 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'index.html'
+      - 'deploy-pages.sh'
+  workflow_dispatch:
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    name: Deploy to Cloudflare Pages
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
+      - name: Deploy to Cloudflare Pages
+        run: |
+          chmod +x deploy-pages.sh
+          
+          # 创建或更新项目
+          wrangler pages project create ai-daily-collector --production-branch=master 2>/dev/null || true
+          
+          # 部署
+          wrangler pages deploy . --project-name=ai-daily-collector
+
+      - name: Verify Deployment
+        run: |
+          echo ""
+          echo "================================================"
+          echo "✅ 前端部署完成!"
+          echo ""
+          echo "🌐 访问地址: https://ai-daily-collector.pages.dev"
+          echo "================================================"
