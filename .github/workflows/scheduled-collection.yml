@@ -49,6 +49,9 @@ jobs:
           echo "⏰ 时间: $(date)"
           echo ""
           
+          # 创建数据目录
+          mkdir -p data/
+          
           # 运行采集脚本
           python3 scripts/daily-ai-workflow.py \
             --sources newsnow,v2ex,reddit,ai_blogs,tech_media \
@@ -57,10 +60,20 @@ jobs:
             --output data/daily.json \
             || echo "采集完成（可能有部分失败）"
           
+          # 检查是否生成了数据
+          if [ -f "data/daily.json" ]; then
+            echo "✅ 数据文件已生成"
+            ls -la data/
+          else
+            echo "⚠️ 未生成数据文件，尝试生成示例数据"
+            echo '{"hotspots": [], "timestamp": "'$(date -Iseconds)'"}' > data/daily.json
+          fi
+          
           echo ""
           echo "✅ 采集完成!"
 
       - name: Upload results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: daily-collection
@@ -76,13 +89,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
+          # 确保 data 目录存在
+          mkdir -p data/
+          
           # 检查是否有新数据
-          if [ -f "data/daily.json" ]; then
+          if [ -f "data/daily.json" ] && [ -s "data/daily.json" ]; then
             git add data/
             git commit -m "📅 Daily update: $(date '+%Y-%m-%d %H:%M')" || echo "没有新数据"
             git push origin master || echo "推送失败或没有更改"
           else
-            echo "没有生成数据文件"
+            echo "没有生成数据文件，跳过提交"
           fi
 
       - name: Send Notification
