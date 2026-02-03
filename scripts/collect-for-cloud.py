@@ -11,6 +11,10 @@ import sys
 import yaml
 from datetime import datetime
 from pathlib import Path
+from pytz import timezone
+
+# 北京时区
+BEIJING_TZ = timezone('Asia/Shanghai')
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent
@@ -57,18 +61,19 @@ def save_article(article, output_dir):
     url = article['url']
     score = article.get('score', 0)
 
-    timestamp = int(datetime.now().timestamp())
+    timestamp = int(datetime.now(BEIJING_TZ).timestamp())
     source_short = source.split()[0] if ' ' in source else source[:3]
     filename = f"{source_short}_{score}_{timestamp}.md"
 
     print(f"   📄 {source}: {title[:50]}")
     content = extract_content(url)
 
+    now_beijing = datetime.now(BEIJING_TZ)
     file_content = f"""---
 title: "{title}"
 url: "{url}"
 source: "{source}"
-date: {datetime.now().strftime('%Y-%m-%d')}
+date: {now_beijing.strftime('%Y-%m-%d')}
 score: {score}
 ---
 
@@ -81,7 +86,7 @@ score: {score}
 {content if content else "*内容提取失败*"}
 
 ---
-*自动采集于 {datetime.now().strftime('%Y-%m-%d')}*
+*自动采集于 {now_beijing.strftime('%Y-%m-%d %H:%M:%S')} (北京时间)*
 """
 
     filepath = output_dir / filename
@@ -105,10 +110,11 @@ def main():
     args = parser.parse_args()
 
     # 配置输出目录
+    now_beijing = datetime.now(BEIJING_TZ)
     if args.output_dir:
         output_dir = Path(args.output_dir)
     else:
-        date_str = datetime.now().strftime('%Y-%m-%d')
+        date_str = now_beijing.strftime('%Y-%m-%d')
         output_dir = project_root / 'ai' / 'articles' / 'original' / date_str
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -118,7 +124,7 @@ def main():
 
     print("============================================")
     print("AI Daily Collector (Cloud Enhanced)")
-    print(f"日期: {datetime.now().strftime('%Y-%m-%d')}")
+    print(f"日期: {now_beijing.strftime('%Y-%m-%d %H:%M:%S')} (北京时间)")
     print(f"输出目录: {output_dir}")
     print("============================================")
     print()
