@@ -4,20 +4,34 @@
 echo "🚀 部署 AI Daily 前端到 Cloudflare Pages"
 echo "=========================================="
 
-# 检查参数
-if [ -z "$CF_API_TOKEN" ]; then
-    echo "❌ 错误: CF_API_TOKEN 未设置"
-    echo "请设置: export CF_API_TOKEN='你的token'"
+# 检查环境变量 (支持多种写法)
+API_TOKEN="${CLOUDFLARE_API_TOKEN}"
+if [ -z "$API_TOKEN" ]; then
+    API_TOKEN="${CF_API_TOKEN}"
+fi
+
+if [ -z "$API_TOKEN" ]; then
+    echo "❌ 错误: Cloudflare API Token 未设置"
+    echo "请确保 GitHub Secrets 中配置了 CF_API_TOKEN 或 CLOUDFLARE_API_TOKEN"
     exit 1
 fi
 
-if [ -z "$CF_ACCOUNT_ID" ]; then
-    echo "❌ 错误: CF_ACCOUNT_ID 未设置"
-    echo "请设置: export CF_ACCOUNT_ID='你的account-id'"
+ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID}"
+if [ -z "$ACCOUNT_ID" ]; then
+    ACCOUNT_ID="${CF_ACCOUNT_ID}"
+fi
+
+if [ -z "$ACCOUNT_ID" ]; then
+    echo "❌ 错误: Cloudflare Account ID 未设置"
+    echo "请确保 GitHub Secrets 中配置了 CF_ACCOUNT_ID 或 CLOUDFLARE_ACCOUNT_ID"
     exit 1
 fi
+
+echo "✅ 环境变量检查通过"
+echo "   Account ID: ${ACCOUNT_ID:0:8}..."
 
 # 安装 wrangler
+echo ""
 echo "📦 安装 Wrangler..."
 npm install -g wrangler
 
@@ -32,7 +46,7 @@ wrangler pages project create ai-daily-collector --production-branch=master 2>/d
 
 # 部署
 echo "📤 上传文件..."
-wrangler pages deploy . --project-name=ai-daily-collector
+wrangler pages deploy . --project-name=ai-daily-collector --commit-dirty=true
 
 echo ""
 echo "=========================================="
