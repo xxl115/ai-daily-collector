@@ -1,0 +1,43 @@
+{
+  "success": true,
+  "title": "AI Daily - 2026-02-03",
+  "generated_at": "2026-02-03T09:00:00.000000",
+  "total_collected": 5,
+  "hotspots": [
+    {
+      "title": "AI Daily Collector - 欢迎使用",
+      "url": "https://github.com/xxl115/ai-daily-collector",
+      "source": "GitHub",
+      "hot_score": 100,
+      "timestamp": "2026-02-03T09:00:00.000000"
+    },
+    {
+      "title": "DeepSeek R1 - 开源大语言模型",
+      "url": "https://github.com/deepseek-ai/DeepSeek-R1",
+      "source": "GitHub Trending",
+      "hot_score": 95,
+      "timestamp": "2026-02-03T08:00:00.000000"
+    },
+    {
+      "title": "Claude Code - AI 编程助手",
+      "url": "https://github.com/anthropics/claude-code",
+      "source": "GitHub",
+      "hot_score": 90,
+      "timestamp": "2026-02-03T07:00:00.000000"
+    },
+    {
+      "title": "MCP (Model Context Protocol) 发布",
+      "url": "https://modelcontextprotocol.io",
+      "source": "Hacker News",
+      "hot_score": 85,
+      "timestamp": "2026-02-03T06:00:00.000000"
+    },
+    {
+      "title": "V2EX AI 讨论区",
+      "url": "https://www.v2ex.com/?tab=tech",
+      "source": "V2EX",
+      "hot_score": 80,
+      "timestamp": "2026-02-03T05:00:00.000000"
+    }
+  ]
+}
