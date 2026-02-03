@@ -206,6 +206,24 @@ status:
 	@echo ""
 	@echo "过滤配置:"
 	@python -c "from utils.filter import keyword_filter; import json; print(json.dumps(keyword_filter.get_stats(), indent=2))" 2>/dev/null || echo "  无法获取过滤状态"
+	@echo ""
+	@echo "抓取器:"
+	@python -c "from fetchers import NEWSNOW_PLATFORMS, fetch_newsnow_hotspots, fetch_v2ex_hotspots, fetch_reddit_hotspots; print(f'  ✅ NewsNow: {len(NEWSNOW_PLATFORMS)} 平台'); print('  ✅ V2EX: 可用'); print('  ✅ Reddit: 可用')" 2>/dev/null || echo "  ❌ 抓取器模块异常"
+
+# 测试数据抓取
+test-fetcher:
+	@echo "🧪 测试数据抓取器..."
+	@echo ""
+	@echo "1. 测试 V2EX 热门..."
+	@python -c "from fetchers import fetch_v2ex_hotspots; data = fetch_v2ex_hotspots(limit=5); print(f'   获取: {len(data)} 条'); [print(f'   - {d.get(\"title\",\"\")[:40]}') for d in data[:3]]" 2>/dev/null || echo "   ❌ V2EX 测试失败"
+	@echo ""
+	@echo "2. 测试 Reddit 热门..."
+	@python -c "from fetchers import fetch_reddit_hotspots; data = fetch_reddit_hotspots(limit=5, subreddits=['programming']); print(f'   获取: {len(data)} 条'); [print(f'   - {d.get(\"title\",\"\")[:40]}') for d in data[:3]]" 2>/dev/null || echo "   ❌ Reddit 测试失败"
+	@echo ""
+	@echo "3. 测试 NewsNow..."
+	@python -c "from fetchers import fetch_newsnow_hotspots; data = fetch_newsnow_hotspots(limit=5, platforms=['v2ex', 'baidu']); print(f'   获取: {len(data)} 条'); [print(f'   - {d.get(\"title\",\"\")[:40]}') for d in data[:3]]" 2>/dev/null || echo "   ❌ NewsNow 测试失败"
+	@echo ""
+	@echo "✅ 测试完成!"
 
 # Docker
 docker-build:
