@@ -24,6 +24,9 @@ cryptography>=41.0.0
 # Redis 缓存（可选）
 redis>=5.0.0
 
+# 日志（彩色输出）
+colorlog>=6.8.0
+
 # 测试
 pytest>=7.4.0
 pytest-cov>=4.1.0
