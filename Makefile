@@ -225,6 +225,39 @@ test-fetcher:
 	@echo ""
 	@echo "✅ 测试完成!"
 
+# 统计报告
+stats:
+	@echo "📊 生成日报统计..."
+	@python scripts/daily_stats.py
+
+stats-save:
+	@echo "📊 生成并保存统计报告..."
+	@python -c "
+from scripts.daily_stats import DailyStatsAnalyzer
+analyzer = DailyStatsAnalyzer()
+path = analyzer.save_stats_report()
+if path:
+    print(f'✅ 统计报告已保存: {path}')
+else:
+    print('❌ 未找到日报文件')
+"
+
+stats-week:
+	@echo "📈 分析本周趋势..."
+	@python -c "
+from scripts.daily_stats import DailyStatsAnalyzer
+analyzer = DailyStatsAnalyzer()
+trends = analyzer.analyze_trends(7)
+print('本周统计:')
+for day in trends['daily_stats']:
+    print(f\"  {day['date']}: {day['articles']} 篇\")
+print()
+print('热门关键词趋势:')
+for word, data in list(trends['keyword_trends'].items())[:5]:
+    total = sum(d['count'] for d in data)
+    print(f\"  {word}: {total} 次\")
+"
+
 # Docker
 docker-build:
 	@echo "🐳 构建 Docker 镜像..."
