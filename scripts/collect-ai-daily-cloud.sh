@@ -298,8 +298,17 @@ echo ""
 echo "✅ 完成! 文件保存于: $OUTPUT_DIR/"
 echo ""
 echo "🔄 提交到 GitHub..."
+
+# 配置 git 用户信息（使用 GitHub Actions bot）
+git config user.name "github-actions[bot]"
+git config user.email "github-actions[bot]@users.noreply.github.com"
+
+# 使用 GITHUB_TOKEN 进行认证
 git add $OUTPUT_DIR/
 git commit -m "AI Daily: $DATE - $TOTAL_COUNT 条内容" || echo "无新内容"
+
+# 配置远程 URL 使用 token 认证
+git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/xxl115/ai-daily-collector.git"
 git push origin master || echo "推送失败"
 
 echo ""
