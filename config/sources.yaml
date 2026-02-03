@@ -2,7 +2,207 @@
 # https://github.com/xxl115/ai-daily-collector
 
 sources:
-  # ===== 英文科技媒体 =====
+  # ===== NewsNow 中文热点 (23个平台) =====
+  - name: "NewsNow 今日头条"
+    type: "newsnow"
+    platform_id: "toutiao"
+    url: "https://newsnow.busiyi.world/api"
+    enabled: true
+    language: "zh"
+    filters:
+      keyword: "AI|大模型|人工智能"
+      hours: 24
+      max_articles: 10
+
+  - name: "NewsNow 百度热搜"
+    type: "newsnow"
+    platform_id: "baidu"
+    url: "https://newsnow.busiyi.world/api"
+    enabled: true
+    language: "zh"
+    filters:
+      keyword: "AI|大模型|人工智能"
+      hours: 24
+      max_articles: 10
+
+  - name: "NewsNow 微博"
+    type: "newsnow"
+    platform_id: "weibo"
+    url: "https://newsnow.busiyi.world/api"
+    enabled: true
+    language: "zh"
+    filters:
+      keyword: "AI|大模型|人工智能"
+      hours: 24
+      max_articles: 10
+
+  - name: "NewsNow 知乎"
+    type: "newsnow"
+    platform_id: "zhihu"
+    url: "https://newsnow.busiyi.world/api"
+    enabled: true
+    language: "zh"
+    filters:
+      keyword: "AI|大模型|人工智能"
+      hours: 24
+      max_articles: 10
+
+  - name: "NewsNow B站"
+    type: "newsnow"
+    platform_id: "bilibili"
+    url: "https://newsnow.busiyi.world/api"
+    enabled: true
+    language: "zh"
+    filters:
+      keyword: "AI|大模型|人工智能"
+      hours: 24
+      max_articles: 10
+
+  - name: "NewsNow GitHub Trending"
+    type: "newsnow"
+    platform_id: "github"
+    url: "https://newsnow.busiyi.world/api"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|agent|llm"
+      hours: 24
+      max_articles: 10
+
+  - name: "NewsNow Hacker News"
+    type: "newsnow"
+    platform_id: "hackernews"
+    url: "https://newsnow.busiyi.world/api"
+    enabled: false
+    language: "en"
+    filters:
+      keyword: "AI|ml|agent"
+      hours: 24
+      max_articles: 10
+
+  - name: "NewsNow Product Hunt"
+    type: "newsnow"
+    platform_id: "producthunt"
+    url: "https://newsnow.busiyi.world/api"
+    enabled: false
+    language: "en"
+    filters:
+      keyword: "AI|tech"
+      hours: 24
+      max_articles: 10
+
+  # ===== AI 官方博客 (10个) =====
+  - name: "OpenAI Blog"
+    type: "ai_blogs"
+    blog_id: "openai"
+    url: "https://openai.com/blog/rss.xml"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  - name: "Google AI"
+    type: "ai_blogs"
+    blog_id: "google-ai"
+    url: "https://blog.google/technology/ai/rss.xml"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  - name: "Anthropic"
+    type: "ai_blogs"
+    blog_id: "anthropic"
+    url: "https://www.anthropic.com/rss"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  - name: "Meta AI"
+    type: "ai_blogs"
+    blog_id: "meta-ai"
+    url: "https://ai.meta.com/blog/rss.xml"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  - name: "DeepMind"
+    type: "ai_blogs"
+    blog_id: "deepmind"
+    url: "https://deepmind.google/blog/"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  - name: "Microsoft AI"
+    type: "ai_blogs"
+    blog_id: "microsoft-ai"
+    url: "https://www.microsoft.com/en-us/ai"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  - name: "AWS AI"
+    type: "ai_blogs"
+    blog_id: "aws-ai"
+    url: "https://aws.amazon.com/blogs/machine-learning/feed/"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  - name: "NVIDIA AI"
+    type: "ai_blogs"
+    blog_id: "nvidia-ai"
+    url: "https://blogs.nvidia.com/blog/category/deep-learning/feed/"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  - name: "Stability AI"
+    type: "ai_blogs"
+    blog_id: "stability-ai"
+    url: "https://stability.ai/blog"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  - name: "Mistral AI"
+    type: "ai_blogs"
+    blog_id: "mistral"
+    url: "https://mistral.ai/news/"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 5
+
+  # ===== 英文科技媒体 (9个) =====
   - name: "MIT Tech Review"
     type: "tech_media"
     media_id: "mit-tech"
@@ -23,7 +223,73 @@ sources:
     filters:
       keyword: "AI|artificial intelligence|machine learning"
       hours: 24
-      max_articles: 20
+      max_articles: 10
+
+  - name: "The Verge"
+    type: "tech_media"
+    media_id: "theverge"
+    url: "https://www.theverge.com/rss/index.xml"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|technology"
+      hours: 24
+      max_articles: 10
+
+  - name: "Wired"
+    type: "tech_media"
+    media_id: "wired"
+    url: "https://www.wired.com/feed/rss"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|technology"
+      hours: 24
+      max_articles: 10
+
+  - name: "VentureBeat"
+    type: "tech_media"
+    media_id: "venturebeat"
+    url: "https://venturebeat.com/feed/"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|machine learning"
+      hours: 24
+      max_articles: 10
+
+  - name: "Ars Technica"
+    type: "tech_media"
+    media_id: "ars-technica"
+    url: "https://arstechnica.com/feed/"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|technology"
+      hours: 24
+      max_articles: 10
+
+  - name: "HackerNoon"
+    type: "tech_media"
+    media_id: "hackernoon"
+    url: "https://hackernoon.com/feed"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|programming"
+      hours: 24
+      max_articles: 10
+
+  - name: "BetaList"
+    type: "tech_media"
+    media_id: "betablist"
+    url: "https://betablist.com/feed"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|startup"
+      hours: 24
+      max_articles: 10
 
   # ===== 开发者社区 =====
   - name: "Hacker News"
@@ -56,6 +322,94 @@ sources:
       hours: 24
       max_articles: 10
 
+  - name: "V2EX"
+    type: "v2ex"
+    url: "https://www.v2ex.com/"
+    enabled: true
+    language: "zh"
+    filters:
+      keyword: "AI|大模型|GPT|Claude"
+      hours: 24
+      max_articles: 20
+
+  # ===== Reddit (16个子版块) =====
+  - name: "Reddit r/programming"
+    type: "reddit"
+    subreddit: "programming"
+    url: "https://www.reddit.com/r/programming/hot.json"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|ml|programming"
+      hours: 24
+      max_articles: 10
+
+  - name: "Reddit r/technology"
+    type: "reddit"
+    subreddit: "technology"
+    url: "https://www.reddit.com/r/technology/hot.json"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|tech"
+      hours: 24
+      max_articles: 10
+
+  - name: "Reddit r/artificial"
+    type: "reddit"
+    subreddit: "artificial"
+    url: "https://www.reddit.com/r/artificial/hot.json"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|ML"
+      hours: 24
+      max_articles: 10
+
+  - name: "Reddit r/MachineLearning"
+    type: "reddit"
+    subreddit: "MachineLearning"
+    url: "https://www.reddit.com/r/MachineLearning/hot.json"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 10
+
+  - name: "Reddit r/Python"
+    type: "reddit"
+    subreddit: "python"
+    url: "https://www.reddit.com/r/python/hot.json"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|ml"
+      hours: 24
+      max_articles: 10
+
+  - name: "Reddit r/opensource"
+    type: "reddit"
+    subreddit: "opensource"
+    url: "https://www.reddit.com/r/opensource/hot.json"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI"
+      hours: 24
+      max_articles: 10
+
+  - name: "Reddit r/GitHub"
+    type: "reddit"
+    subreddit: "github"
+    url: "https://www.reddit.com/r/github/hot.json"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|repo"
+      hours: 24
+      max_articles: 10
+
   # ===== AI 论文 & 模型 =====
   - name: "ArXiv AI"
     type: "arxiv"
@@ -77,27 +431,94 @@ sources:
       hours: 24
       max_articles: 10
 
-  # ===== AI 官方博客 =====
-  - name: "OpenAI Blog"
-    type: "ai_blogs"
-    media_id: "openai"
-    url: "https://openai.com/blog/rss.xml"
-    enabled: false  # API 限制，经常失败
+  # ===== YouTube AI 频道 =====
+  - name: "YouTube Lex Fridman"
+    type: "youtube"
+    channel_id: "UC2TX-_23AbJ5X5j3nF8F5w"
+    url: "https://www.youtube.com/channel/UC2TX-_23AbJ5X5j3nF8F5w/videos"
+    enabled: true
     language: "en"
     filters:
-      keyword: ""
-      hours: 24
+      keyword: "AI|ML|technology"
+      hours: 48
       max_articles: 5
 
-  - name: "Google AI"
-    type: "ai_blogs"
-    media_id: "googleai"
-    url: "https://blog.google/technology/ai/rss"
-    enabled: false
+  - name: "YouTube Two Minute Papers"
+    type: "youtube"
+    channel_id: "mKB3qZ6QQ2I"
+    url: "https://www.youtube.com/channel/mKB3qZ6QQ2I/videos"
+    enabled: true
     language: "en"
     filters:
-      keyword: ""
-      hours: 24
+      keyword: "AI|ML|papers"
+      hours: 48
+      max_articles: 5
+
+  - name: "YouTube 3Blue1Brown"
+    type: "youtube"
+    channel_id: "3Blue1Brown"
+    url: "https://www.youtube.com/channel/3Blue1Brown/videos"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|ML|math"
+      hours: 48
+      max_articles: 5
+
+  # ===== AI 播客 =====
+  - name: "Podcast Lex Fridman"
+    type: "podcast"
+    podcast_id: "lex_fridman"
+    url: "https://lexfridman.com/podcast"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|ML|technology"
+      hours: 168
+      max_articles: 5
+
+  - name: "Podcast a16z"
+    type: "podcast"
+    podcast_id: "a16z_podcast"
+    url: "https://a16z.com/podcasts/"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|tech"
+      hours: 168
+      max_articles: 5
+
+  - name: "Podcast Y Combinator"
+    type: "podcast"
+    podcast_id: "ycombinator_podcast"
+    url: "https://www.ycombinator.com/podcast/"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|startup"
+      hours: 168
+      max_articles: 5
+
+  - name: "Podcast Practical AI"
+    type: "podcast"
+    podcast_id: "practical_ai"
+    url: "https://practicalai.fm/"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|ML"
+      hours: 168
+      max_articles: 5
+
+  - name: "Podcast TWIML"
+    type: "podcast"
+    podcast_id: "twiml_podcast"
+    url: "https://twimlai.com/podcast"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: "AI|ML"
+      hours: 168
       max_articles: 5
 
   # ===== 中文科技媒体 =====
@@ -145,16 +566,5 @@ sources:
       hours: 24
       max_articles: 20
 
-  # ===== API 源 =====
-  - name: "量子位"
-    type: "api"
-    url: "https://api.qbitai.com/v1/articles"
-    enabled: false  # API 不存在，暂时禁用
-    language: "zh"
-    filters:
-      keyword: "AI"
-      hours: 24
-      max_articles: 30
-
 # 全局配置
-max_articles: 150  # 总文章数量限制
+max_articles: 300  # 总文章数量限制

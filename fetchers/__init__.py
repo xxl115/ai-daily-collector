@@ -357,6 +357,27 @@ def fetch_by_config(source_config: dict) -> list:
             # Dev.to
             return fetch_devto_hotspots(limit=limit)
 
+        elif source_type == "newsnow":
+            # NewsNow 中文热点
+            platform_id = source_config.get("platform_id")
+            return fetch_newsnow_hotspots(platforms=[platform_id] if platform_id else None, limit=limit)
+
+        elif source_type == "youtube":
+            # YouTube 频道
+            channel_id = source_config.get("channel_id")
+            if channel_id:
+                return youtube_fetcher.fetch_channel_videos(channel_id, limit=limit)
+            else:
+                return youtube_fetcher.get_ai_trending(limit=limit)
+
+        elif source_type == "podcast":
+            # 播客
+            podcast_id = source_config.get("podcast_id")
+            if podcast_id:
+                return podcast_fetcher.fetch_rss(podcast_id)[:limit]
+            else:
+                return podcast_fetcher.get_latest_episodes(limit=limit)
+
         else:
             logger.warning(f"未知的数据源类型: {source_type}")
             return []
