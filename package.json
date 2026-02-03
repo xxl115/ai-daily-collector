@@ -1,0 +1,11 @@
+{
+  "name": "ai-daily-collector",
+  "version": "1.0.0",
+  "description": "AI Daily News Collector",
+  "private": true,
+  "scripts": {
+    "test": "echo \"No tests\""
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

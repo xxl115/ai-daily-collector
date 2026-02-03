@@ -33,14 +33,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install Wrangler
         run: npm install -g wrangler
 
       - name: Deploy to Cloudflare Workers
         run: |
-          echo "${{ secrets.CF_API_TOKEN }}" | wrangler login --api-token
           wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
@@ -57,4 +55,4 @@ jobs:
           echo "   - API: https://${{ secrets.CF_WORKER_NAME }}.workers.dev/api/hotspots"
           echo ""
           echo "🧪 测试:"
-          curl -s "https://${{ secrets.CF_WORKER_NAME }}.workers.dev/health" || echo "请求失败"
+          curl -s "https://${{ secrets.CF_WORKER_NAME }}.workers.dev/health"
