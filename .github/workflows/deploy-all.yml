@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy-worker:
+  deploy-all:
     runs-on: ubuntu-latest
-    name: Deploy Worker
+    name: Deploy Worker + Frontend
     
     steps:
       - name: Checkout repository
@@ -27,55 +27,15 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
-      - name: Deploy to Cloudflare Workers
-        run: wrangler deploy
+      - name: Run Deploy Script
+        run: |
+          chmod +x deploy-all.sh
+          ./deploy-all.sh
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
-      - name: Verify Worker
-        run: |
-          echo ""
-          echo "✅ Worker 部署完成!"
-          echo "🌐 https://${{ secrets.CF_WORKER_NAME }}.workers.dev/health"
-
-  deploy-frontend:
-    runs-on: ubuntu-latest
-    name: Deploy Frontend
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Wrangler
-        run: npm install -g wrangler
-
-      - name: Deploy to Cloudflare Pages
-        run: |
-          wrangler pages project create ai-daily-collector --production-branch=master 2>/dev/null || true
-          wrangler pages deploy . --project-name=ai-daily-collector --commit-dirty=true
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-
-      - name: Verify Frontend
-        run: |
-          echo ""
-          echo "✅ 前端部署完成!"
-          echo "🌐 https://ai-daily-collector.pages.dev"
-
-  notify:
-    needs: [deploy-worker, deploy-frontend]
-    runs-on: ubuntu-latest
-    name: Notify
-    
-    steps:
-      - name: Summary
+      - name: Verify Deployment
         run: |
           echo ""
           echo "================================================"
