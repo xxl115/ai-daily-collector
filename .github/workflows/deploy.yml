@@ -8,6 +8,8 @@ on:
       - 'requirements.txt'
       - 'Dockerfile'
       - 'docker-compose.yml'
+      - 'wrangler.toml'
+      - 'api/cloudflare_worker.js'
   release:
     types: [published]
 
