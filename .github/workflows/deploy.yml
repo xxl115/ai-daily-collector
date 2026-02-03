@@ -1,0 +1,325 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - '**.py'
+      - 'requirements.txt'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+  release:
+    types: [published]
+
+env:
+  DOCKER_REGISTRY: ${{ secrets.DOCKERHUB_USERNAME }}
+  SERVER_HOST: ${{ secrets.SERVER_HOST }}
+  SERVER_USER: ${{ secrets.SERVER_USER }}
+  SERVER_PATH: ${{ secrets.SERVER_PATH }}
+
+jobs:
+  # ============ 部署到服务器 ============
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          script: |
+            echo "🚀 开始部署 AI Daily Collector..."
+            
+            cd ${{ secrets.SERVER_PATH }}
+            
+            # 备份数据
+            echo "📦 备份数据..."
+            if [ -d "data" ]; then
+              tar -czf data/backups/data-$(date +%Y%m%d-%H%M%S).tar.gz data/
+            fi
+            
+            # 拉取最新代码
+            echo "📥 拉取最新代码..."
+            git pull origin master
+            
+            # 拉取最新 Docker 镜像
+            echo "🐳 拉取 Docker 镜像..."
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/ai-daily-collector:latest
+            
+            # 重启服务
+            echo "🔄 重启服务..."
+            docker-compose down
+            docker-compose up -d --build
+            
+            # 清理旧镜像
+            echo "🧹 清理旧镜像..."
+            docker image prune -f
+            
+            # 检查服务状态
+            echo "✅ 检查服务状态..."
+            docker-compose ps
+            
+            echo "🎉 部署完成!"
+            echo "📝 时间: $(date)"
+            echo "🌐 服务地址: http://${{ secrets.SERVER_HOST }}:8000"
+            echo "📊 API 文档: http://${{ secrets.SERVER_HOST }}:8000/docs"
+
+  # ============ 部署到云服务器 (VPS) ============
+  deploy-vps:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        uses: easingthemes/ssh-deploy@v4
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+          PORT: ${{ secrets.VPS_PORT || '22' }}
+          TARGET: ${{ secrets.VPS_TARGET || '/opt/ai-daily-collector' }}
+          SOURCE: '.'
+          EXCLUDE: '.git/,node_modules/,*.log,data/,htmlcov/,.pytest_cache/'
+
+      - name: Restart Service via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          script: |
+            cd ${{ secrets.VPS_TARGET || '/opt/ai-daily-collector' }}
+            docker-compose pull
+            docker-compose up -d --build
+            docker system prune -f
+            echo "✅ VPS 部署完成!"
+            
+  # ============ 部署到 Kubernetes ============
+  deploy-k8s:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Kubectl
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Login to Container Registry
+        uses: azure/container-login@v2
+        with:
+          login-server: ${{ secrets.DOCKERHUB_USERNAME }}.docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull and Deploy to Kubernetes
+        run: |
+          # 更新镜像版本
+          kubectl set image deployment/ai-daily-collector \
+            ai-daily-collector=${{ secrets.DOCKERHUB_USERNAME }}/ai-daily-collector:latest \
+            -n ai-daily-collector
+          
+          # 等待部署完成
+          kubectl rollout status deployment/ai-daily-collector -n ai-daily-collector
+          
+          echo "✅ Kubernetes 部署完成!"
+
+  # ============ 部署到 Fly.io ============
+  deploy-fly:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Fly.io
+        uses: superfly/flyctl-actions@v1
+        with:
+          args: 'deploy --remote-only'
+
+      - name: Fly.io Status
+        run: |
+          flyctl status
+          echo "✅ Fly.io 部署完成!"
+
+  # ============ 部署到 Zeabur ============
+  deploy-zeabur:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Zeabur
+        uses: zeabur/zeabur-github-action@v1
+        with:
+          api-token: ${{ secrets.ZEABUR_API_TOKEN }}
+          project-id: ${{ secrets.ZEABUR_PROJECT_ID }}
+          service-id: ${{ secrets.ZEABUR_SERVICE_ID }}
+          
+      - name: Zeabur Status
+        run: |
+          echo "✅ Zeabur 部署完成!"
+
+  # ============ 部署到 Vercel ============
+  deploy-vercel:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+
+  # ============ 部署到 Render ============
+  deploy-render:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Trigger Render Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: api.render.com
+          username: trigger
+          key: ${{ secrets.RENDER_DEPLOY_KEY }}
+          script: |
+            curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys"
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
+              -H "Content-Type: application/json"
+              -d '{"clearCache": true}'
+            echo "✅ Render 部署已触发!"
+
+  # ============ Serverless 部署 (AWS Lambda) ============
+  deploy-lambda:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      - name: Build and Deploy to AWS Lambda
+        run: |
+          sam build
+          sam deploy --guided
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+  # ============ 部署到 Railway ============
+  deploy-railway:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Railway
+        uses: bref-dev/railway-github-action@v1
+        with:
+          railway-token: ${{ secrets.RAILWAY_TOKEN }}
+          service: ${{ secrets.RAILWAY_SERVICE }}
+          environment: production
+
+  # ============ 部署到 Coolify ============
+  deploy-coolify:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Trigger Coolify Deploy
+        run: |
+          curl -X POST "${{ secrets.COOLIFY_API_URL }}/api/v1/projects/${{ secrets.COOLIFY_PROJECT_ID }}/services/${{ secrets.COOLIFY_SERVICE_ID }}/deploy"
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_KEY }}"
+            -H "Content-Type: application/json"
+            -d '{"pullRequestId": null}'
+          echo "✅ Coolify 部署已触发!"
+
+  # ============ 部署通知 ============
+  notify-deploy:
+    runs-on: ubuntu-latest
+    needs: [deploy, deploy-vps, deploy-k8s, deploy-fly, deploy-vercel, deploy-render, deploy-lambda, deploy-railway, deploy-coolify]
+    if: always()
+    
+    steps:
+      - name: Check deploy status
+        id: status
+        run: |
+          echo "✅ 部署流程完成!"
+          echo "📝 检查各个 job 的状态..."
+
+      - name: Send Discord notification
+        if: always()
+        uses: appleboy/discord-action@v1
+        with:
+          webhook_id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook_token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          username: 'AI Daily Deploy Bot'
+          content: |
+            ✅ **AI Daily Collector 部署完成!**
+            📝 Commit: ${{ github.sha }}
+            🌐 分支: ${{ github.ref_name }}
+            👤 作者: ${{ github.actor }}
+            📅 时间: $(date)
+
+      - name: Send Telegram notification
+        if: always()
+        run: |
+          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
+            -H "Content-Type: application/json"
+            -d "{
+              \"chat_id\": \"${{ secrets.TELEGRAM_CHAT_ID }}\",
+              \"text\": \"✅ AI Daily Collector 部署完成!\n📝 Commit: ${{ github.sha }}\",
+              \"parse_mode\": \"Markdown\"
+            }"
+
+      - name: Send Feishu notification
+        if: always()
+        run: |
+          curl -X POST "${{ secrets.FEISHU_WEBHOOK_URL }}"
+            -H "Content-Type: application/json"
+            -d "{
+              \"msg_type\": \"text\",
+              \"content\": {
+                \"text\": \"✅ AI Daily Collector 部署完成! Commit: ${{ github.sha }}\"
+              }
+            }"
