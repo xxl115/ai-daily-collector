@@ -81,6 +81,14 @@ from .errors import (
     fallback_return_empty,
     fallback_cache_last_success,
 )
+from .notion import (
+    NotionClient,
+    NotionSyncManager,
+    NotionSyncStatus,
+    notion_sync_manager,
+    sync_to_notion,
+    get_notion_status,
+)
 
 __all__ = [
     # Logger
@@ -88,13 +96,13 @@ __all__ = [
     'get_logger',
     'LoggerMixin',
     'logger',
-    
+
     # Metrics
     'MetricsCollector',
     'metrics',
     'CollectorMetrics',
     'track_duration',
-    
+
     # Helpers
     'clean_filename',
     'slugify',
@@ -107,13 +115,13 @@ __all__ = [
     'read_json',
     'write_json',
     'format_file_size',
-    
+
     # RSS
     'RSSGenerator',
     'AtomGenerator',
     'generate_rss_from_articles',
     'generate_atom_from_articles',
-    
+
     # Notification
     'PushPlatform',
     'PushMessage',
@@ -124,14 +132,22 @@ __all__ = [
     'NotificationManager',
     'notification_manager',
     'send_daily_report',
-    
+
+    # Notion
+    'NotionClient',
+    'NotionSyncManager',
+    'NotionSyncStatus',
+    'notion_sync_manager',
+    'sync_to_notion',
+    'get_notion_status',
+
     # Filter
     'WordGroup',
     'KeywordFilter',
     'keyword_filter',
     'filter_articles',
     'sort_by_hotness',
-    
+
     # Cache
     'Cache',
     'cache',
@@ -139,7 +155,7 @@ __all__ = [
     'MemoryCache',
     'DiskCache',
     'RedisCache',
-    
+
     # Rate Limit
     'RateLimiter',
     'limiter',
@@ -149,7 +165,7 @@ __all__ = [
     'rate_limit_webhook',
     'RateLimitConfig',
     'RateLimitExceeded',
-    
+
     # Errors
     'ErrorSeverity',
     'ErrorCategory',

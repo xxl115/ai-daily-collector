@@ -368,6 +368,62 @@ def send_notifications(
             logger.info(f"   ❌ {platform}")
 
 
+def sync_to_notion(
+    articles: List[Dict],
+    config: Dict,
+):
+    """
+    同步到 Notion
+
+    Args:
+        articles: 文章列表
+        config: 配置
+    """
+    logger = get_logger(__name__)
+
+    if not config.get("enable_notion", True):
+        logger.info("\n🔕 Notion 同步已禁用")
+        return
+
+    from utils.notion import notion_sync_manager, get_notion_status
+
+    status = get_notion_status()
+    if not status.get("api_key_configured"):
+        logger.info("\n🔕 Notion 未配置 (API Key)")
+        return
+    if not status.get("parent_page_id_configured"):
+        logger.info("\n🔕 Notion 未配置 (Parent Page ID)")
+        return
+
+    beijing_tz = __import__("pytz").timezone("Asia/Shanghai")
+    now = datetime.now(beijing_tz)
+    date_str = now.strftime("%Y-%m-%d")
+
+    # 构建链接列表
+    links = []
+    for article in articles[:20]:
+        links.append({
+            "title": article.get("title", "")[:100],
+            "url": article.get("url", ""),
+        })
+
+    # 同步到 Notion
+    logger.info("\n📓 同步到 Notion...")
+
+    result = notion_sync_manager.sync_daily_report(
+        date=date_str,
+        title=f"AI Daily - {date_str}",
+        content="",
+        links=links,
+    )
+
+    if result.get("status") == "success":
+        logger.info(f"   ✅ Notion 同步成功")
+        logger.info(f"   📎 {result.get('url', '')}")
+    else:
+        logger.info(f"   ❌ Notion 同步失败: {result.get('error', 'unknown')}")
+
+
 def run_workflow(args: argparse.Namespace):
     """运行完整工作流"""
     # 加载配置
@@ -383,6 +439,7 @@ def run_workflow(args: argparse.Namespace):
         "enable_filter": not args.no_filter,
         "enable_sorting": not args.no_sort,
         "enable_notification": not args.no_notify,
+        "enable_notion": not args.no_notion,
     })
     
     # 设置日志
@@ -415,7 +472,10 @@ def run_workflow(args: argparse.Namespace):
         
         # 6. 发送推送
         send_notifications(articles, config, report_file)
-        
+
+        # 7. 同步到 Notion
+        sync_to_notion(articles, config)
+
         logger.info("\n" + "=" * 60)
         logger.info("✅ 工作流完成!")
         logger.info("=" * 60)
@@ -493,6 +553,11 @@ def main():
         "--no-notify",
         action="store_true",
         help="跳过推送",
+    )
+    process_group.add_argument(
+        "--no-notion",
+        action="store_true",
+        help="跳过 Notion 同步",
     )
     
     args = parser.parse_args()
