@@ -1,0 +1,45 @@
+# AI Daily Collector - Docker Compose
+
+services:
+  ai-collector:
+    build: .
+    container_name: ai-daily-collector
+    restart: unless-stopped
+    volumes:
+      # 数据持久化
+      - ./data:/app/data
+      # 配置目录（可挂载自定义配置）
+      - ./config:/app/config:ro
+      # 环境变量文件
+      - ./.env:/app/.env:ro
+    environment:
+      - TZ=Asia/Shanghai
+    env_file:
+      - .env
+    # 定时任务（在宿主机 cron 中配置更可靠）
+    # command: ["python", "scripts/daily-ai-workflow.py"]
+
+# 开发环境（带热重载）
+  ai-collector-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: ai-collector-dev
+    volumes:
+      - .:/app
+      - ./data:/app/data
+    environment:
+      - PYTHONPATH=/app
+      - DEBUG=true
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"  # FastAPI 端口
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+volumes:
+  data:
+
+networks:
+  default:
+    name: ai-collector-network

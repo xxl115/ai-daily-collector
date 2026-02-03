@@ -12,8 +12,10 @@ python-dateutil>=2.8.2
 # YAML 解析
 PyYAML>=6.0.1
 
-# 路径处理
-pathlib2>=2.3.7; python_version < "3.4"
+# FastAPI & Web（可选，用于 API 服务）
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
 
 # 加密（可选，用于 API Key）
 cryptography>=41.0.0
@@ -21,3 +23,13 @@ cryptography>=41.0.0
 # 测试
 pytest>=7.4.0
 pytest-cov>=4.1.0
+pytest-asyncio>=0.23.0
+
+# 代码质量
+flake8>=7.0.0
+black>=24.0.0
+mypy>=1.8.0
+
+# 开发工具
+pre-commit>=3.6.0
+ipython>=8.0.0

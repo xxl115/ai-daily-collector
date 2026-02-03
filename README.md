@@ -2,8 +2,13 @@
 
 > 自动化采集、总结和分发 AI 热点资讯的完整工作流
 
-[![GitHub stars](https://img.shields.io/github/stars/xxl115/ai-daily-collector)](https://github.com/xxl115/ai-daily-collector/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/xxl115/ai-daily-collector)](https://img.shields.io/github/stars/xxl115/ai-daily-collector)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![CI/CD](https://img.shields.io/github/actions/workflow/status/xxl115/ai-daily-collector/ci.yml?branch=master)](https://github.com/xxl115/ai-daily-collector/actions)
+[![Tests](https://img.shields.io/github/actions/workflow/status/xxl115/ai-daily-collector/ci.yml?branch=master&label=tests)](https://github.com/xxl115/ai-daily-collector/actions)
+
+**English** | [中文](README_CN.md)
 
 ## ✨ 特性
 
@@ -12,17 +17,27 @@
 - 📰 **日报生成**: 自动按分类整理成结构化日报
 - 🌐 **多平台同步**: 自动推送到 GitHub 和 Notion
 - ⏰ **定时任务**: 每天自动执行，无需人工干预
+- 🔌 **REST API**: 提供 FastAPI 接口，支持程序化访问
+- 🐳 **Docker 支持**: 一键部署，开箱即用
 
 ## 🚀 快速开始
 
-### 前置要求
+### 方式一：Docker（推荐）
 
-- Python 3.10+
-- 智谱 AI API Key (`ZAI_API_KEY`)
-- Notion Integration Token（可选，用于同步到 Notion）
-- Git（用于版本管理）
+```bash
+# 克隆并启动
+git clone https://github.com/xxl115/ai-daily-collector.git
+cd ai-daily-collector
 
-### 安装
+# 配置环境变量
+cp .env.example .env
+# 编辑 .env 填入 API Keys
+
+# 启动容器
+docker-compose up -d
+```
+
+### 方式二：本地安装
 
 ```bash
 # 克隆项目
@@ -30,62 +45,93 @@ git clone https://github.com/xxl115/ai-daily-collector.git
 cd ai-daily-collector
 
 # 安装依赖
-pip install -r requirements.txt
+make install
 
 # 配置环境变量
 cp .env.example .env
 # 编辑 .env 填入你的 API Keys
-```
 
-### 配置
-
-编辑 `.env` 文件：
-
-```bash
-# 智谱 AI API（必须）
-export ZAI_API_KEY="your_zhipu_api_key"
-
-# Notion（可选）
-export NOTION_API_KEY="your_notion_token"
-```
-
-### 使用
-
-```bash
 # 运行完整工作流
-python scripts/daily-ai-workflow.py
+make run
+```
 
-# 或分步骤执行
-python scripts/ai-hotspot-crawler-simple.py    # 1. 采集文章
-python scripts/summarize-articles.py            # 2. 生成总结
-python scripts/generate-daily-report.py         # 3. 生成日报
-python scripts/push-to-notion.py                # 4. 同步 Notion
+### 方式三：仅使用 API
+
+```bash
+# 启动 API 服务
+make api
+
+# 访问 http://localhost:8000/docs 查看 API 文档
 ```
 
 ## 📁 项目结构
 
 ```
 ai-daily-collector/
-├── ai/
-│   ├── articles/
-│   │   ├── original/          # 原始文章（按日期归档）
-│   │   └── summary/           # 中文总结（按日期归档）
-│   ├── daily/                 # 每日日报
-│   └── tools/                 # 工具脚本
-├── scripts/                   # 核心脚本
+├── api/                    # FastAPI 接口
+│   └── main.py            # API 主程序
+├── scripts/               # 核心脚本
 │   ├── ai-hotspot-crawler-simple.py  # RSS 采集
 │   ├── summarize-articles.py         # AI 总结生成
 │   ├── generate-daily-report.py      # 日报生成
 │   ├── push-to-notion.py             # Notion 同步
 │   └── daily-ai-workflow.py          # 完整工作流
-├── config/
-│   └── sources.yaml          # RSS 源配置
-├── tests/                    # 测试用例
-├── .env.example              # 环境变量模板
-├── requirements.txt          # Python 依赖
-├── LICENSE                   # 开源协议
-└── README.md                 # 本文档
+├── ai/                     # 数据目录
+│   ├── articles/
+│   │   ├── original/       # 原始文章
+│   │   └── summary/        # 中文总结
+│   └── daily/              # 每日日报
+├── config/                 # 配置文件
+│   └── sources.yaml        # RSS 源配置
+├── tests/                  # 测试用例
+├── .github/workflows/      # CI/CD 配置
+├── Dockerfile              # Docker 镜像
+├── docker-compose.yml      # Docker Compose
+├── Makefile                # 命令行工具
+├── requirements.txt        # Python 依赖
+└── README.md               # 本文档
 ```
+
+## 📖 使用指南
+
+### 单独运行脚本
+
+```bash
+# 1. 采集今日 AI 热点
+make crawl
+
+# 2. 生成中文总结
+make summarize
+
+# 3. 生成日报
+make report
+
+# 4. 推送到 Notion（可选）
+python scripts/push-to-notion.py
+```
+
+### 使用 Make 命令
+
+```bash
+make help              # 查看所有命令
+make install           # 安装依赖
+make test              # 运行测试
+make lint              # 代码检查
+make format            # 代码格式化
+make docker-build      # 构建镜像
+make deploy            # 部署到生产
+```
+
+### API 端点
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/` | GET | 健康检查 |
+| `/api/v1/report/today` | GET | 获取今日日报 |
+| `/api/v1/articles` | GET | 获取文章列表 |
+| `/api/v1/categories` | GET | 获取分类列表 |
+| `/api/v1/stats` | GET | 获取统计信息 |
+| `/docs` | GET | Swagger API 文档 |
 
 ## 📊 分类体系
 
@@ -102,15 +148,6 @@ ai-daily-collector/
 | 8️⃣ | 安全风险 | 漏洞、恶意软件、深度伪造 |
 | 7️⃣ | 灵感库 | 待深挖的方向（按需展开） |
 
-## ⏰ 定时任务
-
-项目内置定时任务配置（`.github/workflows/` 或系统 cron）：
-
-```bash
-# 每天晚上 8 点自动执行
-0 20 * * * cd /path/to/ai-daily-collector && python scripts/daily-ai-workflow.py
-```
-
 ## 🛠️ 自定义
 
 ### 添加新的 RSS 源
@@ -123,23 +160,77 @@ sources:
     url: "https://example.com/rss"
     enabled: true
     filters:
-      - keyword: "AI"      # 关键词过滤
-      - hours: 24          # 只抓取最近24小时
+      keyword: "AI"
+      hours: 24
+      max_articles: 10
 ```
 
 ### 修改分类规则
 
-编辑 `scripts/generate-daily-report.py` 中的 `CATEGORIES` 配置。
+编辑 `scripts/generate_daily_report.py` 中的 `CATEGORIES` 配置。
+
+### 禁用 Notion 同步
+
+在 `.env` 中注释掉 `NOTION_API_KEY` 即可跳过 Notion 同步。
+
+## 🧪 测试
+
+```bash
+# 运行所有测试
+make test
+
+# 运行测试并检查覆盖率
+make test-cov
+
+# 代码风格检查
+make lint
+
+# 自动格式化
+make format
+```
+
+## 🐳 Docker 部署
+
+```bash
+# 构建镜像
+make docker-build
+
+# 前台运行
+make docker-run
+
+# 使用 docker-compose（推荐）
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
+```
+
+## ⏰ 定时任务
+
+### Linux/Mac (cron)
+
+```bash
+# 编辑 crontab
+crontab -e
+
+# 添加定时任务（每天晚上 8 点）
+0 20 * * * cd /path/to/ai-daily-collector && make run >> /var/log/ai-collector.log 2>&1
+```
+
+### GitHub Actions（自动）
+
+项目已配置 GitHub Actions CI/CD，每次 push 会自动运行测试。
+
+## 📦 版本历史
+
+查看 [CHANGELOG.md](CHANGELOG.md) 了解版本变更。
 
 ## 🤝 贡献
 
-欢迎贡献代码！请遵循以下步骤：
-
-1. Fork 本项目
-2. 创建分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'Add amazing feature'`)
-4. 推送分支 (`git push origin feature/amazing-feature`)
-5. 创建 Pull Request
+欢迎贡献代码！请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 了解贡献指南。
 
 ## 📝 许可证
 
@@ -149,4 +240,9 @@ sources:
 
 - [智谱 AI](https://www.zhipuai.cn/) - 提供中文总结能力
 - [Notion](https://www.notion.so/) - 日报同步平台
-- 所有 RSS 源提供者
+- [FastAPI](https://fastapi.tiangolo.com/) - API 框架
+- [RSSHub](https://github.com/DIYgod/RSSHub) - RSS 聚合灵感
+
+---
+
+*如果这个项目对你有帮助，请 ⭐ Star 支持一下！*
