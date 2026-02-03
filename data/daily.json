@@ -1,43 +1,197 @@
 {
   "success": true,
   "title": "AI Daily - 2026-02-03",
-  "generated_at": "2026-02-03T09:00:00.000000",
-  "total_collected": 5,
+  "generated_at": "2026-02-03T14:18:39.841434",
+  "total_collected": 27,
   "hotspots": [
     {
-      "title": "AI Daily Collector - 欢迎使用",
-      "url": "https://github.com/xxl115/ai-daily-collector",
-      "source": "GitHub",
-      "hot_score": 100,
-      "timestamp": "2026-02-03T09:00:00.000000"
-    },
-    {
-      "title": "DeepSeek R1 - 开源大语言模型",
-      "url": "https://github.com/deepseek-ai/DeepSeek-R1",
-      "source": "GitHub Trending",
-      "hot_score": 95,
-      "timestamp": "2026-02-03T08:00:00.000000"
-    },
-    {
-      "title": "Claude Code - AI 编程助手",
-      "url": "https://github.com/anthropics/claude-code",
-      "source": "GitHub",
-      "hot_score": 90,
-      "timestamp": "2026-02-03T07:00:00.000000"
-    },
-    {
-      "title": "MCP (Model Context Protocol) 发布",
-      "url": "https://modelcontextprotocol.io",
+      "title": "xAI joins SpaceX",
+      "url": "https://www.spacex.com/updates#xai-joins-spacex",
       "source": "Hacker News",
-      "hot_score": 85,
-      "timestamp": "2026-02-03T06:00:00.000000"
+      "hot_score": 778,
+      "timestamp": "2026-02-02T21:51:22"
     },
     {
-      "title": "V2EX AI 讨论区",
-      "url": "https://www.v2ex.com/?tab=tech",
-      "source": "V2EX",
-      "hot_score": 80,
-      "timestamp": "2026-02-03T05:00:00.000000"
+      "title": "Todd C. Miller – Sudo maintainer for over 30 years",
+      "url": "https://www.millert.dev/",
+      "source": "Hacker News",
+      "hot_score": 525,
+      "timestamp": "2026-02-02T17:25:26"
+    },
+    {
+      "title": "Nano-vLLM: How a vLLM-style inference engine works",
+      "url": "https://neutree.ai/blog/nano-vllm-part-1",
+      "source": "Hacker News",
+      "hot_score": 262,
+      "timestamp": "2026-02-02T12:52:35"
+    },
+    {
+      "title": "Archive.today is directing a DDoS attack against my blog?",
+      "url": "https://gyrovague.com/2026/02/01/archive-today-is-directing-a-ddos-attack-against-my-blog/",
+      "source": "Hacker News",
+      "hot_score": 224,
+      "timestamp": "2026-02-01T05:11:53"
+    },
+    {
+      "title": "Banning lead in gas worked. The proof is in our hair",
+      "url": "https://attheu.utah.edu/health-medicine/banning-lead-in-gas-worked-the-proof-is-in-our-hair/",
+      "source": "Hacker News",
+      "hot_score": 111,
+      "timestamp": "2026-02-03T01:52:21"
+    },
+    {
+      "title": "[GitHub] trufflesecurity/trufflehog",
+      "url": "https://github.com/trufflesecurity/trufflehog",
+      "source": "GitHub Trending",
+      "hot_score": 100,
+      "timestamp": "2026-02-03T14:18:37.850891"
+    },
+    {
+      "title": "[GitHub] activepieces/activepieces",
+      "url": "https://github.com/activepieces/activepieces",
+      "source": "GitHub Trending",
+      "hot_score": 100,
+      "timestamp": "2026-02-03T14:18:37.851132"
+    },
+    {
+      "title": "[GitHub] tailscale/tailscale",
+      "url": "https://github.com/tailscale/tailscale",
+      "source": "GitHub Trending",
+      "hot_score": 100,
+      "timestamp": "2026-02-03T14:18:37.851350"
+    },
+    {
+      "title": "[GitHub] k3s-io/k3s",
+      "url": "https://github.com/k3s-io/k3s",
+      "source": "GitHub Trending",
+      "hot_score": 100,
+      "timestamp": "2026-02-03T14:18:37.851599"
+    },
+    {
+      "title": "[GitHub] juicedata/juicefs",
+      "url": "https://github.com/juicedata/juicefs",
+      "source": "GitHub Trending",
+      "hot_score": 100,
+      "timestamp": "2026-02-03T14:18:37.851807"
+    },
+    {
+      "title": "[GitHub] 9001/copyparty",
+      "url": "https://github.com/9001/copyparty",
+      "source": "GitHub Trending",
+      "hot_score": 100,
+      "timestamp": "2026-02-03T14:18:37.852063"
+    },
+    {
+      "title": "[GitHub] docker/compose",
+      "url": "https://github.com/docker/compose",
+      "source": "GitHub Trending",
+      "hot_score": 100,
+      "timestamp": "2026-02-03T14:18:37.852264"
+    },
+    {
+      "title": "[GitHub] ClickHouse/ClickHouse",
+      "url": "https://github.com/ClickHouse/ClickHouse",
+      "source": "GitHub Trending",
+      "hot_score": 100,
+      "timestamp": "2026-02-03T14:18:37.852465"
+    },
+    {
+      "title": "[GitHub] milvus-io/milvus",
+      "url": "https://github.com/milvus-io/milvus",
+      "source": "GitHub Trending",
+      "hot_score": 100,
+      "timestamp": "2026-02-03T14:18:37.852729"
+    },
+    {
+      "title": "[GitHub] nlohmann/json",
+      "url": "https://github.com/nlohmann/json",
+      "source": "GitHub Trending",
+      "hot_score": 100,
+      "timestamp": "2026-02-03T14:18:37.852988"
+    },
+    {
+      "title": "LNAI – Define AI coding tool configs once, sync to Claude, Cursor, Codex, etc.",
+      "url": "https://github.com/KrystianJonca/lnai",
+      "source": "Hacker News",
+      "hot_score": 43,
+      "timestamp": "2026-02-03T08:45:57"
+    },
+    {
+      "title": "The Compiler Never Used Sarcasm: Why AI Feels Unsafe to the Neurodivergent Coder",
+      "url": "https://dev.to/btarbox/the-compiler-never-used-sarcasm-why-ai-feels-unsafe-to-the-neurodivergent-coder-30i3",
+      "source": "Dev.to",
+      "hot_score": 27,
+      "timestamp": "2026-02-02T14:20:01Z"
+    },
+    {
+      "title": "Above the API: What Developers Contribute When AI Can Code",
+      "url": "https://dev.to/dannwaneri/above-the-api-what-developers-contribute-when-ai-can-code-5025",
+      "source": "Dev.to",
+      "hot_score": 9,
+      "timestamp": "2026-02-03T04:48:49Z"
+    },
+    {
+      "title": "Agent Skills",
+      "url": "https://agentskills.io/home",
+      "source": "Hacker News",
+      "hot_score": 7,
+      "timestamp": "2026-02-03T14:09:54"
+    },
+    {
+      "title": "Semantic Caching for RubyLLM: Cut Your AI Costs by 70%",
+      "url": "https://dev.to/stokry/semantic-caching-for-rubyllm-cut-your-ai-costs-by-70-2ibn",
+      "source": "Dev.to",
+      "hot_score": 5,
+      "timestamp": "2026-02-03T07:39:36Z"
+    },
+    {
+      "title": "Building a TUI with Pieces SDK - Part 3: Advanced Features",
+      "url": "https://dev.to/getpieces/building-a-tui-with-pieces-sdk-part-3-advanced-features-3i0o",
+      "source": "Dev.to",
+      "hot_score": 5,
+      "timestamp": "2026-02-02T17:57:24Z"
+    },
+    {
+      "title": "Stop Sending Sensitive Health Data to Servers: Build a Private AI Health Assistant with WebLLM & Transformers.js",
+      "url": "https://dev.to/wellallytech/stop-sending-sensitive-health-data-to-servers-build-a-private-ai-health-assistant-with-webllm--34kh",
+      "source": "Dev.to",
+      "hot_score": 2,
+      "timestamp": "2026-02-03T01:30:00Z"
+    },
+    {
+      "title": "Claude Code: Personal Practical Notes",
+      "url": "https://dev.to/shusukedev/claude-code-personal-practical-notes-2o5h",
+      "source": "Dev.to",
+      "hot_score": 1,
+      "timestamp": "2026-02-02T23:38:22Z"
+    },
+    {
+      "title": "llms.txt: The File Your Website Probably Doesn't Have",
+      "url": "https://dev.to/mohaniyer/llmstxt-the-file-your-website-probably-doesnt-have-3dd5",
+      "source": "Dev.to",
+      "hot_score": 1,
+      "timestamp": "2026-02-03T00:26:35Z"
+    },
+    {
+      "title": "Switch Claude Code providers in seconds with claude-provider (Plugin + CLI)",
+      "url": "https://dev.to/rashed_iqbal/switch-claude-code-providers-in-seconds-with-claude-provider-plugin-cli-3719",
+      "source": "Dev.to",
+      "hot_score": 0,
+      "timestamp": "2026-02-02T22:49:22Z"
+    },
+    {
+      "title": "I built a PC game library that unifies Steam, Epic, Xbox & more and i am looking for feedback",
+      "url": "https://dev.to/olmzgamer/i-built-a-pc-game-library-that-unifies-steam-epic-xbox-more-and-i-am-looking-for-feedback-436g",
+      "source": "Dev.to",
+      "hot_score": 0,
+      "timestamp": "2026-02-02T22:46:24Z"
+    },
+    {
+      "title": "AI & Tech News Briefing - 2026-02-03",
+      "url": "https://dev.to/andrew_collins/ai-tech-news-briefing-2026-02-03-hf0",
+      "source": "Dev.to",
+      "hot_score": 0,
+      "timestamp": "2026-02-03T00:35:43Z"
     }
   ]
 }
