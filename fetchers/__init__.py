@@ -1,5 +1,16 @@
 # AI Daily Collector - 数据抓取模块
 
+from .base import (
+    FetcherStatus,
+    FetcherType,
+    FetcherConfig,
+    FetchResult,
+    BaseFetcher,
+    FetcherRegistry,
+    registry,
+    fetcher,
+)
+
 from .newsnow import (
     NewsNowFetcher,
     NewsNowManager,
@@ -24,6 +35,16 @@ from .reddit import (
 )
 
 __all__ = [
+    # Base
+    'FetcherStatus',
+    'FetcherType',
+    'FetcherConfig',
+    'FetchResult',
+    'BaseFetcher',
+    'FetcherRegistry',
+    'registry',
+    'fetcher',
+    
     # NewsNow
     'NewsNowFetcher',
     'NewsNowManager',

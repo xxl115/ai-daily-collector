@@ -44,6 +44,43 @@ from .filter import (
     filter_articles,
     sort_by_hotness,
 )
+from .cache import (
+    Cache,
+    cache,
+    cached,
+    MemoryCache,
+    DiskCache,
+    RedisCache,
+)
+from .rate_limit import (
+    RateLimiter,
+    limiter,
+    rate_limit,
+    rate_limit_api,
+    rate_limit_crawler,
+    rate_limit_webhook,
+    RateLimitConfig,
+    RateLimitExceeded,
+)
+from .errors import (
+    ErrorSeverity,
+    ErrorCategory,
+    ErrorContext,
+    BaseError,
+    NetworkError,
+    ParseError,
+    AuthenticationError,
+    RateLimitError,
+    DataError,
+    ConfigurationError,
+    FallbackManager,
+    fallback_manager,
+    retry,
+    with_fallback,
+    fallback_return_default,
+    fallback_return_empty,
+    fallback_cache_last_success,
+)
 
 __all__ = [
     # Logger
@@ -94,4 +131,41 @@ __all__ = [
     'keyword_filter',
     'filter_articles',
     'sort_by_hotness',
+    
+    # Cache
+    'Cache',
+    'cache',
+    'cached',
+    'MemoryCache',
+    'DiskCache',
+    'RedisCache',
+    
+    # Rate Limit
+    'RateLimiter',
+    'limiter',
+    'rate_limit',
+    'rate_limit_api',
+    'rate_limit_crawler',
+    'rate_limit_webhook',
+    'RateLimitConfig',
+    'RateLimitExceeded',
+    
+    # Errors
+    'ErrorSeverity',
+    'ErrorCategory',
+    'ErrorContext',
+    'BaseError',
+    'NetworkError',
+    'ParseError',
+    'AuthenticationError',
+    'RateLimitError',
+    'DataError',
+    'ConfigurationError',
+    'FallbackManager',
+    'fallback_manager',
+    'retry',
+    'with_fallback',
+    'fallback_return_default',
+    'fallback_return_empty',
+    'fallback_cache_last_success',
 ]

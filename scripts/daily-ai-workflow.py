@@ -40,6 +40,9 @@ from utils.logger import setup_logger, get_logger
 from utils.rss import RSSGenerator
 from utils.notification import notification_manager
 from utils.filter import keyword_filter, sort_by_hotness
+from utils.cache import cache
+from utils.rate_limit import limiter
+from utils.errors import retry, FallbackManager, fallback_return_empty
 
 # 导入抓取器
 from fetchers import (
