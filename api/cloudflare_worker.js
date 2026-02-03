@@ -3,54 +3,100 @@
  * 
  * 提供 API 网关功能:
  * - 健康检查
- * - 热点数据 API
+ * - 热点数据 API (从 GitHub 读取)
  * - RSS 订阅
  */
 
 // 配置
 const CF_WORKER_NAME = "ai-daily-collector";
+const DATA_URL = "https://raw.githubusercontent.com/xxl115/ai-daily-collector/master/data/daily.json";
 
 const CACHE_TTL = {
-  hotspots: 3600,    // 1小时
-  rss: 1800,         // 30分钟
-  stats: 300,        // 5分钟
+  data: 3600,     // 1小时
+  hotspots: 3600,
+  rss: 1800,      // 30分钟
 };
 
-// 热点数据 (静态示例，实际可从 KV 读取)
-const SAMPLE_HOTSPOTS = [
-  {
-    title: "DeepSeek R1 发布",
-    url: "https://github.com/deepseek-ai/DeepSeek-R1",
-    source: "GitHub Trending",
-    hot_score: 95,
-    timestamp: new Date().toISOString(),
-  },
-  {
-    title: "Claude Code 编程助手",
-    url: "https://github.com/anthropics/claude-code",
-    source: "GitHub",
-    hot_score: 92,
-    timestamp: new Date().toISOString(),
-  },
-  {
-    title: "MCP 协议发布",
-    url: "https://modelcontextprotocol.io",
-    source: "Hacker News",
-    hot_score: 88,
-    timestamp: new Date().toISOString(),
-  },
-];
+/**
+ * 缓存辅助函数
+ */
+const cache = new Map();
+
+async function getCached(key) {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.time < CACHE_TTL[key] * 1000) {
+    return cached.data;
+  }
+  return null;
+}
+
+function setCache(key, data) {
+  cache.set(key, { data, time: Date.now() });
+}
+
+/**
+ * 获取热点数据
+ */
+async function fetchHotspots() {
+  // 检查缓存
+  const cached = getCached('hotspots');
+  if (cached) return cached;
+  
+  try {
+    const response = await fetch(DATA_URL, {
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    setCache('hotspots', data);
+    return data;
+  } catch (error) {
+    console.error('Fetch hotspots error:', error);
+    return null;
+  }
+}
+
+/**
+ * 生成 RSS
+ */
+function generateRSS(items) {
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>AI Daily Hotspots</title>
+    <link>https://${CF_WORKER_NAME}.workers.dev</link>
+    <description>Daily AI News Hotspots - Auto Generated</description>
+    <language>en-us</language>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <atom:link href="https://${CF_WORKER_NAME}.workers.dev/rss/latest.xml" rel="self" type="application/rss+xml"/>
+    ${items.slice(0, 20).map(item => `
+    <item>
+      <title><![CDATA[${item.title || 'Untitled'}]]></title>
+      <link>${item.url || '#'}</link>
+      <description><![CDATA[${item.source || 'Unknown'} - Hot Score: ${item.hot_score || 0}]]></description>
+      <pubDate>${new Date(item.timestamp || Date.now()).toUTCString()}</pubDate>
+      <guid>${item.url || Date.now()}</guid>
+    </item>`).join('')}
+  </channel>
+</rss>`;
+  return xml;
+}
 
 /**
  * 路由分发
  */
-async function routeRequest(path, method, url, request, env, ctx) {
+async function routeRequest(path, method, url, request) {
   // 根路径 - 返回使用说明
   if (path === '/' || path === '') {
     return new Response(JSON.stringify({
       name: "AI Daily Collector",
       version: "1.0.0",
       status: "ok",
+      data_source: DATA_URL,
       endpoints: {
         health: "/health",
         hotspots: "/api/hotspots",
@@ -76,13 +122,36 @@ async function routeRequest(path, method, url, request, env, ctx) {
 
   // 热点 API
   if (path === '/api/hotspots' || path === '/api/hotspots/') {
-    const limit = parseInt(url.searchParams.get('limit') || '20');
-    const data = SAMPLE_HOTSPOTS.slice(0, limit);
+    const limit = parseInt(url.searchParams.get('limit') || '30');
+    const rawData = await fetchHotspots();
+    
+    if (!rawData) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Failed to fetch data",
+        fallback: true,
+        hotspots: [
+          {
+            title: "AI Daily Collector - 数据采集中",
+            url: "https://github.com/xxl115/ai-daily-collector",
+            source: "GitHub",
+            hot_score: 100,
+            timestamp: new Date().toISOString(),
+          }
+        ]
+      }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    const items = rawData.hotspots || [];
     
     return new Response(JSON.stringify({
       success: true,
-      count: data.length,
-      data: data,
+      total: items.length,
+      limit: limit,
+      data: items.slice(0, limit),
+      generated_at: rawData.generated_at,
       timestamp: new Date().toISOString(),
     }), {
       headers: { 'Content-Type': 'application/json' }
@@ -91,7 +160,10 @@ async function routeRequest(path, method, url, request, env, ctx) {
 
   // RSS 订阅
   if (path.startsWith('/rss')) {
-    const rss = generateRSS(SAMPLE_HOTSPOTS);
+    const rawData = await fetchHotspots();
+    const items = rawData?.hotspots || [];
+    const rss = generateRSS(items);
+    
     return new Response(rss, {
       headers: {
         'Content-Type': 'application/rss+xml',
@@ -111,36 +183,10 @@ async function routeRequest(path, method, url, request, env, ctx) {
 }
 
 /**
- * 生成 RSS
- */
-function generateRSS(items) {
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>AI Daily Hotspots</title>
-    <link>https://${CF_WORKER_NAME}.workers.dev</link>
-    <description>Daily AI News Hotspots</description>
-    <language>en-us</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="https://${CF_WORKER_NAME}.workers.dev/rss/latest.xml" rel="self" type="application/rss+xml"/>
-    ${items.map(item => `
-    <item>
-      <title><![CDATA[${item.title}]]></title>
-      <link>${item.url}</link>
-      <description><![CDATA[${item.source} - Hot Score: ${item.hot_score}]]></description>
-      <pubDate>${new Date(item.timestamp).toUTCString()}</pubDate>
-      <guid>${item.url}</guid>
-    </item>`).join('')}
-  </channel>
-</rss>`;
-  return xml;
-}
-
-/**
  * 处理请求
  */
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request) {
     const url = new URL(request.url);
     const path = url.pathname;
     const method = request.method;
@@ -163,7 +209,7 @@ export default {
 
     try {
       // 路由分发
-      const response = await routeRequest(path, method, url, request, env, ctx);
+      const response = await routeRequest(path, method, url, request);
       
       // 添加 CORS 头
       for (const [key, value] of Object.entries(corsHeaders)) {

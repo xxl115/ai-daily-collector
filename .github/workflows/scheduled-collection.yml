@@ -32,9 +32,7 @@ jobs:
       - name: Generate daily data
         run: |
           mkdir -p data/
-          printf '%s\n' 'import json' 'from datetime import datetime' '' 'hotspots = [' '  {' '"title": "AI Daily Collector running",' '"url": "https://github.com/xxl115/ai-daily-collector",' '"source": "GitHub",' '"hot_score": 100,' '"timestamp": datetime.now().isoformat()' '  }' ']' '' 'data = {' '  "success": True,' '  "hotspots": hotspots,' '  "count": len(hotspots),' '  "collected_at": datetime.now().isoformat()' '}' '' 'with open("data/daily.json", "w") as f:' '  json.dump(data, f, ensure_ascii=False, indent=2)' '' 'print(f"Generated {len(hotspots)} hotspots")' > generate_data.py
-          python3 generate_data.py
-          rm generate_data.py
+          python3 scripts/collect-real.py
 
       - name: Commit results
         if: github.event_name == 'schedule'
