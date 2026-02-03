@@ -229,6 +229,113 @@ fly deploy
 5. 配置环境变量
 6. 点击 "Deploy"
 
+### 7. Cloudflare Workers
+
+Cloudflare Workers 是边缘计算平台，适合部署轻量级 API 网关。
+
+#### 方式 1: Wrangler CLI
+
+```bash
+# 1. 安装 Wrangler
+npm install -g wrangler
+
+# 2. 登录 Cloudflare
+wrangler login
+
+# 3. 创建 KV 命名空间（用于缓存）
+wrangler kv:namespace create "CACHE"
+
+# 4. 编辑 wrangler.toml，填入 KV ID
+
+# 5. 部署到生产环境
+wrangler deploy --env production
+
+# 或开发模式预览
+wrangler dev
+```
+
+#### 方式 2: GitHub Actions
+
+配置以下 Secrets:
+
+| Secret 名称 | 说明 | 示例 |
+|------------|------|------|
+| `CF_API_TOKEN` | Cloudflare API Token | - |
+| `CF_ACCOUNT_ID` | Cloudflare Account ID | - |
+| `CF_WORKER_NAME` | Worker 名称 | `ai-daily-collector` |
+
+获取 API Token:
+1. 访问 [Cloudflare Dashboard](https://dash.cloudflare.com/profile/api-tokens)
+2. 点击 "Create Token"
+3. 选择 "Edit Cloudflare Workers" 模板
+4. 复制生成的 Token
+
+#### 方式 3: Dashboard 手动部署
+
+1. 访问 [Cloudflare Dashboard](https://dash.cloudflare.com)
+2. 进入 "Workers & Pages" → "Create Application"
+3. 点击 "Create Worker"
+4. 复制 `api/cloudflare_worker.js` 的内容
+5. 配置 KV 绑定:
+   - 变量名称: `CACHE`
+   - KV 命名空间: 选择你创建的命名空间
+6. 点击 "Deploy"
+
+#### Cloudflare Workers 端点
+
+部署后会获得一个域名，例如: `ai-daily-collector.workers.dev`
+
+| 端点 | 说明 |
+|------|------|
+| `GET /health` | 健康检查 |
+| `GET /api/hotspots` | 热点列表 |
+| `GET /api/v2ex` | V2EX 热门 |
+| `GET /api/reddit` | Reddit 热门 |
+| `GET /api/newsnow` | 中文平台 |
+| `GET /api/github` | GitHub Trending |
+| `GET /rss` | RSS Feed |
+| `GET /rss/latest` | 最新 RSS |
+| `GET /api/stats` | 统计信息 |
+
+#### 缓存配置
+
+Workers 使用 Cloudflare KV 进行缓存:
+
+| 数据类型 | TTL |
+|----------|-----|
+| 热点列表 | 1 小时 |
+| RSS Feed | 30 分钟 |
+| 统计信息 | 5 分钟 |
+
+#### 自定义域名
+
+```bash
+# 绑定自定义域名
+wrangler routes add "https://api.your-domain.com/*" --zone-name=your-domain.com
+```
+
+或在 Dashboard 中配置自定义域名。
+
+### 8. Cloudflare Pages
+
+Cloudflare Pages 适合部署静态内容和函数。
+
+```bash
+# 1. 安装 Wrangler
+npm install -g wrangler
+
+# 2. 登录 Cloudflare
+wrangler login
+
+# 3. 创建 Pages 项目
+wrangler pages project create ai-daily-collector --production-branch=master
+
+# 4. 部署静态资源
+wrangler pages deploy ./public --project-name=ai-daily-collector
+```
+
+访问: `https://ai-daily-collector.pages.dev`
+
 ---
 
 ## 环境变量配置

@@ -323,3 +323,99 @@ jobs:
                 \"text\": \"✅ AI Daily Collector 部署完成! Commit: ${{ github.sha }}\"
               }
             }"
+
+  # ============ 部署到 Cloudflare Workers ============
+  deploy-cloudflare:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Wrangler
+        run: |
+          npm install -g wrangler
+
+      - name: Login to Cloudflare
+        run: |
+          echo "${{ secrets.CF_API_TOKEN }}" | wrangler login --api-token
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      - name: Create KV Namespace (if not exists)
+        run: |
+          wrangler kv:namespace create "CACHE" --env CACHE 2>/dev/null || echo "KV namespace may already exist"
+
+      - name: Get KV Namespace ID
+        id: kv
+        run: |
+          KV_ID=$(wrangler kv:namespace list 2>/dev/null | grep -oP '(?<=id: )[a-z0-9-]+' | head -1 || echo "")
+          echo "KV_NAMESPACE_ID=$KV_ID" >> $GITHUB_OUTPUT
+
+      - name: Update wrangler.toml with KV ID
+        run: |
+          if [ -n "${{ env.KV_NAMESPACE_ID }}" ]; then
+            sed -i "s/your-kv-namespace-id/${{ env.KV_NAMESPACE_ID }}/g" wrangler.toml
+          fi
+          cat wrangler.toml
+
+      - name: Deploy to Cloudflare Workers
+        run: |
+          wrangler deploy --env production
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
+      - name: Cloudflare Worker Status
+        run: |
+          echo "✅ Cloudflare Workers 部署完成!"
+          echo "🌐 URL: https://${{ secrets.CF_WORKER_NAME }}.workers.dev"
+          echo ""
+          echo "测试部署结果:"
+          curl -s https://${{ secrets.CF_WORKER_NAME }}.workers.dev/health | head -20
+
+  # ============ 部署到 Cloudflare Pages ============
+  deploy-cloudflare-pages:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Wrangler
+        run: |
+          npm install -g wrangler
+
+      - name: Login to Cloudflare
+        run: |
+          echo "${{ secrets.CF_API_TOKEN }}" | wrangler login --api-token
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      - name: Deploy to Cloudflare Pages
+        run: |
+          wrangler pages project create ai-daily-collector --production-branch=master 2>/dev/null || true
+          wrangler pages deploy ./public --project-name=ai-daily-collector
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
+      - name: Cloudflare Pages Status
+        run: |
+          echo "✅ Cloudflare Pages 部署完成!"
+          echo "🌐 URL: https://ai-daily-collector.pages.dev"
+
+  # ============ 部署通知 ============
+  notify-deploy:
+    needs: [deploy, deploy-vps, deploy-k8s, deploy-fly, deploy-vercel, deploy-render, deploy-lambda, deploy-railway, deploy-coolify, deploy-cloudflare, deploy-cloudflare-pages]
+    if: always()
