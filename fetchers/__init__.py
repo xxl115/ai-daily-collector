@@ -82,6 +82,34 @@ from .qbitai import (
     fetch_qbitai_hotspots,
 )
 
+from .producthunt import (
+    ProductHuntFetcher,
+    producthunt_fetcher,
+    fetch_producthunt,
+    fetch_producthunt_hotspots,
+)
+
+from .arxiv import (
+    ArxivFetcher,
+    arxiv_fetcher,
+    fetch_arxiv,
+    fetch_arxiv_hotspots,
+)
+
+from .huggingface import (
+    HuggingFaceFetcher,
+    huggingface_fetcher,
+    fetch_huggingface,
+    fetch_huggingface_hotspots,
+)
+
+from .devto import (
+    DevToFetcher,
+    devto_fetcher,
+    fetch_devto,
+    fetch_devto_hotspots,
+)
+
 __all__ = [
     # Base
     'FetcherStatus',
@@ -155,6 +183,30 @@ __all__ = [
     'qbitai_fetcher',
     'fetch_qbitai',
     'fetch_qbitai_hotspots',
+
+    # Product Hunt
+    'ProductHuntFetcher',
+    'producthunt_fetcher',
+    'fetch_producthunt',
+    'fetch_producthunt_hotspots',
+
+    # ArXiv
+    'ArxivFetcher',
+    'arxiv_fetcher',
+    'fetch_arxiv',
+    'fetch_arxiv_hotspots',
+
+    # Hugging Face
+    'HuggingFaceFetcher',
+    'huggingface_fetcher',
+    'fetch_huggingface',
+    'fetch_huggingface_hotspots',
+
+    # Dev.to
+    'DevToFetcher',
+    'devto_fetcher',
+    'fetch_devto',
+    'fetch_devto_hotspots',
 ]
 
 
@@ -288,6 +340,22 @@ def fetch_by_config(source_config: dict) -> list:
         elif source_type == "hackernews":
             # Hacker News (使用 Firebase API)
             return _fetch_hacker_news(limit=limit, keyword_filter=filters.get("keyword", ""))
+
+        elif source_type == "producthunt":
+            # Product Hunt
+            return fetch_producthunt_hotspots(limit=limit)
+
+        elif source_type == "arxiv":
+            # ArXiv 论文
+            return fetch_arxiv_hotspots(limit=limit)
+
+        elif source_type == "huggingface":
+            # Hugging Face
+            return fetch_huggingface_hotspots(limit=limit)
+
+        elif source_type == "devto":
+            # Dev.to
+            return fetch_devto_hotspots(limit=limit)
 
         else:
             logger.warning(f"未知的数据源类型: {source_type}")
