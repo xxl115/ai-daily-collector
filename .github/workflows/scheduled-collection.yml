@@ -2,6 +2,7 @@ name: AI Daily Collection (Scheduled)
 
 on:
   schedule:
+    # 每天 6:00, 14:00, 22:00 UTC (北京时间 14:00, 22:00, 06:00)
     - cron: '0 6 * * *'
     - cron: '0 14 * * *'
     - cron: '0 22 * * *'
@@ -17,6 +18,7 @@ env:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   collect-and-deploy:
@@ -38,35 +40,55 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install requests beautifulsoup4 lxml
+          pip install -r requirements.txt
+          # Remove dev/test dependencies we don't need in CI
+          pip uninstall -y pytest pytest-cov pytest-asyncio flake8 black mypy pre-commit ipython fastapi uvicorn pydantic cryptography redis || true
+          sudo apt-get install -y jq
 
-      - name: Generate daily data
+      - name: Run AI Daily Collection
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
         run: |
-          mkdir -p data/
-          python3 scripts/collect-real.py
+          chmod +x scripts/collect-ai-daily-cloud.sh
+          ./scripts/collect-ai-daily-cloud.sh
 
       - name: Show results
         run: |
           echo "📊 采集结果预览:"
-          if [ -f "data/daily.json" ]; then
-            head -50 data/daily.json
-            echo ""
-            echo "✅ 数据文件已生成"
+          echo ""
+          if [ -d "ai/articles/original" ]; then
+            ARTICLE_COUNT=$(find ai/articles/original -name "*.md" 2>/dev/null | wc -l)
+            echo "✅ 文章文件: ${ARTICLE_COUNT} 个"
+            echo "   目录: ai/articles/original/"
           else
-            echo "❌ 数据文件未生成"
-            exit 1
+            echo "⚠️ 文章目录未创建"
           fi
+          echo ""
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-articles
+          path: ai/articles/original/
 
       - name: Commit results
         run: |
+          cd ${{ github.workspace }}
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -f "data/daily.json" ] && [ -s "data/daily.json" ]; then
-            git add data/
-            git commit -m "AI Daily: $(date '+%Y-%m-%d %H:%M')" || echo "No changes to commit"
-            git push origin master || echo "Push failed"
+
+          # 提交文章文件
+          if [ -d "ai/articles/original" ]; then
+            git add ai/articles/original/ 2>/dev/null || true
+          fi
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
           else
-            echo "⚠️ No data to commit"
+            git commit -m "AI Daily: $(date +%Y-%m-%d)" || echo "Commit failed"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:master || echo "Push failed"
           fi
 
       - name: Setup Node.js
@@ -109,9 +131,12 @@ jobs:
         if: always()
         run: |
           WORKER_NAME="${{ steps.worker-name.outputs.name }}"
+          ARTICLE_COUNT=$(find ai/articles/original -name "*.md" 2>/dev/null | wc -l || echo "0")
+
           echo "## 📊 AI Daily 数据采集" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **触发时间**: $(date '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "- **触发方式**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **采集文章**: ${ARTICLE_COUNT} 篇" >> $GITHUB_STEP_SUMMARY
           echo "- **Worker**: https://${WORKER_NAME}.workers.dev" >> $GITHUB_STEP_SUMMARY
           echo "- **前端**: https://ai-daily-collector.pages.dev" >> $GITHUB_STEP_SUMMARY
