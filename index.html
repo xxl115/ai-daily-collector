@@ -537,6 +537,13 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
         
+        // XSS 防护 - HTML 转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
         // 相对时间
         function timeAgo(dateStr) {
             if (!dateStr) return '未知时间';
@@ -667,18 +674,18 @@
             }
             
             articles.innerHTML = filtered.map((item, index) => `
-                <article class="article-card" onclick="window.open('${item.url}', '_blank')">
+                <article class="article-card" onclick="window.open('${item.url}', '_blank', 'noopener,noreferrer')">
                     <div class="article-content">
                         <div class="article-header">
                             <span class="source-tag">${item.source}</span>
                             <span class="hot-score">⭐ ${item.hot_score}</span>
                         </div>
-                        <h3 class="article-title">${index + 1}. ${item.title}</h3>
+                        <h3 class="article-title">${index + 1}. ${escapeHtml(item.title)}</h3>
                         <div class="article-meta">
                             <span class="article-time">🕐 ${timeAgo(item.published_at)}</span>
                             <div class="article-actions">
-                                <button class="action-btn" onclick="event.stopPropagation(); bookmark('${item.title.replace(/'/g, "\\'")}')">🔖</button>
-                                <button class="action-btn" onclick="event.stopPropagation(); share('${item.title.replace(/'/g, "\\'")}')">📤</button>
+                                <button class="action-btn" onclick="event.stopPropagation(); bookmark('${escapeHtml(item.title)}')">🔖</button>
+                                <button class="action-btn" onclick="event.stopPropagation(); share('${escapeHtml(item.title)}')">📤</button>
                             </div>
                         </div>
                     </div>
