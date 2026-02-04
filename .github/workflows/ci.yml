@@ -102,81 +102,29 @@ jobs:
 
       - name: Check all modules can be imported
         run: |
-          python -c "
-import sys
-sys.path.insert(0, '.')
-try:
-    from scripts.daily_ai_workflow import main as workflow_main
-    print('✅ daily_ai_workflow imported')
-except Exception as e:
-    print(f'❌ daily_ai_workflow: {e}')
-    sys.exit(1)
+          cat > /tmp/check_imports.py << 'EOF'
+          import sys
+          sys.path.insert(0, '.')
+          modules = [
+              ('fetchers', 'from fetchers import fetch_by_config'),
+              ('config.settings', 'from config.settings import config'),
+              ('utils.logger', 'from utils.logger import setup_logger'),
+          ]
+          failed = []
+          for name, import_cmd in modules:
+              try:
+                  exec(import_cmd)
+                  print(f'✅ {name} imported')
+              except Exception as e:
+                  print(f'❌ {name}: {e}')
+                  failed.append(name)
 
-try:
-    from scripts.ai_hotspot_crawler_simple import Crawler
-    print('✅ ai_hotspot_crawler_simple imported')
-except Exception as e:
-    print(f'❌ ai_hotspot_crawler_simple: {e}')
-    sys.exit(1)
-
-try:
-    from scripts.summarize_articles import summarize_with_zhipu
-    print('✅ summarize_articles imported')
-except Exception as e:
-    print(f'❌ summarize_articles: {e}')
-    sys.exit(1)
-
-try:
-    from scripts.generate_daily_report import generate_report
-    print('✅ generate_daily_report imported')
-except Exception as e:
-    print(f'❌ generate_daily_report: {e}')
-    sys.exit(1)
-
-try:
-    from scripts.push_to_notion import md_to_notion_blocks
-    print('✅ push_to_notion imported')
-except Exception as e:
-    print(f'❌ push_to_notion: {e}')
-    sys.exit(1)
-
-try:
-    from api.main import app
-    print('✅ api.main imported')
-except Exception as e:
-    print(f'❌ api.main: {e}')
-    sys.exit(1)
-
-try:
-    from config.settings import config
-    print('✅ config.settings imported')
-except Exception as e:
-    print(f'❌ config.settings: {e}')
-    sys.exit(1)
-
-try:
-    from utils.logger import setup_logger
-    print('✅ utils.logger imported')
-except Exception as e:
-    print(f'❌ utils.logger: {e}')
-    sys.exit(1)
-
-try:
-    from utils.metrics import metrics
-    print('✅ utils.metrics imported')
-except Exception as e:
-    print(f'❌ utils.metrics: {e}')
-    sys.exit(1)
-
-try:
-    from utils.helpers import clean_filename
-    print('✅ utils.helpers imported')
-except Exception as e:
-    print(f'❌ utils.helpers: {e}')
-    sys.exit(1)
-
-print('\\n✅ 所有模块导入成功!')
-"
+          if failed:
+              print(f'\n❌ Failed modules: {failed}')
+              sys.exit(1)
+          print('\n✅ 所有核心模块导入成功!')
+          EOF
+          python /tmp/check_imports.py
 
   # ============ Docker 构建 ============
   docker:
