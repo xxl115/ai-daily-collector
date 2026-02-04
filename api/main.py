@@ -412,14 +412,75 @@ async def get_stats():
     """
     today = datetime.now().strftime("%Y-%m-%d")
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    data_dir = get_data_dir()
+    
+    # 读取 daily.json 获取实时统计
+    today_count = 0
+    yesterday_count = 0
+    total_sources = set()
+    hot_score_sum = 0
+    
+    try:
+        daily_file = data_dir / "daily.json"
+        if daily_file.exists():
+            import json
+            data = json.loads(daily_file.read_text())
+            hotspots = data.get("hotspots", [])
+            
+            for item in hotspots:
+                total_sources.add(item.get("source", "Unknown"))
+                hot_score_sum += item.get("hot_score", 0)
+                if item.get("published_at", "").startswith(today):
+                    today_count += 1
+                elif item.get("published_at", "").startswith(yesterday):
+                    yesterday_count += 1
+            
+            today_count = today_count or len(hotspots)  # 如果没有时间数据，全部算今日
+    except Exception:
+        pass
     
     stats = {
-        "today": {"date": today, "articles": 0, "reports": 1},
-        "yesterday": {"date": yesterday, "articles": 0, "reports": 1},
-        "total": {"articles": 0, "reports": 0}
+        "today": {"date": today, "articles": today_count, "hot_score_avg": round(hot_score_sum / max(today_count, 1), 1)},
+        "yesterday": {"date": yesterday, "articles": yesterday_count, "hot_score_avg": 0},
+        "total": {"articles": today_count + yesterday_count, "sources": len(total_sources)}
     }
     
     return stats
+
+
+@app.get("/api/v1/sources", tags=["📝 文章"])
+async def list_sources():
+    """
+    📋 获取来源统计
+    
+    返回所有数据来源及其文章数量。
+    """
+    data_dir = get_data_dir()
+    
+    try:
+        daily_file = data_dir / "daily.json"
+        if daily_file.exists():
+            import json
+            data = json.loads(daily_file.read_text())
+            hotspots = data.get("hotspots", [])
+            
+            # 统计来源
+            source_counts = {}
+            for item in hotspots:
+                source = item.get("source", "Unknown")
+                source_counts[source] = source_counts.get(source, 0) + 1
+            
+            # 按数量排序
+            sources = sorted(
+                [{"name": k, "count": v} for k, v in source_counts.items()],
+                key=lambda x: -x["count"]
+            )
+            
+            return {"success": True, "total": len(sources), "sources": sources}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    return {"success": True, "total": 0, "sources": []}
 
 
 # ============ RSS Feed ============
