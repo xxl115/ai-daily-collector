@@ -12,15 +12,19 @@ from xml.dom import minidom
 
 from fastapi import FastAPI, HTTPException, Query, Response, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import XMLResponse, PlainTextResponse
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 import uvicorn
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent))
 
-# 导入数据模块
-from scripts.generate_daily_report import generate_report, CATEGORIES
+# 导入数据模块（可选，如果不存在则静默忽略）
+try:
+    from scripts.generate_daily_report import generate_report, CATEGORIES
+except ImportError:
+    generate_report = None
+    CATEGORIES = {}
 
 # ============ 应用配置 ============
 
@@ -555,7 +559,7 @@ async def get_rss_feed(
         summary_dir = get_project_root() / "ai" / "articles" / "summary" / target_date
     
     if not summary_dir.exists():
-        return XMLResponse(content=generate_empty_rss())
+        return Response(content=generate_empty_rss(), media_type="application/rss+xml")
     
     # 收集文章
     articles = []
@@ -568,7 +572,7 @@ async def get_rss_feed(
     
     # 生成 RSS
     rss_content = generate_rss(articles, target_date)
-    return XMLResponse(content=rss_content, media_type="application/rss+xml")
+    return Response(content=rss_content, media_type="application/rss+xml")
 
 
 @app.get("/rss/latest", tags=["📡 RSS 订阅"])
@@ -597,7 +601,7 @@ async def get_rss_feed_latest(
             break
     
     rss_content = generate_rss(articles, datetime.now().strftime("%Y-%m-%d"))
-    return XMLResponse(content=rss_content, media_type="application/rss+xml")
+    return Response(content=rss_content, media_type="application/rss+xml")
 
 
 def generate_rss(articles: List[Dict], date: str) -> str:
