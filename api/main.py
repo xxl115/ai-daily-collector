@@ -307,6 +307,10 @@ async def get_report_by_date(date: str):
 
 @app.get("/api/v1/articles", response_model=ArticleListResponse, tags=["📝 文章"])
 async def list_articles(
+    period: Optional[str] = Query(
+        None,
+        description="时间段筛选：today/yesterday/week/month"
+    ),
     date: Optional[str] = Query(
         None, 
         description="日期，格式 YYYY-MM-DD，默认今天"
@@ -322,10 +326,11 @@ async def list_articles(
     """
     📝 获取文章列表
     
-    支持日期筛选、分类筛选、关键词搜索和分页。
+    支持日期筛选、时间段筛选、分类筛选、关键词搜索和分页。
     
     Args:
-        date: 日期筛选
+        period: 时间段筛选（today/yesterday/week/month）
+        date: 日期筛选（格式 YYYY-MM-DD）
         category: 分类筛选
         page: 页码（从 1 开始）
         page_size: 每页数量（最大 100）
@@ -334,30 +339,68 @@ async def list_articles(
     Returns:
         文章列表数据
     """
-    target_date = date or datetime.now().strftime("%Y-%m-%d")
-    summary_dir = get_project_root() / "ai" / "articles" / "summary" / target_date
+    # 处理 period 参数
+    target_date = None
+    if period:
+        if period == 'today':
+            target_date = datetime.now().strftime("%Y-%m-%d")
+        elif period == 'yesterday':
+            target_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        elif period == 'week':
+            # 最近 7 天
+            target_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        elif period == 'month':
+            # 最近 30 天
+            target_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
     
-    if not summary_dir.exists():
-        raise HTTPException(
-            status_code=404,
-            detail=f"未找到 {target_date} 的文章"
-        )
-    
-    # 获取所有文章
+    # 获取所有文章（支持 period）
     articles = []
-    for f in summary_dir.glob("*.md"):
-        article = parse_article_file(f)
-        if article:
-            # 分类筛选
-            if category:
-                if category.lower() not in article.get("title", "").lower():
-                    continue
-            # 关键词搜索
-            if keyword:
-                if keyword.lower() not in article.get("title", "").lower() and \
-                   keyword.lower() not in article.get("summary", "").lower():
-                    continue
-            articles.append(article)
+    
+    if period in ['week', 'month']:
+        # 多日期聚合
+        days = 7 if period == 'week' else 30
+        for i in range(days):
+            check_date = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
+            date_dir = get_project_root() / "ai" / "articles" / "summary" / check_date
+            if date_dir.exists():
+                for f in date_dir.glob("*.md"):
+                    article = parse_article_file(f)
+                    if article:
+                        # 分类筛选
+                        if category:
+                            if category.lower() not in article.get("title", "").lower():
+                                continue
+                        # 关键词搜索
+                        if keyword:
+                            if keyword.lower() not in article.get("title", "").lower() and \
+                               keyword.lower() not in article.get("summary", "").lower():
+                                continue
+                        article["date"] = check_date  # 添加日期信息
+                        articles.append(article)
+    else:
+        # 单日期（today/yesterday 或 date）
+        target_date = date or datetime.now().strftime("%Y-%m-%d")
+        summary_dir = get_project_root() / "ai" / "articles" / "summary" / target_date
+        
+        if not summary_dir.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"未找到 {target_date} 的文章"
+            )
+        
+        for f in summary_dir.glob("*.md"):
+            article = parse_article_file(f)
+            if article:
+                # 分类筛选
+                if category:
+                    if category.lower() not in article.get("title", "").lower():
+                        continue
+                # 关键词搜索
+                if keyword:
+                    if keyword.lower() not in article.get("title", "").lower() and \
+                       keyword.lower() not in article.get("summary", "").lower():
+                        continue
+                articles.append(article)
     
     # 分页
     total = len(articles)
@@ -366,7 +409,8 @@ async def list_articles(
     paginated_articles = articles[start:end]
     
     return {
-        "date": target_date,
+        "date": target_date or datetime.now().strftime("%Y-%m-%d"),
+        "period": period,
         "total": total,
         "page": page,
         "page_size": page_size,
