@@ -18,6 +18,7 @@ import uvicorn
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # 导入数据模块（可选，如果不存在则静默忽略）
 try:
@@ -25,6 +26,12 @@ try:
 except ImportError:
     generate_report = None
     CATEGORIES = {}
+
+# 导入 API v2 路由
+try:
+    from api.v2 import v2_router
+except ImportError:
+    v2_router = None
 
 # ============ 应用配置 ============
 
@@ -78,6 +85,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 注册 API v2 路由（如果可用）
+try:
+    from .v2 import v2_router
+    app.include_router(v2_router)
+    print("✅ API v2 routes registered")
+except ImportError as e:
+    print(f"⚠️  API v2 routes not available: {e}")
 
 
 # ============ 数据模型 ============

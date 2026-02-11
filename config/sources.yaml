@@ -2,8 +2,8 @@
 # https://github.com/xxl115/ai-daily-collector
 
 sources:
-  # ===== NewsNow 中文热点 (23个平台) =====
-  - name: "NewsNow 今日头条"
+  # ===== NewsNow 中文热点 (只保留1个主要源，避免重复) =====
+  - name: "NewsNow 中文热点"
     type: "newsnow"
     platform_id: "toutiao"
     url: "https://newsnow.busiyi.world/api"
@@ -12,13 +12,14 @@ sources:
     filters:
       keyword: "AI|大模型|人工智能"
       hours: 24
-      max_articles: 10
+      max_articles: 20
 
+  # 禁用重复的 NewsNow 源（它们抓取相同数据）
   - name: "NewsNow 百度热搜"
     type: "newsnow"
     platform_id: "baidu"
     url: "https://newsnow.busiyi.world/api"
-    enabled: true
+    enabled: false  # 禁用：重复数据
     language: "zh"
     filters:
       keyword: "AI|大模型|人工智能"
@@ -29,7 +30,7 @@ sources:
     type: "newsnow"
     platform_id: "weibo"
     url: "https://newsnow.busiyi.world/api"
-    enabled: true
+    enabled: false  # 禁用：重复数据
     language: "zh"
     filters:
       keyword: "AI|大模型|人工智能"
@@ -40,7 +41,7 @@ sources:
     type: "newsnow"
     platform_id: "zhihu"
     url: "https://newsnow.busiyi.world/api"
-    enabled: true
+    enabled: false  # 禁用：重复数据
     language: "zh"
     filters:
       keyword: "AI|大模型|人工智能"
@@ -51,7 +52,7 @@ sources:
     type: "newsnow"
     platform_id: "bilibili"
     url: "https://newsnow.busiyi.world/api"
-    enabled: true
+    enabled: false  # 禁用：重复数据
     language: "zh"
     filters:
       keyword: "AI|大模型|人工智能"
@@ -62,7 +63,7 @@ sources:
     type: "newsnow"
     platform_id: "github"
     url: "https://newsnow.busiyi.world/api"
-    enabled: true
+    enabled: false  # 禁用：与 Hacker News 重复
     language: "en"
     filters:
       keyword: "AI|agent|llm"
@@ -91,7 +92,7 @@ sources:
       hours: 24
       max_articles: 10
 
-  # ===== AI 官方博客 (10个) =====
+  # ===== AI 官方博客 (保留主要) =====
   - name: "OpenAI Blog"
     type: "ai_blogs"
     blog_id: "openai"
@@ -101,23 +102,23 @@ sources:
     filters:
       keyword: ""
       hours: 24
-      max_articles: 5
-
-  - name: "Google AI"
-    type: "ai_blogs"
-    blog_id: "google-ai"
-    url: "https://blog.google/technology/ai/rss.xml"
-    enabled: true
-    language: "en"
-    filters:
-      keyword: ""
-      hours: 24
-      max_articles: 5
+      max_articles: 10
 
   - name: "Anthropic"
     type: "ai_blogs"
     blog_id: "anthropic"
     url: "https://www.anthropic.com/rss"
+    enabled: true
+    language: "en"
+    filters:
+      keyword: ""
+      hours: 24
+      max_articles: 10
+
+  - name: "Google AI"
+    type: "ai_blogs"
+    blog_id: "google-ai"
+    url: "https://blog.google/technology/ai/rss.xml"
     enabled: true
     language: "en"
     filters:
@@ -140,7 +141,7 @@ sources:
     type: "ai_blogs"
     blog_id: "deepmind"
     url: "https://deepmind.google/blog/"
-    enabled: true
+    enabled: false  # 禁用：RSS不可用
     language: "en"
     filters:
       keyword: ""
@@ -151,7 +152,7 @@ sources:
     type: "ai_blogs"
     blog_id: "microsoft-ai"
     url: "https://www.microsoft.com/en-us/ai"
-    enabled: true
+    enabled: false  # 禁用：减少数据源
     language: "en"
     filters:
       keyword: ""
@@ -162,7 +163,7 @@ sources:
     type: "ai_blogs"
     blog_id: "aws-ai"
     url: "https://aws.amazon.com/blogs/machine-learning/feed/"
-    enabled: true
+    enabled: false  # 禁用：减少数据源
     language: "en"
     filters:
       keyword: ""
@@ -173,7 +174,7 @@ sources:
     type: "ai_blogs"
     blog_id: "nvidia-ai"
     url: "https://blogs.nvidia.com/blog/category/deep-learning/feed/"
-    enabled: true
+    enabled: false  # 禁用：减少数据源
     language: "en"
     filters:
       keyword: ""
@@ -184,7 +185,7 @@ sources:
     type: "ai_blogs"
     blog_id: "stability-ai"
     url: "https://stability.ai/blog"
-    enabled: true
+    enabled: false  # 禁用：减少数据源
     language: "en"
     filters:
       keyword: ""
@@ -195,14 +196,14 @@ sources:
     type: "ai_blogs"
     blog_id: "mistral"
     url: "https://mistral.ai/news/"
-    enabled: true
+    enabled: false  # 禁用：减少数据源
     language: "en"
     filters:
       keyword: ""
       hours: 24
       max_articles: 5
 
-  # ===== 英文科技媒体 (9个) =====
+  # ===== 英文科技媒体 (精简) =====
   - name: "MIT Tech Review"
     type: "tech_media"
     media_id: "mit-tech"
@@ -225,28 +226,6 @@ sources:
       hours: 24
       max_articles: 10
 
-  - name: "The Verge"
-    type: "tech_media"
-    media_id: "theverge"
-    url: "https://www.theverge.com/rss/index.xml"
-    enabled: true
-    language: "en"
-    filters:
-      keyword: "AI|technology"
-      hours: 24
-      max_articles: 10
-
-  - name: "Wired"
-    type: "tech_media"
-    media_id: "wired"
-    url: "https://www.wired.com/feed/rss"
-    enabled: true
-    language: "en"
-    filters:
-      keyword: "AI|technology"
-      hours: 24
-      max_articles: 10
-
   - name: "VentureBeat"
     type: "tech_media"
     media_id: "venturebeat"
@@ -258,11 +237,33 @@ sources:
       hours: 24
       max_articles: 10
 
+  - name: "The Verge"
+    type: "tech_media"
+    media_id: "theverge"
+    url: "https://www.theverge.com/rss/index.xml"
+    enabled: false  # 禁用：减少数据源
+    language: "en"
+    filters:
+      keyword: "AI|technology"
+      hours: 24
+      max_articles: 10
+
+  - name: "Wired"
+    type: "tech_media"
+    media_id: "wired"
+    url: "https://wired.com/feed/rss"
+    enabled: false  # 禁用：减少数据源
+    language: "en"
+    filters:
+      keyword: "AI|technology"
+      hours: 24
+      max_articles: 10
+
   - name: "Ars Technica"
     type: "tech_media"
     media_id: "ars-technica"
     url: "https://arstechnica.com/feed/"
-    enabled: true
+    enabled: false  # 禁用：减少数据源
     language: "en"
     filters:
       keyword: "AI|technology"
@@ -273,7 +274,7 @@ sources:
     type: "tech_media"
     media_id: "hackernoon"
     url: "https://hackernoon.com/feed"
-    enabled: true
+    enabled: false  # 禁用：减少数据源
     language: "en"
     filters:
       keyword: "AI|programming"
@@ -284,7 +285,7 @@ sources:
     type: "tech_media"
     media_id: "betablist"
     url: "https://betablist.com/feed"
-    enabled: true
+    enabled: false  # 禁用：减少数据源
     language: "en"
     filters:
       keyword: "AI|startup"
@@ -332,28 +333,17 @@ sources:
       hours: 24
       max_articles: 20
 
-  # ===== Reddit (16个子版块) =====
-  - name: "Reddit r/programming"
+  # ===== Reddit (保留主要AI相关子版块) =====
+  - name: "Reddit r/MachineLearning"
     type: "reddit"
-    subreddit: "programming"
-    url: "https://www.reddit.com/r/programming/hot.json"
+    subreddit: "MachineLearning"
+    url: "https://www.reddit.com/r/MachineLearning/hot.json"
     enabled: true
     language: "en"
     filters:
-      keyword: "AI|ml|programming"
+      keyword: ""
       hours: 24
-      max_articles: 10
-
-  - name: "Reddit r/technology"
-    type: "reddit"
-    subreddit: "technology"
-    url: "https://www.reddit.com/r/technology/hot.json"
-    enabled: true
-    language: "en"
-    filters:
-      keyword: "AI|tech"
-      hours: 24
-      max_articles: 10
+      max_articles: 15
 
   - name: "Reddit r/artificial"
     type: "reddit"
@@ -366,14 +356,25 @@ sources:
       hours: 24
       max_articles: 10
 
-  - name: "Reddit r/MachineLearning"
+  - name: "Reddit r/programming"
     type: "reddit"
-    subreddit: "MachineLearning"
-    url: "https://www.reddit.com/r/MachineLearning/hot.json"
-    enabled: true
+    subreddit: "programming"
+    url: "https://www.reddit.com/r/programming/hot.json"
+    enabled: false  # 禁用：AI内容较少
     language: "en"
     filters:
-      keyword: ""
+      keyword: "AI|ml|programming"
+      hours: 24
+      max_articles: 10
+
+  - name: "Reddit r/technology"
+    type: "reddit"
+    subreddit: "technology"
+    url: "https://www.reddit.com/r/technology/hot.json"
+    enabled: false  # 禁用：AI内容较少
+    language: "en"
+    filters:
+      keyword: "AI|tech"
       hours: 24
       max_articles: 10
 
@@ -381,7 +382,7 @@ sources:
     type: "reddit"
     subreddit: "python"
     url: "https://www.reddit.com/r/python/hot.json"
-    enabled: true
+    enabled: false  # 禁用：AI内容较少
     language: "en"
     filters:
       keyword: "AI|ml"
@@ -392,7 +393,7 @@ sources:
     type: "reddit"
     subreddit: "opensource"
     url: "https://www.reddit.com/r/opensource/hot.json"
-    enabled: true
+    enabled: false  # 禁用：AI内容较少
     language: "en"
     filters:
       keyword: "AI"
@@ -403,7 +404,7 @@ sources:
     type: "reddit"
     subreddit: "github"
     url: "https://www.reddit.com/r/github/hot.json"
-    enabled: true
+    enabled: false  # 禁用：AI内容较少
     language: "en"
     filters:
       keyword: "AI|repo"
@@ -431,7 +432,7 @@ sources:
       hours: 24
       max_articles: 10
 
-  # ===== YouTube AI 频道 =====
+  # ===== YouTube AI 频道 (精简) =====
   - name: "YouTube Lex Fridman"
     type: "youtube"
     channel_id: "UC2TX-_23AbJ5X5j3nF8F5w"
@@ -458,14 +459,14 @@ sources:
     type: "youtube"
     channel_id: "3Blue1Brown"
     url: "https://www.youtube.com/channel/3Blue1Brown/videos"
-    enabled: true
+    enabled: false  # 禁用：主要是数学内容
     language: "en"
     filters:
       keyword: "AI|ML|math"
       hours: 48
       max_articles: 5
 
-  # ===== AI 播客 =====
+  # ===== AI 播客 (精简) =====
   - name: "Podcast Lex Fridman"
     type: "podcast"
     podcast_id: "lex_fridman"
@@ -492,7 +493,7 @@ sources:
     type: "podcast"
     podcast_id: "ycombinator_podcast"
     url: "https://www.ycombinator.com/podcast/"
-    enabled: true
+    enabled: false  # 禁用：主要是创业内容
     language: "en"
     filters:
       keyword: "AI|startup"
@@ -503,7 +504,7 @@ sources:
     type: "podcast"
     podcast_id: "practical_ai"
     url: "https://practicalai.fm/"
-    enabled: true
+    enabled: false  # 禁用：减少数据源
     language: "en"
     filters:
       keyword: "AI|ML"
@@ -514,7 +515,7 @@ sources:
     type: "podcast"
     podcast_id: "twiml_podcast"
     url: "https://twimlai.com/podcast"
-    enabled: true
+    enabled: false  # 禁用：减少数据源
     language: "en"
     filters:
       keyword: "AI|ML"
