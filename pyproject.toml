@@ -13,13 +13,11 @@ authors = [
     {name = "xxl115", email = "contact@example.com"}
 ]
 
-# Cloudflare Python Workers 兼容的依赖 - 只包含 Workers 支持的包
-dependencies = [
-    "pydantic>=2.5.0",
-]
+# Cloudflare Python Workers 兼容 - 只用标准库
+dependencies = []
 
 [project.optional-dependencies]
-# 本地开发和数据收集（不兼容 Workers）
+# 本地开发使用
 local = [
     "requests>=2.31.0",
     "feedparser>=6.0.10",
@@ -27,6 +25,7 @@ local = [
     "PyYAML>=6.0.1",
     "fastapi>=0.109.0",
     "uvicorn[standard]>=0.27.0",
+    "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
     "colorlog>=6.8.0",
     "cryptography>=41.0.0",
