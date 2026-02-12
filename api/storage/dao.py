@@ -41,12 +41,7 @@ class ArticleDAO:
             return []
 
         filters = filters or {}
-        articles = self.storage.fetch_articles(filters)
-
-        # Apply pagination
-        start = offset
-        end = offset + limit
-        return articles[start:end]
+        return self.storage.fetch_articles(filters, limit=limit, offset=offset)
 
     def fetch_article_by_id(self, article_id: str) -> Optional[ArticleModel]:
         """Fetch a single article by ID.
