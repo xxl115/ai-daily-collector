@@ -56,9 +56,19 @@ jobs:
           if [ -n "$CF_D1_DATABASE_ID" ]; then
             sed -i "s/your-database-id-here/$CF_D1_DATABASE_ID/g" wrangler.toml
             echo "Updated wrangler.toml with D1 database ID"
+            echo "Database ID length: ${#CF_D1_DATABASE_ID}"
           else
             echo "CF_D1_DATABASE_ID not set, using placeholder"
+            exit 1
           fi
+
+      - name: Verify wrangler.toml
+        run: |
+          echo "=== wrangler.toml content ==="
+          cat wrangler.toml
+          echo ""
+          echo "=== Checking database_id ==="
+          grep "database_id" wrangler.toml
 
       - name: Deploy to Cloudflare Workers
         run: |
