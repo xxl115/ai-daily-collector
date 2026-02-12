@@ -1,5 +1,0 @@
-Title: antigravity-awesome-skills - The Ultimate Collection of 600+ Agentic Skills for Claude Code/Antigravity/Cursor. Battle-tested, high-performance skills for AI agents including official skills from Anthropic and Vercel.
-URL: https://github.com/sickn33/antigravity-awesome-skills
-Score: 6196
-Source: GitHub
-Date: 2026-02-02

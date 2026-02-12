@@ -1,6 +1,0 @@
-Title: Towards a science of scaling agent systems: When and why agent systems work
-URL: https://research.google/blog/towards-a-science-of-scaling-agent-systems-when-and-why-agent-systems-work/
-Score: 87
-Author: gmays
-Source: Hacker News
-Date: 2026-02-02

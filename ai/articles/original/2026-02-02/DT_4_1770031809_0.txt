@@ -1,5 +1,0 @@
-Title: I Built My Own DeepSite Alternative That Works with Kimi K2.5, Gemini, or Any Model
-URL: https://dev.to/juandenis/i-built-my-own-deepsite-alternative-that-works-with-kimi-k25-gemini-or-any-model-5gfo
-Score: 4
-Source: Dev.to
-Date: 2026-02-02

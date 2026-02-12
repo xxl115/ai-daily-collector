@@ -1,5 +1,0 @@
-Title: Architectural Choices in China&apos;s Open-Source AI Ecosystem: Building Beyond DeepSeek 
-URL: https://huggingface.co/blog/upskill
-Score: 0
-Source: Hugging Face
-Date: 2026-02-02

@@ -1,6 +1,0 @@
-Title: My iPhone 16 Pro Max produces garbage output when running MLX LLMs
-URL: https://journal.rafaelcosta.me/my-thousand-dollar-iphone-cant-do-math/
-Score: 314
-Author: rafaelcosta
-Source: Hacker News
-Date: 2026-02-02

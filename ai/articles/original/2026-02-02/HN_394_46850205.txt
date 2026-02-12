@@ -1,6 +1,0 @@
-Title: Show HN: NanoClaw – “Clawdbot” in 500 lines of TS with Apple container isolation
-URL: https://github.com/gavrielc/nanoclaw
-Score: 394
-Author: jimminyx
-Source: Hacker News
-Date: 2026-02-02
