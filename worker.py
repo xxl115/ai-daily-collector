@@ -23,9 +23,11 @@ class Default(WorkerEntrypoint):
 
             # 获取 D1 数据库绑定
             db = None
+            db_error = None
             try:
                 db = env.DB
             except Exception as e:
+                db_error = str(e)
                 pass
 
             # 初始化存储适配器
@@ -33,7 +35,7 @@ class Default(WorkerEntrypoint):
 
             # 健康检查端点 - 显示数据库连接状态
             if path == "/" or path == "/health":
-                return self._health_response(storage)
+                return self._health_response(storage, db_error)
 
             # API 端点
             if path == "/api/v2/articles":
@@ -65,24 +67,38 @@ class Default(WorkerEntrypoint):
                 "message": str(e)
             }, status=500)
 
-    def _health_response(self, storage):
+    def _health_response(self, storage, db_error=None):
         """健康检查响应 - 显示数据库连接状态"""
         db_connected = storage is not None
         db_count = 0
+        db_details = {}
+        
         if storage:
             try:
                 stats = storage.get_stats()
                 db_count = stats.get("total", 0)
+                db_details = {
+                    "sources": stats.get("sources", {}),
+                    "tables": storage._list_tables()
+                }
             except Exception as e:
                 db_count = f"ERROR: {str(e)}"
         
-        return self._json_response({
+        response = {
             "status": "healthy",
             "version": VERSION,
-            "database": "connected" if db_connected else "not configured",
-            "article_count": db_count,
+            "database": {
+                "connected": db_connected,
+                "article_count": db_count,
+                "error": db_error
+            },
             "timestamp": datetime.utcnow().isoformat() + "Z"
-        })
+        }
+        
+        if db_details:
+            response["database_details"] = db_details
+            
+        return self._json_response(response)
 
     async def _articles_response(self, parsed_url, storage):
         """文章列表响应 - 返回空列表当没有数据"""
@@ -274,6 +290,15 @@ class WorkersD1StorageAdapter:
             "total": total,
             "sources": sources
         }
+
+    def _list_tables(self):
+        """List all tables in the database"""
+        result = self._execute_sql(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        )
+        if result.get("success"):
+            return [row.get("name") for row in result.get("results", [])]
+        return []
 
     def _row_to_dict(self, row):
         """Convert database row to dict"""

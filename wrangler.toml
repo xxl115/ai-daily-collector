@@ -12,6 +12,8 @@ command = ""
 [[d1_databases]]
 binding = "DB"
 database_name = "ai-daily-collector"
+# 注意：部署前需要替换为真实的 D1 数据库 ID
+# 在 Cloudflare Dashboard → D1 中找到你的数据库 ID
 database_id = "your-database-id-here"
 
 # 环境变量
