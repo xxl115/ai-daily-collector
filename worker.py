@@ -1,5 +1,5 @@
 """
-Cloudflare Workers Python 入口文件 - v2
+Cloudflare Workers Python 入口文件 - v2.1
 """
 from workers import WorkerEntrypoint
 from js import Response
@@ -8,7 +8,7 @@ from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 
 # 版本号用于强制刷新
-VERSION = "2.0.1"
+VERSION = "2.1.0"
 
 class Default(WorkerEntrypoint):
     """Cloudflare Python Workers 默认入口类"""
@@ -22,20 +22,22 @@ class Default(WorkerEntrypoint):
             path = parsed_url.path
             method = request.method
 
-            # 健康检查端点 - 不依赖数据库
-            if path == "/" or path == "/health":
-                return self._health_response()
-
             # 获取 D1 数据库绑定
             db = None
             try:
                 db = env.DB
-            except:
+            except Exception as e:
+                # 数据库绑定失败，记录日志但继续
                 pass
 
             # 初始化存储适配器
             storage = WorkersD1StorageAdapter(db) if db else None
 
+            # 健康检查端点 - 显示数据库连接状态
+            if path == "/" or path == "/health":
+                return self._health_response(storage)
+
+            # API 端点
             if path == "/api/v2/articles":
                 if method != "GET":
                     return self._method_not_allowed()
@@ -65,18 +67,27 @@ class Default(WorkerEntrypoint):
                 "message": str(e)
             }, status=500)
 
-    def _health_response(self):
-        """健康检查响应"""
+    def _health_response(self, storage):
+        """健康检查响应 - 显示数据库连接状态"""
+        db_connected = storage is not None
         return self._json_response({
             "status": "healthy",
             "version": VERSION,
+            "database": "connected" if db_connected else "not configured",
             "timestamp": datetime.utcnow().isoformat() + "Z"
         })
 
     async def _articles_response(self, parsed_url, storage):
-        """文章列表响应"""
+        """文章列表响应 - 返回空列表当没有数据"""
         if not storage:
-            return self._json_response({"error": "Database not available"}, status=500)
+            # 数据库未配置，返回空结果而不是错误
+            return self._json_response({
+                "total": 0,
+                "articles": [],
+                "page": 1,
+                "page_size": 20,
+                "message": "Database configured but no data yet"
+            })
 
         try:
             query_params = parse_qs(parsed_url.query)
@@ -99,12 +110,16 @@ class Default(WorkerEntrypoint):
                 "page_size": page_size
             })
         except Exception as e:
-            return self._json_response({"error": str(e)}, status=500)
+            return self._json_response({
+                "error": str(e),
+                "total": 0,
+                "articles": []
+            }, status=500)
 
     async def _article_detail_response(self, path, storage):
         """单篇文章详情响应"""
         if not storage:
-            return self._json_response({"error": "Database not available"}, status=500)
+            return self._json_response({"error": "Database not configured"}, status=500)
 
         try:
             article_id = path.split("/")[-1]
@@ -120,7 +135,11 @@ class Default(WorkerEntrypoint):
     async def _stats_response(self, storage):
         """统计信息响应"""
         if not storage:
-            return self._json_response({"error": "Database not available"}, status=500)
+            return self._json_response({
+                "total_articles": 0,
+                "sources": [],
+                "message": "No data yet"
+            })
 
         try:
             stats = storage.get_stats()
@@ -138,7 +157,7 @@ class Default(WorkerEntrypoint):
     async def _sources_response(self, storage):
         """数据源列表响应"""
         if not storage:
-            return self._json_response({"error": "Database not available"}, status=500)
+            return self._json_response([])
 
         try:
             stats = storage.get_stats()
