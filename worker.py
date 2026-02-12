@@ -26,21 +26,36 @@ class Default(WorkerEntrypoint):
             db_error = None
             env_info = {}
             
+            # DEBUG: Log env information
             if env is None:
                 db_error = "env is None - D1 binding not available"
                 env_info = {"env_type": "None"}
             else:
                 env_info = {
-                    "env_type": type(env).__name__,
-                    "env_attrs": [attr for attr in dir(env) if not attr.startswith('_')][:10]
+                    "env_type": str(type(env)),
+                    "env_str": str(env)[:200],
+                    "has_DB": hasattr(env, 'DB'),
+                    "env_dir": [attr for attr in dir(env) if not attr.startswith('_')][:20]
                 }
-                try:
-                    # Try to access DB binding
-                    db = getattr(env, 'DB', None)
-                    if db is None:
-                        db_error = "env.DB is None - D1 binding may not be configured"
-                except Exception as e:
-                    db_error = f"Error accessing env.DB: {str(e)}"
+                
+                # Try multiple ways to access DB
+                if hasattr(env, 'DB'):
+                    try:
+                        db = env.DB
+                        if db is None:
+                            db_error = "env.DB exists but is None"
+                    except Exception as e:
+                        db_error = f"Error accessing env.DB: {str(e)}"
+                else:
+                    # Check if DB is accessible as dict key
+                    if isinstance(env, dict):
+                        db = env.get('DB')
+                        if db:
+                            db_error = None
+                        else:
+                            db_error = "env is dict but 'DB' key not found"
+                    else:
+                        db_error = f"env has no DB attribute. Available: {env_info['env_dir']}"
 
             # 初始化存储适配器
             storage = WorkersD1StorageAdapter(db) if db else None
