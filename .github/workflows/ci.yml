@@ -106,9 +106,12 @@ jobs:
           import sys
           sys.path.insert(0, '.')
           modules = [
-              ('fetchers', 'from fetchers import fetch_by_config'),
-              ('config.settings', 'from config.settings import config'),
-              ('utils.logger', 'from utils.logger import setup_logger'),
+              ('config.config', 'from config.config import load_config_from_env'),
+              ('ingestor.main', 'from ingestor.main import main'),
+              ('ingestor.scrapers', 'from ingestor.scrapers import fetch_rss'),
+              ('utils.logging_config', 'from utils.logging_config import setup_logging'),
+              ('api.main', 'from api.main import app'),
+              ('shared.models', 'from shared.models import ArticleModel'),
           ]
           failed = []
           for name, import_cmd in modules:

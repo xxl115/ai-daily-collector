@@ -48,11 +48,19 @@ jobs:
       - name: Run AI Daily Collection
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_D1_DATABASE_ID: ${{ secrets.CF_D1_DATABASE_ID }}
+          DATABASE_PROVIDER: d1
         run: |
-          chmod +x scripts/collect-ai-daily-cloud.sh
-          ./scripts/collect-ai-daily-cloud.sh
+          echo "============================================"
+          echo "AI Daily Collector - Scheduled Collection"
+          echo "Date: $(date +%Y-%m-%d)"
+          echo "============================================"
+          echo ""
+          python -m ingestor.main --config config/sources.yaml
+          echo ""
+          echo "✅ Collection complete!"
 
       - name: Show results
         run: |

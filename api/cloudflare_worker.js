@@ -3,7 +3,13 @@
  * 支持: /api/hotspots, /api/stats, /api/sources, /rss
  */
 
+// Primary data source for hotspots (legacy master branch)
 const DATA_URL = "https://raw.githubusercontent.com/xxl115/ai-daily-collector/master/data/daily.json";
+// Fallback data sources (try alternative branches in case of rename)
+const FALLBACK_DATA_URLS = [
+  DATA_URL,
+  "https://raw.githubusercontent.com/xxl115/ai-daily-collector/main/data/daily.json",
+];
 
 export default {
   async fetch(request) {
@@ -49,17 +55,23 @@ export default {
         const source = url.searchParams.get('source');  // 筛选来源
         const keyword = url.searchParams.get('keyword'); // 关键词搜索
         
-        const dataResp = await fetch(DATA_URL);
-        
-        if (!dataResp.ok) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: "Failed to fetch data",
-            data: []
-          }), { headers: corsHeaders });
+      // Try multiple data sources to improve reliability
+      let data = null;
+      for (const url of FALLBACK_DATA_URLS) {
+        try {
+          const dataResp = await fetch(url);
+          if (dataResp && dataResp.ok) {
+            data = await dataResp.json();
+            break;
+          }
+        } catch (e) {
+          // ignore and try next source
         }
-        
-        const data = await dataResp.json();
+      }
+      if (!data) {
+        // As a last resort, provide an empty payload to avoid breaking the API.
+        data = { hotspots: [], generated_at: new Date().toISOString(), total_collected: 0 };
+      }
         let items = data.hotspots || [];
         
         // 来源筛选

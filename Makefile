@@ -1,7 +1,7 @@
 # AI Daily Collector - Makefile
 # 简化常用命令
 
-.PHONY: help install install-dev install-poetry run crawl summarize report api test test-cov test-coverage lint lint-flake8 lint-black lint-mypy format format-black format-isort quality check clean docker-build docker-push docker-run docker-compose-up docker-compose-down deploy release precommit precommit-run
+.PHONY: help install install-dev run crawl api-report api dev test test-cov test-coverage lint format quality check clean docker-build docker-push docker-run docker-compose-up docker-compose-down deploy status test-fetcher
 
 # 默认目标
 help:
@@ -13,10 +13,8 @@ help:
 	@echo "    make install-poetry       - 使用 Poetry 安装"
 	@echo ""
 	@echo "🚀 运行:"
-	@echo "    make run                  - 运行完整工作流"
-	@echo "    make crawl                - 仅采集文章"
-	@echo "    make summarize            - 仅生成总结"
-	@echo "    make report               - 仅生成日报"
+	@echo "    make run                  - 运行数据摄取"
+	@echo "    make crawl                - 仅采集 RSS 文章"
 	@echo "    make api                  - 启动 API 服务"
 	@echo "    make dev                  - 开发模式（热重载）"
 	@echo ""
@@ -27,29 +25,21 @@ help:
 	@echo ""
 	@echo "🔧 代码质量:"
 	@echo "    make lint                 - 检查所有代码风格"
-	@echo "    make lint-flake8          - Flake8 检查"
-	@echo "    make lint-black           - Black 检查"
-	@echo "    make lint-mypy            - MyPy 类型检查"
 	@echo "    make format               - 格式化所有代码"
-	@echo "    make format-black         - Black 格式化"
-	@echo "    make format-isort         - Import 排序"
 	@echo "    make quality              - 运行所有检查"
 	@echo "    make check                - 完整质量检查 (lint + test)"
 	@echo ""
 	@echo "🐳 Docker:"
 	@echo "    make docker-build         - 构建 Docker 镜像"
-	@echo "    make docker-push          - 推送镜像到仓库"
-	@echo "    make docker-run           - 运行 Docker 容器"
 	@echo "    make docker-compose-up    - 启动 Docker Compose"
 	@echo "    make docker-compose-down  - 停止 Docker Compose"
 	@echo ""
 	@echo "📤 部署:"
 	@echo "    make deploy               - 部署到生产环境"
-	@echo "    make release              - 发布新版本"
 	@echo ""
 	@echo "🔧 工具:"
-	@echo "    make precommit            - 安装预提交钩子"
-	@echo "    make precommit-run        - 运行预提交检查"
+	@echo "    make status               - 查看项目状态"
+	@echo "    make test-fetcher         - 测试数据抓取器"
 	@echo "    make clean                - 清理缓存文件"
 	@echo ""
 
@@ -68,19 +58,17 @@ install-poetry:
 	fi
 	poetry install --with dev
 
-# 运行完整工作流
+# 运行数据摄取
 run:
-	python scripts/daily-ai-workflow.py
+	python ingestor/main.py
 
 # 分步骤运行
 crawl:
-	python scripts/ai-hotspot-crawler-simple.py
+	python ingestor/main.py --source-type rss
 
-summarize:
-	python scripts/summarize-articles.py
-
-report:
-	python scripts/generate-daily-report.py
+api-report:
+	@echo "📊 通过 API 生成报告..."
+	@curl -s http://localhost:8000/api/v2/articles | python -m json.tool
 
 # API 服务
 api:
@@ -152,111 +140,31 @@ clean:
 	rm -rf *.whl 2>/dev/null || true
 	@echo "✨ 清理完成!"
 
-# 测试推送
-test-notification:
-	@echo "📱 测试推送功能..."
-	@echo "请选择测试平台:"
-	@echo "  1. 飞书"
-	@echo "  2. 钉钉"
-	@echo "  3. 企业微信"
-	@echo "  4. Telegram"
-	@read -p "请选择 (1-4): " PLATFORM; \
-	if [ "$$PLATFORM" = "1" ]; then \
-		python -c "from utils.notification import notification_manager; print('飞书配置状态:', notification_manager.get_config_status()['feishu'])"; \
-	elif [ "$$PLATFORM" = "2" ]; then \
-		python -c "from utils.notification import notification_manager; print('钉钉配置状态:', notification_manager.get_config_status()['dingtalk'])"; \
-	elif [ "$$PLATFORM" = "3" ]; then \
-		python -c "from utils.notification import notification_manager; print('企业微信配置状态:', notification_manager.get_config_status()['wework'])"; \
-	elif [ "$$PLATFORM" = "4" ]; then \
-		python -c "from utils.notification import notification_manager; print('Telegram配置状态:', notification_manager.get_config_status()['telegram'])"; \
-	fi
-
-# 测试关键词过滤
-test-filter:
-	@echo "🔍 测试关键词过滤..."
-	python -c "
-from utils.filter import keyword_filter, filter_articles
-
-# 测试文章
-articles = [
-    {'title': 'OpenAI 发布新的 GPT-4.5 模型', 'url': 'https://example.com/1'},
-    {'title': 'Google 发布 Gemini 2.0', 'url': 'https://example.com/2'},
-    {'title': '如何玩好英雄联盟', 'url': 'https://example.com/3'},
-    {'title': '今天天气不错', 'url': 'https://example.com/4'},
-]
-
-matched, filtered = filter_articles(articles)
-print(f'匹配: {len(matched)} 篇')
-print(f'过滤: {len(filtered)} 篇')
-print()
-print('过滤统计:', keyword_filter.get_stats())
-"
-
 # 查看配置状态
 status:
 	@echo "📊 项目状态..."
 	@echo ""
-	@echo "依赖检查:"
-	@python -c "import utils.notification; print('  ✅ notification 模块正常')" 2>/dev/null || echo "  ❌ notification 模块异常"
-	@python -c "import utils.filter; print('  ✅ filter 模块正常')" 2>/dev/null || echo "  ❌ filter 模块异常"
-	@python -c "import utils.rss; print('  ✅ rss 模块正常')" 2>/dev/null || echo "  ❌ rss 模块异常"
+	@echo "核心模块:"
+	@python -c "from ingestor.scrapers import fetch_v2ex, fetch_reddit, fetch_newsnow; print('  ✅ Scrapers: 可用')" 2>/dev/null || echo "  ❌ Scrapers 模块异常"
+	@python -c "from ingestor.main import main; print('  ✅ Ingestor: 可用')" 2>/dev/null || echo "  ❌ Ingestor 模块异常"
+	@python -c "from api.main import app; print('  ✅ API: 可用')" 2>/dev/null || echo "  ❌ API 模块异常"
 	@echo ""
-	@echo "推送配置:"
-	@python -c "from utils.notification import notification_manager; import json; print(json.dumps(notification_manager.get_config_status(), indent=2))" 2>/dev/null || echo "  无法获取配置状态"
-	@echo ""
-	@echo "过滤配置:"
-	@python -c "from utils.filter import keyword_filter; import json; print(json.dumps(keyword_filter.get_stats(), indent=2))" 2>/dev/null || echo "  无法获取过滤状态"
-	@echo ""
-	@echo "抓取器:"
-	@python -c "from fetchers import NEWSNOW_PLATFORMS, fetch_newsnow_hotspots, fetch_v2ex_hotspots, fetch_reddit_hotspots; print(f'  ✅ NewsNow: {len(NEWSNOW_PLATFORMS)} 平台'); print('  ✅ V2EX: 可用'); print('  ✅ Reddit: 可用')" 2>/dev/null || echo "  ❌ 抓取器模块异常"
+	@echo "✅ 检查完成!"
 
 # 测试数据抓取
 test-fetcher:
 	@echo "🧪 测试数据抓取器..."
 	@echo ""
 	@echo "1. 测试 V2EX 热门..."
-	@python -c "from fetchers import fetch_v2ex_hotspots; data = fetch_v2ex_hotspots(limit=5); print(f'   获取: {len(data)} 条'); [print(f'   - {d.get(\"title\",\"\")[:40]}') for d in data[:3]]" 2>/dev/null || echo "   ❌ V2EX 测试失败"
+	@python -c "from ingestor.scrapers import fetch_v2ex; data = fetch_v2ex(keyword='AI', max_articles=5); print(f'   获取: {len(data)} 条'); [print(f'   - {d.get(\"title\",\"\")[:40]}') for d in data[:3]]" 2>/dev/null || echo "   ❌ V2EX 测试失败"
 	@echo ""
 	@echo "2. 测试 Reddit 热门..."
-	@python -c "from fetchers import fetch_reddit_hotspots; data = fetch_reddit_hotspots(limit=5, subreddits=['programming']); print(f'   获取: {len(data)} 条'); [print(f'   - {d.get(\"title\",\"\")[:40]}') for d in data[:3]]" 2>/dev/null || echo "   ❌ Reddit 测试失败"
+	@python -c "from ingestor.scrapers import fetch_reddit; data = fetch_reddit(subreddit='MachineLearning', max_articles=5); print(f'   获取: {len(data)} 条'); [print(f'   - {d.get(\"title\",\"\")[:40]}') for d in data[:3]]" 2>/dev/null || echo "   ❌ Reddit 测试失败"
 	@echo ""
 	@echo "3. 测试 NewsNow..."
-	@python -c "from fetchers import fetch_newsnow_hotspots; data = fetch_newsnow_hotspots(limit=5, platforms=['v2ex', 'baidu']); print(f'   获取: {len(data)} 条'); [print(f'   - {d.get(\"title\",\"\")[:40]}') for d in data[:3]]" 2>/dev/null || echo "   ❌ NewsNow 测试失败"
+	@python -c "from ingestor.scrapers import fetch_newsnow; data = fetch_newsnow(platform_id='v2ex', max_articles=5); print(f'   获取: {len(data)} 条'); [print(f'   - {d.get(\"title\",\"\")[:40]}') for d in data[:3]]" 2>/dev/null || echo "   ❌ NewsNow 测试失败"
 	@echo ""
 	@echo "✅ 测试完成!"
-
-# 统计报告
-stats:
-	@echo "📊 生成日报统计..."
-	@python scripts/daily_stats.py
-
-stats-save:
-	@echo "📊 生成并保存统计报告..."
-	@python -c "
-from scripts.daily_stats import DailyStatsAnalyzer
-analyzer = DailyStatsAnalyzer()
-path = analyzer.save_stats_report()
-if path:
-    print(f'✅ 统计报告已保存: {path}')
-else:
-    print('❌ 未找到日报文件')
-"
-
-stats-week:
-	@echo "📈 分析本周趋势..."
-	@python -c "
-from scripts.daily_stats import DailyStatsAnalyzer
-analyzer = DailyStatsAnalyzer()
-trends = analyzer.analyze_trends(7)
-print('本周统计:')
-for day in trends['daily_stats']:
-    print(f\"  {day['date']}: {day['articles']} 篇\")
-print()
-print('热门关键词趋势:')
-for word, data in list(trends['keyword_trends'].items())[:5]:
-    total = sum(d['count'] for d in data)
-    print(f\"  {word}: {total} 次\")
-"
 
 # Docker
 docker-build:
