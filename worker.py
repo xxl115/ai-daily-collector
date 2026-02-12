@@ -1,60 +1,66 @@
 """
 Cloudflare Workers Python 入口文件
 使用官方推荐的 WorkerEntrypoint 模式
-
-参考文档: https://developers.cloudflare.com/workers/languages/python/
 """
-from workers import WorkerEntrypoint, Response
+from workers import WorkerEntrypoint
+from js import Response
 import json
 from datetime import datetime
 
 
 class Default(WorkerEntrypoint):
-    """
-    Cloudflare Python Workers 默认入口类
-    必须继承 WorkerEntrypoint 并定义 fetch 方法
-    """
+    """Cloudflare Python Workers 默认入口类"""
 
     async def fetch(self, request):
-        """
-        处理所有 HTTP 请求的主入口
-        """
-        url = request.url
-        path = url.pathname
-        method = request.method
+        """处理所有 HTTP 请求的主入口"""
+        try:
+            url = request.url
+            path = url.pathname
+            method = request.method
 
-        # 获取 D1 数据库绑定 (通过 env 属性访问)
-        db = self.env.DB if hasattr(self.env, 'DB') else None
+            # 获取 D1 数据库绑定
+            db = None
+            try:
+                db = self.env.DB
+            except:
+                pass
 
-        # 初始化存储适配器
-        storage = WorkersD1StorageAdapter(db) if db else None
+            # 初始化存储适配器
+            storage = WorkersD1StorageAdapter(db) if db else None
 
-        # 路由处理
-        if path == "/" or path == "/health":
-            return self._health_response(db)
+            # 路由处理
+            if path == "/" or path == "/health":
+                return self._health_response(db)
 
-        elif path == "/api/v2/articles":
-            if method != "GET":
-                return self._method_not_allowed()
-            return await self._articles_response(request, storage)
+            elif path == "/api/v2/articles":
+                if method != "GET":
+                    return self._method_not_allowed()
+                return await self._articles_response(request, storage)
 
-        elif path.startswith("/api/v2/articles/"):
-            if method != "GET":
-                return self._method_not_allowed()
-            return await self._article_detail_response(path, storage)
+            elif path.startswith("/api/v2/articles/"):
+                if method != "GET":
+                    return self._method_not_allowed()
+                return await self._article_detail_response(path, storage)
 
-        elif path == "/api/v2/stats":
-            if method != "GET":
-                return self._method_not_allowed()
-            return await self._stats_response(storage)
+            elif path == "/api/v2/stats":
+                if method != "GET":
+                    return self._method_not_allowed()
+                return await self._stats_response(storage)
 
-        elif path == "/api/v2/sources":
-            if method != "GET":
-                return self._method_not_allowed()
-            return await self._sources_response(storage)
+            elif path == "/api/v2/sources":
+                if method != "GET":
+                    return self._method_not_allowed()
+                return await self._sources_response(storage)
 
-        else:
-            return self._json_response({"error": "Not found"}, status=404)
+            else:
+                return self._json_response({"error": "Not found"}, status=404)
+
+        except Exception as e:
+            # 全局错误处理
+            return self._json_response({
+                "error": "Internal server error",
+                "message": str(e)
+            }, status=500)
 
     def _health_response(self, db):
         """健康检查响应"""
@@ -141,10 +147,12 @@ class Default(WorkerEntrypoint):
 
     def _json_response(self, data, status=200):
         """创建 JSON 响应"""
-        return Response(
+        return Response.new(
             json.dumps(data, ensure_ascii=False, default=str),
-            status=status,
-            headers={"Content-Type": "application/json"}
+            {
+                "status": status,
+                "headers": {"Content-Type": "application/json"}
+            }
         )
 
     def _method_not_allowed(self):
