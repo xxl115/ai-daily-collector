@@ -223,6 +223,30 @@ class WorkersD1StorageAdapter:
 
     def __init__(self, d1_binding):
         self.db = d1_binding
+        self._ensure_schema()
+
+    def _ensure_schema(self):
+        """创建 articles 表（如果不存在）"""
+        create_table_sql = """
+        CREATE TABLE IF NOT EXISTS articles (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            content TEXT,
+            url TEXT NOT NULL,
+            published_at TEXT,
+            source TEXT,
+            categories TEXT,
+            tags TEXT,
+            summary TEXT,
+            raw_markdown TEXT,
+            ingested_at TEXT NOT NULL
+        )
+        """
+        self._execute_sql(create_table_sql)
+
+        # 创建索引
+        self._execute_sql("CREATE INDEX IF NOT EXISTS idx_articles_source ON articles(source)")
+        self._execute_sql("CREATE INDEX IF NOT EXISTS idx_articles_ingested_at ON articles(ingested_at DESC)")
 
     def _execute_sql(self, sql, params=None):
         """通过 Workers D1 绑定执行 SQL"""
