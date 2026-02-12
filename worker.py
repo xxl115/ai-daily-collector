@@ -85,7 +85,8 @@ class Default(WorkerEntrypoint):
         db_connected = storage is not None
         db_count = 0
         db_details = {}
-        
+        schema_error = None
+
         if storage:
             try:
                 stats = storage.get_stats()
@@ -94,26 +95,28 @@ class Default(WorkerEntrypoint):
                     "sources": stats.get("sources", {}),
                     "tables": storage._list_tables()
                 }
+                schema_error = getattr(storage, 'schema_error', None)
             except Exception as e:
                 db_count = f"ERROR: {str(e)}"
-        
+
         response = {
             "status": "healthy",
             "version": VERSION,
             "database": {
                 "connected": db_connected,
                 "article_count": db_count,
-                "error": db_error
+                "error": db_error,
+                "schema_error": schema_error
             },
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
-        
+
         if db_details:
             response["database_details"] = db_details
-        
+
         if env_info:
             response["env_info"] = env_info
-            
+
         return self._json_response(response)
 
     async def _articles_response(self, parsed_url, storage):
@@ -223,7 +226,11 @@ class WorkersD1StorageAdapter:
 
     def __init__(self, d1_binding):
         self.db = d1_binding
-        self._ensure_schema()
+        self.schema_error = None
+        try:
+            self._ensure_schema()
+        except Exception as e:
+            self.schema_error = str(e)
 
     def _ensure_schema(self):
         """创建 articles 表（如果不存在）"""
@@ -242,7 +249,9 @@ class WorkersD1StorageAdapter:
             ingested_at TEXT NOT NULL
         )
         """
-        self._execute_sql(create_table_sql)
+        result = self._execute_sql(create_table_sql)
+        if not result.get("success"):
+            raise Exception(f"Failed to create table: {result.get('errors')}")
 
         # 创建索引
         self._execute_sql("CREATE INDEX IF NOT EXISTS idx_articles_source ON articles(source)")
