@@ -255,9 +255,22 @@ class WorkersD1StorageAdapter:
             if params:
                 stmt = stmt.bind(*params)
             result = stmt.all()
+
+            # D1 API 返回的结果格式处理
+            results = []
+            if hasattr(result, 'results'):
+                # 新版 API: result.results
+                results = list(result.results)
+            elif isinstance(result, list):
+                # 旧版或直接返回列表
+                results = result
+            elif hasattr(result, '__iter__'):
+                # 可迭代对象
+                results = list(result)
+
             return {
                 "success": True,
-                "results": list(result.results) if hasattr(result, 'results') else []
+                "results": results
             }
         except Exception as e:
             return {
@@ -310,11 +323,12 @@ class WorkersD1StorageAdapter:
         total = 0
         if count_result.get("success") and count_result.get("results"):
             row = count_result["results"][0]
-            # Handle both dict and numeric access
+            # Handle both dict and object access
             if isinstance(row, dict):
                 total = row.get("total", 0)
             else:
-                total = row[0] if hasattr(row, '__getitem__') else 0
+                # Try attribute access
+                total = getattr(row, 'total', None) or getattr(row, 'COUNT(*)', 0) or 0
 
         # Get sources breakdown
         sources_result = self._execute_sql(
@@ -325,6 +339,10 @@ class WorkersD1StorageAdapter:
             for row in sources_result.get("results", []):
                 if isinstance(row, dict):
                     sources[row.get("source", "unknown")] = row.get("count", 0)
+                else:
+                    source = getattr(row, 'source', 'unknown')
+                    count = getattr(row, 'count', 0) or getattr(row, 'COUNT(*)', 0)
+                    sources[source] = count
 
         return {
             "total": total,
@@ -342,33 +360,39 @@ class WorkersD1StorageAdapter:
 
     def _row_to_dict(self, row):
         """Convert database row to dict"""
-        if not isinstance(row, dict):
-            return {"raw_data": str(row)}
-        
+        # Handle object-type rows (not just dict)
+        def get_value(field, default=""):
+            if isinstance(row, dict):
+                return row.get(field, default)
+            else:
+                return getattr(row, field, default)
+
         categories = []
         tags = []
 
-        if row.get("categories"):
+        cat_value = get_value("categories")
+        if cat_value:
             try:
-                categories = json.loads(row["categories"])
+                categories = json.loads(cat_value)
             except:
                 categories = []
 
-        if row.get("tags"):
+        tag_value = get_value("tags")
+        if tag_value:
             try:
-                tags = json.loads(row["tags"])
+                tags = json.loads(tag_value)
             except:
                 tags = []
 
         return {
-            "id": str(row.get("id", "")),
-            "title": str(row.get("title", "")),
-            "content": str(row.get("content", "")),
-            "url": str(row.get("url", "")),
-            "published_at": str(row.get("published_at")),
-            "source": str(row.get("source", "")),
+            "id": str(get_value("id", "")),
+            "title": str(get_value("title", "")),
+            "content": str(get_value("content", "")),
+            "url": str(get_value("url", "")),
+            "published_at": str(get_value("published_at")) if get_value("published_at") else None,
+            "source": str(get_value("source", "")),
             "categories": categories,
             "tags": tags,
-            "summary": str(row.get("summary", "")),
-            "ingested_at": str(row.get("ingested_at", ""))
+            "summary": str(get_value("summary", "")),
+            "ingested_at": str(get_value("ingested_at", ""))
         }
