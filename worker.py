@@ -1,21 +1,23 @@
 """
 Cloudflare Workers Python 入口文件
-使用官方推荐的 WorkerEntrypoint 模式
 """
 from workers import WorkerEntrypoint
 from js import Response
 import json
 from datetime import datetime
+from urllib.parse import urlparse, parse_qs
 
 
 class Default(WorkerEntrypoint):
     """Cloudflare Python Workers 默认入口类"""
 
     async def on_fetch(self, request, env, ctx):
-        """处理所有 HTTP 请求的主入口 - 必须叫 on_fetch"""
+        """处理所有 HTTP 请求的主入口"""
         try:
-            url = request.url
-            path = url.pathname
+            # request.url 是字符串，需要解析
+            url_str = str(request.url)
+            parsed_url = urlparse(url_str)
+            path = parsed_url.path
             method = request.method
 
             # 获取 D1 数据库绑定
@@ -35,7 +37,7 @@ class Default(WorkerEntrypoint):
             elif path == "/api/v2/articles":
                 if method != "GET":
                     return self._method_not_allowed()
-                return await self._articles_response(request, storage)
+                return await self._articles_response(parsed_url, storage)
 
             elif path.startswith("/api/v2/articles/"):
                 if method != "GET":
@@ -69,17 +71,17 @@ class Default(WorkerEntrypoint):
             "timestamp": datetime.utcnow().isoformat() + "Z"
         })
 
-    async def _articles_response(self, request, storage):
+    async def _articles_response(self, parsed_url, storage):
         """文章列表响应"""
         if not storage:
             return self._json_response({"error": "Database not available"}, status=500)
 
         try:
-            url = request.url
-            query = url.search_params
-            source = query.get("source")
-            page = int(query.get("page", 1))
-            page_size = min(int(query.get("page_size", 20)), 100)
+            # 解析查询参数
+            query_params = parse_qs(parsed_url.query)
+            source = query_params.get("source", [None])[0]
+            page = int(query_params.get("page", ["1"])[0])
+            page_size = min(int(query_params.get("page_size", ["20"])[0]), 100)
 
             filters = {}
             if source:
