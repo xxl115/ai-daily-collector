@@ -10,7 +10,6 @@ on:
       - 'ingestor/storage/**/*.py'
       - 'shared/**/*.py'
       - 'wrangler.toml'
-      - 'requirements-workers.txt'
       - '.github/workflows/cloudflare-deploy.yml'
   workflow_dispatch:
     inputs:
