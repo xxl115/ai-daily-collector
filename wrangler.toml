@@ -2,6 +2,7 @@
 name = "ai-daily-collector"
 main = "worker.py"
 compatibility_date = "2024-01-15"
+compatibility_flags = ["python_workers"]
 
 # Python Workers 运行时设置
 [build]
