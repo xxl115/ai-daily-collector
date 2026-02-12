@@ -1,5 +1,5 @@
 """
-Cloudflare Workers Python 入口文件
+Cloudflare Workers Python 入口文件 - v2
 """
 from workers import WorkerEntrypoint
 from js import Response
@@ -7,6 +7,8 @@ import json
 from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 
+# 版本号用于强制刷新
+VERSION = "2.0.1"
 
 class Default(WorkerEntrypoint):
     """Cloudflare Python Workers 默认入口类"""
@@ -20,6 +22,10 @@ class Default(WorkerEntrypoint):
             path = parsed_url.path
             method = request.method
 
+            # 健康检查端点 - 不依赖数据库
+            if path == "/" or path == "/health":
+                return self._health_response()
+
             # 获取 D1 数据库绑定
             db = None
             try:
@@ -30,11 +36,7 @@ class Default(WorkerEntrypoint):
             # 初始化存储适配器
             storage = WorkersD1StorageAdapter(db) if db else None
 
-            # 路由处理
-            if path == "/" or path == "/health":
-                return self._health_response(db)
-
-            elif path == "/api/v2/articles":
+            if path == "/api/v2/articles":
                 if method != "GET":
                     return self._method_not_allowed()
                 return await self._articles_response(parsed_url, storage)
@@ -63,11 +65,11 @@ class Default(WorkerEntrypoint):
                 "message": str(e)
             }, status=500)
 
-    def _health_response(self, db):
+    def _health_response(self):
         """健康检查响应"""
         return self._json_response({
             "status": "healthy",
-            "database": "connected" if db else "disconnected",
+            "version": VERSION,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         })
 
@@ -77,7 +79,6 @@ class Default(WorkerEntrypoint):
             return self._json_response({"error": "Database not available"}, status=500)
 
         try:
-            # 解析查询参数
             query_params = parse_qs(parsed_url.query)
             source = query_params.get("source", [None])[0]
             page = int(query_params.get("page", ["1"])[0])
