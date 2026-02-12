@@ -48,7 +48,7 @@ class Default(WorkerEntrypoint):
 
             # 健康检查端点 - 显示数据库连接状态
             if path == "/" or path == "/health":
-                return self._health_response(storage, db_error, env_info)
+                return await self._health_response(storage, db_error, env_info)
 
             # API 端点
             if path == "/api/v2/articles":
@@ -80,22 +80,20 @@ class Default(WorkerEntrypoint):
                 "message": str(e)
             }, status=500)
 
-    def _health_response(self, storage, db_error=None, env_info=None):
+    async def _health_response(self, storage, db_error=None, env_info=None):
         """健康检查响应 - 显示数据库连接状态"""
         db_connected = storage is not None
         db_count = 0
         db_details = {}
-        schema_error = None
 
         if storage:
             try:
-                stats = storage.get_stats()
+                stats = await storage.get_stats()
                 db_count = stats.get("total", 0)
                 db_details = {
                     "sources": stats.get("sources", {}),
-                    "tables": storage._list_tables()
+                    "tables": await storage._list_tables()
                 }
-                schema_error = getattr(storage, 'schema_error', None)
             except Exception as e:
                 db_count = f"ERROR: {str(e)}"
 
@@ -105,8 +103,7 @@ class Default(WorkerEntrypoint):
             "database": {
                 "connected": db_connected,
                 "article_count": db_count,
-                "error": db_error,
-                "schema_error": schema_error
+                "error": db_error
             },
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
@@ -141,8 +138,8 @@ class Default(WorkerEntrypoint):
                 filters["source"] = source
 
             offset = (page - 1) * page_size
-            articles = storage.fetch_articles(filters=filters, limit=page_size, offset=offset)
-            stats = storage.get_stats()
+            articles = await storage.fetch_articles(filters=filters, limit=page_size, offset=offset)
+            stats = await storage.get_stats()
 
             return self._json_response({
                 "total": stats.get("total", len(articles)),
@@ -164,7 +161,7 @@ class Default(WorkerEntrypoint):
 
         try:
             article_id = path.split("/")[-1]
-            article = storage.fetch_article_by_id(article_id)
+            article = await storage.fetch_article_by_id(article_id)
 
             if not article:
                 return self._json_response({"error": "Article not found"}, status=404)
@@ -183,7 +180,7 @@ class Default(WorkerEntrypoint):
             })
 
         try:
-            stats = storage.get_stats()
+            stats = await storage.get_stats()
             return self._json_response({
                 "total_articles": stats.get("total", 0),
                 "sources": [
@@ -201,7 +198,7 @@ class Default(WorkerEntrypoint):
             return self._json_response([])
 
         try:
-            stats = storage.get_stats()
+            stats = await storage.get_stats()
             return self._json_response(list(stats.get("sources", {}).keys()))
         except Exception as e:
             return self._json_response({"error": str(e)}, status=500)
@@ -226,55 +223,22 @@ class WorkersD1StorageAdapter:
 
     def __init__(self, d1_binding):
         self.db = d1_binding
-        self.schema_error = None
-        try:
-            self._ensure_schema()
-        except Exception as e:
-            self.schema_error = str(e)
 
-    def _ensure_schema(self):
-        """创建 articles 表（如果不存在）"""
-        create_table_sql = """
-        CREATE TABLE IF NOT EXISTS articles (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            content TEXT,
-            url TEXT NOT NULL,
-            published_at TEXT,
-            source TEXT,
-            categories TEXT,
-            tags TEXT,
-            summary TEXT,
-            raw_markdown TEXT,
-            ingested_at TEXT NOT NULL
-        )
-        """
-        result = self._execute_sql(create_table_sql)
-        if not result.get("success"):
-            raise Exception(f"Failed to create table: {result.get('errors')}")
-
-        # 创建索引
-        self._execute_sql("CREATE INDEX IF NOT EXISTS idx_articles_source ON articles(source)")
-        self._execute_sql("CREATE INDEX IF NOT EXISTS idx_articles_ingested_at ON articles(ingested_at DESC)")
-
-    def _execute_sql(self, sql, params=None):
-        """通过 Workers D1 绑定执行 SQL"""
+    async def _execute_sql(self, sql, params=None):
+        """通过 Workers D1 绑定执行 SQL（异步）"""
         try:
             stmt = self.db.prepare(sql)
             if params:
                 stmt = stmt.bind(*params)
-            result = stmt.all()
+            result = await stmt.all()
 
             # D1 API 返回的结果格式处理
             results = []
             if hasattr(result, 'results'):
-                # 新版 API: result.results
                 results = list(result.results)
             elif isinstance(result, list):
-                # 旧版或直接返回列表
                 results = result
             elif hasattr(result, '__iter__'):
-                # 可迭代对象
                 results = list(result)
 
             return {
@@ -288,7 +252,7 @@ class WorkersD1StorageAdapter:
                 "sql": sql
             }
 
-    def fetch_articles(self, filters=None, limit=50, offset=0):
+    async def fetch_articles(self, filters=None, limit=50, offset=0):
         """Fetch articles with optional filtering"""
         filters = filters or {}
 
@@ -306,7 +270,7 @@ class WorkersD1StorageAdapter:
         sql += " ORDER BY ingested_at DESC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
 
-        result = self._execute_sql(sql, params)
+        result = await self._execute_sql(sql, params)
 
         articles = []
         if result.get("success"):
@@ -315,32 +279,30 @@ class WorkersD1StorageAdapter:
 
         return articles
 
-    def fetch_article_by_id(self, article_id):
+    async def fetch_article_by_id(self, article_id):
         """Get a single article by ID"""
         sql = "SELECT * FROM articles WHERE id = ? LIMIT 1"
-        result = self._execute_sql(sql, [article_id])
+        result = await self._execute_sql(sql, [article_id])
 
         if result.get("success") and result.get("results"):
             return self._row_to_dict(result["results"][0])
 
         return None
 
-    def get_stats(self):
+    async def get_stats(self):
         """Get database statistics"""
         # Get total count
-        count_result = self._execute_sql("SELECT COUNT(*) as total FROM articles")
+        count_result = await self._execute_sql("SELECT COUNT(*) as total FROM articles")
         total = 0
         if count_result.get("success") and count_result.get("results"):
             row = count_result["results"][0]
-            # Handle both dict and object access
             if isinstance(row, dict):
                 total = row.get("total", 0)
             else:
-                # Try attribute access
                 total = getattr(row, 'total', None) or getattr(row, 'COUNT(*)', 0) or 0
 
         # Get sources breakdown
-        sources_result = self._execute_sql(
+        sources_result = await self._execute_sql(
             "SELECT source, COUNT(*) as count FROM articles GROUP BY source"
         )
         sources = {}
@@ -358,9 +320,9 @@ class WorkersD1StorageAdapter:
             "sources": sources
         }
 
-    def _list_tables(self):
+    async def _list_tables(self):
         """List all tables in the database"""
-        result = self._execute_sql(
+        result = await self._execute_sql(
             "SELECT name FROM sqlite_master WHERE type='table'"
         )
         if result.get("success"):
