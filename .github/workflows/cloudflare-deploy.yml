@@ -1,14 +1,11 @@
-name: Deploy Cloudflare Worker (Python)
+name: Deploy Cloudflare Python Worker
 
 on:
   push:
     branches: [master, main]
     paths:
       - 'worker.py'
-      - 'api/**/*.py'
-      - 'config/**/*.py'
-      - 'ingestor/storage/**/*.py'
-      - 'shared/**/*.py'
+      - 'pyproject.toml'
       - 'wrangler.toml'
       - '.github/workflows/cloudflare-deploy.yml'
   workflow_dispatch:
@@ -31,18 +28,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: 'latest'
+          enable-cache: true
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
-      - name: Install Wrangler CLI
-        run: npm install -g wrangler
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Verify Python syntax
+      - name: Install pywrangler
         run: |
-          python -m py_compile worker.py
-          echo "✅ Python syntax check passed"
+          uv tool install workers-py
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Update wrangler.toml with D1 database ID
         env:
@@ -50,15 +55,15 @@ jobs:
         run: |
           if [ -n "$CF_D1_DATABASE_ID" ]; then
             sed -i "s/your-database-id-here/$CF_D1_DATABASE_ID/g" wrangler.toml
-            echo "✅ Updated wrangler.toml with D1 database ID"
+            echo "Updated wrangler.toml with D1 database ID"
           else
-            echo "⚠️ CF_D1_DATABASE_ID not set, using placeholder"
+            echo "CF_D1_DATABASE_ID not set, using placeholder"
           fi
 
       - name: Deploy to Cloudflare Workers
         run: |
-          echo "🚀 开始部署 Cloudflare Python Worker..."
-          wrangler deploy
+          echo "Starting Cloudflare Python Worker deployment..."
+          uv run pywrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -70,45 +75,45 @@ jobs:
           WORKER_URL="https://${WORKER_NAME}.workers.dev"
 
           echo ""
-          echo "⏳ 等待 Worker 生效..."
+          echo "Waiting for Worker to be ready..."
           sleep 5
 
-          echo "🧪 测试 API 端点..."
+          echo "Testing API endpoints..."
           
           # 测试健康检查
-          echo "测试 /health:"
+          echo "Testing /health:"
           HEALTH=$(curl -s --max-time 30 "${WORKER_URL}/health" || echo '{"status": "failed"}')
-          echo "响应: $HEALTH"
+          echo "Response: $HEALTH"
           
           if echo "$HEALTH" | grep -q "healthy"; then
-            echo "✅ 健康检查通过!"
+            echo "Health check passed!"
           else
-            echo "⚠️ 健康检查可能需要更多时间生效"
+            echo "Health check may need more time"
           fi
           
           # 测试文章列表
           echo ""
-          echo "测试 /api/v2/articles:"
+          echo "Testing /api/v2/articles:"
           ARTICLES=$(curl -s --max-time 30 "${WORKER_URL}/api/v2/articles?page_size=1" || echo '{"error": "failed"}')
-          echo "响应: $ARTICLES"
+          echo "Response: $ARTICLES"
           
           # 测试统计
           echo ""
-          echo "测试 /api/v2/stats:"
+          echo "Testing /api/v2/stats:"
           STATS=$(curl -s --max-time 30 "${WORKER_URL}/api/v2/stats" || echo '{"error": "failed"}')
-          echo "响应: $STATS"
+          echo "Response: $STATS"
 
           echo ""
           echo "================================================"
-          echo "✅ 部署完成!"
+          echo "Deployment complete!"
           echo ""
-          echo "📝 访问地址:"
+          echo "Access URLs:"
           echo "   - Worker: $WORKER_URL"
           echo "   - Health: ${WORKER_URL}/health"
           echo "   - API: ${WORKER_URL}/api/v2/articles"
           echo "   - Stats: ${WORKER_URL}/api/v2/stats"
           echo ""
-          echo "🧪 测试命令:"
+          echo "Test commands:"
           echo "   curl ${WORKER_URL}/health"
           echo "   curl ${WORKER_URL}/api/v2/articles?limit=3"
           echo "   curl ${WORKER_URL}/api/v2/stats"
@@ -118,18 +123,18 @@ jobs:
         if: always()
         run: |
           WORKER_NAME=$(grep "^name = " wrangler.toml | sed 's/name = "\(.*\)"/\1/' | tr -d '"')
-          echo "## 🚀 Cloudflare Python Worker 部署" >> $GITHUB_STEP_SUMMARY
+          echo "## Cloudflare Python Worker Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Worker 名称**: \`$WORKER_NAME\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **运行时**: Python" >> $GITHUB_STEP_SUMMARY
-          echo "- **部署地址**: https://${WORKER_NAME}.workers.dev" >> $GITHUB_STEP_SUMMARY
+          echo "- **Worker Name**: \`$WORKER_NAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runtime**: Python" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment URL**: https://${WORKER_NAME}.workers.dev" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### API 端点" >> $GITHUB_STEP_SUMMARY
+          echo "### API Endpoints" >> $GITHUB_STEP_SUMMARY
           echo "- \`${WORKER_URL}/health\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`${WORKER_URL}/api/v2/articles\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`${WORKER_URL}/api/v2/stats\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 测试命令" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Commands" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "curl https://${WORKER_NAME}.workers.dev/health" >> $GITHUB_STEP_SUMMARY
           echo "curl https://${WORKER_NAME}.workers.dev/api/v2/articles?page_size=5" >> $GITHUB_STEP_SUMMARY
