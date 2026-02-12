@@ -89,13 +89,16 @@ class Default(WorkerEntrypoint):
         if storage:
             try:
                 stats = await storage.get_stats()
-                db_count = stats.get("total", 0)
-                db_details = {
-                    "sources": stats.get("sources", {}),
-                    "tables": await storage._list_tables()
-                }
+                if isinstance(stats, dict):
+                    db_count = stats.get("total", 0)
+                    db_details = {
+                        "sources": stats.get("sources", {}),
+                        "tables": await storage._list_tables()
+                    }
+                else:
+                    db_count = f"ERROR: stats is not dict, type={type(stats)}"
             except Exception as e:
-                db_count = f"ERROR: {str(e)}"
+                db_count = f"ERROR: {type(e).__name__}: {str(e)}"
 
         response = {
             "status": "healthy",
@@ -291,43 +294,49 @@ class WorkersD1StorageAdapter:
 
     async def get_stats(self):
         """Get database statistics"""
-        # Get total count
-        count_result = await self._execute_sql("SELECT COUNT(*) as total FROM articles")
-        total = 0
-        if count_result.get("success") and count_result.get("results"):
-            row = count_result["results"][0]
-            if isinstance(row, dict):
-                total = row.get("total", 0)
-            else:
-                total = getattr(row, 'total', None) or getattr(row, 'COUNT(*)', 0) or 0
-
-        # Get sources breakdown
-        sources_result = await self._execute_sql(
-            "SELECT source, COUNT(*) as count FROM articles GROUP BY source"
-        )
-        sources = {}
-        if sources_result.get("success"):
-            for row in sources_result.get("results", []):
+        try:
+            # Get total count
+            count_result = await self._execute_sql("SELECT COUNT(*) as total FROM articles")
+            total = 0
+            if count_result.get("success") and count_result.get("results"):
+                row = count_result["results"][0]
                 if isinstance(row, dict):
-                    sources[row.get("source", "unknown")] = row.get("count", 0)
+                    total = row.get("total", 0)
                 else:
-                    source = getattr(row, 'source', 'unknown')
-                    count = getattr(row, 'count', 0) or getattr(row, 'COUNT(*)', 0)
-                    sources[source] = count
+                    total = getattr(row, 'total', None) or getattr(row, 'COUNT(*)', 0) or 0
 
-        return {
-            "total": total,
-            "sources": sources
-        }
+            # Get sources breakdown
+            sources_result = await self._execute_sql(
+                "SELECT source, COUNT(*) as count FROM articles GROUP BY source"
+            )
+            sources = {}
+            if sources_result.get("success"):
+                for row in sources_result.get("results", []):
+                    if isinstance(row, dict):
+                        sources[row.get("source", "unknown")] = row.get("count", 0)
+                    else:
+                        source = getattr(row, 'source', 'unknown')
+                        count = getattr(row, 'count', 0) or getattr(row, 'COUNT(*)', 0)
+                        sources[source] = count
+
+            return {
+                "total": total,
+                "sources": sources
+            }
+        except Exception as e:
+            return {"total": 0, "sources": {}, "error": f"Stats error: {str(e)}"}
 
     async def _list_tables(self):
         """List all tables in the database"""
-        result = await self._execute_sql(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        )
-        if result.get("success"):
-            return [row.get("name") for row in result.get("results", [])]
-        return []
+        try:
+            result = await self._execute_sql(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
+            if result.get("success"):
+                return [row.get("name") for row in result.get("results", [])]
+            return []
+        except Exception as e:
+            return [f"Error listing tables: {str(e)}"]
 
     def _row_to_dict(self, row):
         """Convert database row to dict"""
