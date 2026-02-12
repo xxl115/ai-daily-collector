@@ -1,0 +1,12 @@
+# Minimal configuration for ai-daily-collector
+ingest:
+# Data source configurations can be extended per stage
+  sources:
+    - name: example
+      type: rss
+      url: https://example.com/feed.xml
+database:
+  provider: d1
+  account_id: ${CF_ACCOUNT_ID}
+  db_name: ${CF_D1_DB_NAME}
+  api_token: ${CF_API_TOKEN}
