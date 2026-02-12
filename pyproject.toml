@@ -5,113 +5,64 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ai-daily-collector"
 version = "0.2.0"
-description = "AI 热点资讯自动采集与分发系统 - AI News Aggregator with Daily Digest"
+description = "AI 热点资讯自动采集与分发系统"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.12"
 authors = [
     {name = "xxl115", email = "contact@example.com"}
 ]
-keywords = [
-    "ai", "news", "aggregator", "rss", "daily-digest",
-    "llm", "summarization", "automation", "workflow"
-]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
-    "Topic :: Text Processing :: Indexing",
-    "Topic :: Office/Business :: News/Diary",
-]
 
+# Cloudflare Python Workers 兼容的依赖 - 只包含 Workers 支持的包
 dependencies = [
-    # HTTP 请求
-    "requests>=2.31.0",
-    
-    # RSS 解析
-    "feedparser>=6.0.10",
-    
-    # 日期处理
-    "python-dateutil>=2.8.2",
-    
-    # YAML 解析
-    "PyYAML>=6.0.1",
-    
-    # FastAPI & Web
-    "fastapi>=0.109.0",
-    "uvicorn[standard]>=0.27.0",
     "pydantic>=2.5.0",
-    "pydantic-settings>=2.1.0",
-    
-    # 彩色日志
-    "colorlog>=6.8.0",
-    
-    # 加密（可选）
-    "cryptography>=41.0.0",
 ]
 
 [project.optional-dependencies]
+# 本地开发和数据收集（不兼容 Workers）
+local = [
+    "requests>=2.31.0",
+    "feedparser>=6.0.10",
+    "python-dateutil>=2.8.2",
+    "PyYAML>=6.0.1",
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "pydantic-settings>=2.1.0",
+    "colorlog>=6.8.0",
+    "cryptography>=41.0.0",
+]
+
 dev = [
-    # 测试
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
     "pytest-asyncio>=0.23.0",
     "pytest-mock>=3.12.0",
     "httpx>=0.26.0",
-
-    # 代码质量
     "black>=24.0.0",
     "isort>=5.13.0",
     "flake8>=7.0.0",
     "mypy>=1.8.0",
     "types-requests>=2.31.0.0",
     "types-PyYAML>=6.0.0.0",
-
-    # 开发工具
     "pre-commit>=3.6.0",
     "ipython>=8.0.0",
     "rich>=13.7.0",
-
-    # 类型检查
     "types-setuptools>=69.0.0.0",
 ]
 
 # Cloudflare Python Workers 开发依赖
-# 参考: https://developers.cloudflare.com/workers/languages/python/
 [dependency-groups]
 dev = [
     "workers-py",
     "workers-runtime-sdk"
 ]
 
-docs = [
-    "mkdocs>=1.5.0",
-    "mkdocs-material>=9.5.0",
-]
-
-all = [
-    "ai-daily-collector[dev]",
-    "ai-daily-collector[docs]",
-]
-
 [project.scripts]
 ai-collector = "scripts.daily_ai_workflow:main"
-ai-crawl = "scripts.ai_hotspot_crawler_simple:main"
-ai-summarize = "scripts.summarize_articles:main"
-ai-report = "scripts.generate_daily_report:main"
-ai-api = "api.main:main"
 
 [project.urls]
 Homepage = "https://github.com/xxl115/ai-daily-collector"
 Repository = "https://github.com/xxl115/ai-daily-collector"
-Issues = "https://github.com/xxl115/ai-daily-collector/issues"
-Changelog = "https://github.com/xxl115/ai-daily-collector/blob/master/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -120,78 +71,11 @@ exclude = ["tests*", "docs*"]
 
 [tool.black]
 line-length = 100
-target-version = ['py310', 'py311', 'py312']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-    \.eggs
-    | \.git
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-)/
-'''
+target-version = ['py312']
 
 [tool.isort]
 profile = "black"
 line_length = 100
-skip = [".venv", "venv", "node_modules", "build"]
-known_first_party = ["ai_daily_collector", "scripts", "api", "utils", "config"]
-
-[tool.flake8]
-max-line-length = 100
-extend-ignore = "E203"
-per-file-ignores = [
-    "tests/*:E501,S101",
-    "scripts/*:E501",
-]
-exclude = [
-    ".git",
-    "__pycache__",
-    ".mypy_cache",
-    ".pytest_cache",
-    "build",
-    "dist",
-    ".venv",
-    "venv",
-]
 
 [tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-ignore_missing_imports = true
-show_error_codes = true
-color_output = true
-pretty = true
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = "-v --tb=short"
-filterwarnings = [
-    "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning",
-]
-
-[tool.coverage.run]
-source = ["ai_daily_collector", "scripts", "api", "utils", "config"]
-omit = ["tests/*", "*/__pycache__/*"]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-]
-
-[tool.rich]
-traceback_show_locals = true
+python_version = "3.12"
