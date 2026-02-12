@@ -1,5 +1,5 @@
 """
-Cloudflare Workers Python 入口文件 - v2.1
+Cloudflare Workers Python 入口文件 - v2.2 DEBUG
 """
 from workers import WorkerEntrypoint
 from js import Response
@@ -8,7 +8,7 @@ from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 
 # 版本号用于强制刷新
-VERSION = "2.1.0"
+VERSION = "2.2.0"
 
 class Default(WorkerEntrypoint):
     """Cloudflare Python Workers 默认入口类"""
@@ -16,7 +16,6 @@ class Default(WorkerEntrypoint):
     async def on_fetch(self, request, env, ctx):
         """处理所有 HTTP 请求的主入口"""
         try:
-            # request.url 是字符串，需要解析
             url_str = str(request.url)
             parsed_url = urlparse(url_str)
             path = parsed_url.path
@@ -27,7 +26,6 @@ class Default(WorkerEntrypoint):
             try:
                 db = env.DB
             except Exception as e:
-                # 数据库绑定失败，记录日志但继续
                 pass
 
             # 初始化存储适配器
@@ -70,17 +68,25 @@ class Default(WorkerEntrypoint):
     def _health_response(self, storage):
         """健康检查响应 - 显示数据库连接状态"""
         db_connected = storage is not None
+        db_count = 0
+        if storage:
+            try:
+                stats = storage.get_stats()
+                db_count = stats.get("total", 0)
+            except Exception as e:
+                db_count = f"ERROR: {str(e)}"
+        
         return self._json_response({
             "status": "healthy",
             "version": VERSION,
             "database": "connected" if db_connected else "not configured",
+            "article_count": db_count,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         })
 
     async def _articles_response(self, parsed_url, storage):
         """文章列表响应 - 返回空列表当没有数据"""
         if not storage:
-            # 数据库未配置，返回空结果而不是错误
             return self._json_response({
                 "total": 0,
                 "articles": [],
@@ -195,12 +201,13 @@ class WorkersD1StorageAdapter:
             result = stmt.all()
             return {
                 "success": True,
-                "results": result.results if hasattr(result, 'results') else []
+                "results": list(result.results) if hasattr(result, 'results') else []
             }
         except Exception as e:
             return {
                 "success": False,
-                "errors": [{"message": str(e)}]
+                "errors": [{"message": str(e)}],
+                "sql": sql
             }
 
     def fetch_articles(self, filters=None, limit=50, offset=0):
@@ -226,8 +233,7 @@ class WorkersD1StorageAdapter:
         articles = []
         if result.get("success"):
             for row in result.get("results", []):
-                if isinstance(row, dict):
-                    articles.append(self._row_to_dict(row))
+                articles.append(self._row_to_dict(row))
 
         return articles
 
@@ -243,18 +249,26 @@ class WorkersD1StorageAdapter:
 
     def get_stats(self):
         """Get database statistics"""
+        # Get total count
         count_result = self._execute_sql("SELECT COUNT(*) as total FROM articles")
         total = 0
         if count_result.get("success") and count_result.get("results"):
-            total = count_result["results"][0].get("total", 0)
+            row = count_result["results"][0]
+            # Handle both dict and numeric access
+            if isinstance(row, dict):
+                total = row.get("total", 0)
+            else:
+                total = row[0] if hasattr(row, '__getitem__') else 0
 
+        # Get sources breakdown
         sources_result = self._execute_sql(
             "SELECT source, COUNT(*) as count FROM articles GROUP BY source"
         )
         sources = {}
         if sources_result.get("success"):
             for row in sources_result.get("results", []):
-                sources[row["source"]] = row["count"]
+                if isinstance(row, dict):
+                    sources[row.get("source", "unknown")] = row.get("count", 0)
 
         return {
             "total": total,
@@ -263,6 +277,9 @@ class WorkersD1StorageAdapter:
 
     def _row_to_dict(self, row):
         """Convert database row to dict"""
+        if not isinstance(row, dict):
+            return {"raw_data": str(row)}
+        
         categories = []
         tags = []
 
@@ -279,14 +296,14 @@ class WorkersD1StorageAdapter:
                 tags = []
 
         return {
-            "id": row.get("id", ""),
-            "title": row.get("title", ""),
-            "content": row.get("content", ""),
-            "url": row.get("url", ""),
-            "published_at": row.get("published_at"),
-            "source": row.get("source", ""),
+            "id": str(row.get("id", "")),
+            "title": str(row.get("title", "")),
+            "content": str(row.get("content", "")),
+            "url": str(row.get("url", "")),
+            "published_at": str(row.get("published_at")),
+            "source": str(row.get("source", "")),
             "categories": categories,
             "tags": tags,
-            "summary": row.get("summary"),
-            "ingested_at": row.get("ingested_at", "")
+            "summary": str(row.get("summary", "")),
+            "ingested_at": str(row.get("ingested_at", ""))
         }
