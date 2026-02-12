@@ -11,8 +11,8 @@ from datetime import datetime
 class Default(WorkerEntrypoint):
     """Cloudflare Python Workers 默认入口类"""
 
-    async def fetch(self, request):
-        """处理所有 HTTP 请求的主入口"""
+    async def on_fetch(self, request, env, ctx):
+        """处理所有 HTTP 请求的主入口 - 必须叫 on_fetch"""
         try:
             url = request.url
             path = url.pathname
@@ -21,7 +21,7 @@ class Default(WorkerEntrypoint):
             # 获取 D1 数据库绑定
             db = None
             try:
-                db = self.env.DB
+                db = env.DB
             except:
                 pass
 
@@ -56,7 +56,6 @@ class Default(WorkerEntrypoint):
                 return self._json_response({"error": "Not found"}, status=404)
 
         except Exception as e:
-            # 全局错误处理
             return self._json_response({
                 "error": "Internal server error",
                 "message": str(e)
@@ -76,7 +75,6 @@ class Default(WorkerEntrypoint):
             return self._json_response({"error": "Database not available"}, status=500)
 
         try:
-            # 解析查询参数
             url = request.url
             query = url.search_params
             source = query.get("source")
@@ -223,13 +221,11 @@ class WorkersD1StorageAdapter:
 
     def get_stats(self):
         """Get database statistics"""
-        # Total count
         count_result = self._execute_sql("SELECT COUNT(*) as total FROM articles")
         total = 0
         if count_result.get("success") and count_result.get("results"):
             total = count_result["results"][0].get("total", 0)
 
-        # Source breakdown
         sources_result = self._execute_sql(
             "SELECT source, COUNT(*) as count FROM articles GROUP BY source"
         )
