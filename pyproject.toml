@@ -8,7 +8,7 @@ version = "0.2.0"
 description = "AI 热点资讯自动采集与分发系统 - AI News Aggregator with Daily Digest"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = [
     {name = "xxl115", email = "contact@example.com"}
 ]
