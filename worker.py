@@ -24,18 +24,30 @@ class Default(WorkerEntrypoint):
             # 获取 D1 数据库绑定
             db = None
             db_error = None
-            try:
-                db = env.DB
-            except Exception as e:
-                db_error = str(e)
-                pass
+            env_info = {}
+            
+            if env is None:
+                db_error = "env is None - D1 binding not available"
+                env_info = {"env_type": "None"}
+            else:
+                env_info = {
+                    "env_type": type(env).__name__,
+                    "env_attrs": [attr for attr in dir(env) if not attr.startswith('_')][:10]
+                }
+                try:
+                    # Try to access DB binding
+                    db = getattr(env, 'DB', None)
+                    if db is None:
+                        db_error = "env.DB is None - D1 binding may not be configured"
+                except Exception as e:
+                    db_error = f"Error accessing env.DB: {str(e)}"
 
             # 初始化存储适配器
             storage = WorkersD1StorageAdapter(db) if db else None
 
             # 健康检查端点 - 显示数据库连接状态
             if path == "/" or path == "/health":
-                return self._health_response(storage, db_error)
+                return self._health_response(storage, db_error, env_info)
 
             # API 端点
             if path == "/api/v2/articles":
@@ -67,7 +79,7 @@ class Default(WorkerEntrypoint):
                 "message": str(e)
             }, status=500)
 
-    def _health_response(self, storage, db_error=None):
+    def _health_response(self, storage, db_error=None, env_info=None):
         """健康检查响应 - 显示数据库连接状态"""
         db_connected = storage is not None
         db_count = 0
@@ -97,6 +109,9 @@ class Default(WorkerEntrypoint):
         
         if db_details:
             response["database_details"] = db_details
+        
+        if env_info:
+            response["env_info"] = env_info
             
         return self._json_response(response)
 
