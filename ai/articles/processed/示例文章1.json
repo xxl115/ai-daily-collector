@@ -1,0 +1,9 @@
+{
+  "url": "https://example.com/article1",
+  "title": "示例文章1",
+  "content": "占位文本，原文 https://example.com/article1",
+  "summary": "dry-run 摘要",
+  "category": "new",
+  "tags": [],
+  "source": "其他"
+}
