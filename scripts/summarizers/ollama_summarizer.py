@@ -1,5 +1,10 @@
 import requests
+import logging
 from typing import Optional
+
+from utils.retry import retry_with_fixed_interval
+
+logger = logging.getLogger(__name__)
 
 
 class OllamaSummarizer:
@@ -19,6 +24,12 @@ class OllamaSummarizer:
 
 摘要："""
 
+    @retry_with_fixed_interval(
+        max_retries=2,
+        interval=3.0,
+        exceptions=(requests.RequestException, TimeoutError, ConnectionError),
+        on_retry=lambda e, n: logger.warning(f"Ollama 重试 {n}: {e}")
+    )
     def summarize(self, text: str) -> str:
         try:
             response = requests.post(
@@ -37,6 +48,8 @@ class OllamaSummarizer:
             if response.status_code == 200:
                 result = response.json()
                 return result.get('response', '').strip()
+            logger.warning(f"Ollama 返回状态码 {response.status_code}")
             return text[:200]
-        except Exception:
+        except Exception as e:
+            logger.error(f"Ollama 摘要生成失败: {e}")
             return text[:200]
