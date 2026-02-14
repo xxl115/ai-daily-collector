@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "ArticleInput",
+  "type": "object",
+  "properties": {
+    "url": {"type": "string", "format": "uri"},
+    "title": {"type": "string"},
+    "ingested_at": {"type": "string", "format": "date-time"}
+  },
+  "required": ["url", "title", "ingested_at"],
+  "additionalProperties": false
+}

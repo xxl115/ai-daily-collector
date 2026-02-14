@@ -1,4 +1,5 @@
 # Architecture Hub — All-in-One Reference
+ARCHITECTURE_ALL.md 是主文档，ARCHITECTURE.md 提供导航与概要。
 
 - This document serves as a single entry point and navigational hub for architecture-related materials.
 - The consolidated All-in-One architecture reference is available at ARCHITECTURE_ALL.md. Other supporting artifacts (visual diagrams and redesign roadmaps) are linked below.

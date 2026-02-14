@@ -6,6 +6,7 @@ import time
 import json
 import logging
 import os
+import uuid
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict
@@ -62,8 +63,8 @@ class ContentProcessor:
         try:
             with open(self._seen_path, 'w', encoding='utf-8') as f:
                 json.dump(list(self._seen_urls), f, ensure_ascii=False, indent=2)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"保存已处理 URL 列表失败: {e}")
 
     def _init_metrics(self) -> dict:
         # Initialize metrics collection for observability
@@ -79,11 +80,20 @@ class ContentProcessor:
         }
 
     def _emit_metrics(self) -> None:
-        # Emit metrics as a Markdown JSON blob for quick inspection
+        """Emit metrics as a Markdown JSON blob for quick inspection."""
         try:
             import datetime
             metrics_path = Path('ai/daily/REPORT_METRICS.md')
             metrics_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # 文件大小超过 1MB 时进行轮转
+            if metrics_path.exists() and metrics_path.stat().st_size > 1024 * 1024:
+                rotated_path = metrics_path.with_suffix('.old.md')
+                if rotated_path.exists():
+                    rotated_path.unlink()
+                metrics_path.rename(rotated_path)
+                logger.info(f"Metrics 文件已轮转: {rotated_path}")
+
             now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data = {
                 'timestamp': now,
@@ -94,16 +104,23 @@ class ContentProcessor:
                     'avg_summary_len': (sum(self.metrics['summary_lengths']) / len(self.metrics['summary_lengths'])) if self.metrics['summary_lengths'] else 0,
                 }
             }
+
             with open(metrics_path, 'a', encoding='utf-8') as f:
                 f.write('\n\n## Metrics Snapshot @ ' + now + '\n')
                 f.write('```json\n')
                 f.write(json.dumps(data, ensure_ascii=False, indent=2))
                 f.write('\n```\n')
-        except Exception:
-            pass
+
+        except Exception as e:
+            logger.warning(f"写入 metrics 失败: {e}")
 
     def process_article(self, url: str, title: str) -> Dict:
+        # 生成唯一 ID 和提取时间戳
+        article_id = str(uuid.uuid4())
+        extracted_at = datetime.utcnow().isoformat() + 'Z'
+
         result = {
+            'id': article_id,
             'url': url,
             'title': title,
             'content': '',
@@ -111,7 +128,9 @@ class ContentProcessor:
             'category': 'new',
             'tags': [],
             'source': self._detect_source(url),
-            'processed_at': datetime.utcnow().isoformat() + 'Z'
+            'extracted_at': extracted_at,
+            'processed_at': datetime.utcnow().isoformat() + 'Z',
+            'version': 'v1'
         }
         logger.info(f"提取内容: {url}")
         # 干跑开关

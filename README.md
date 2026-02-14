@@ -232,6 +232,12 @@ crontab -e
 
 欢迎贡献代码！请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 了解贡献指南。
 
+## 文档导航
+- ARCHITECTURE_ALL.md：All-in-One 架构总览（核心数据流、契约、落地点等）
+- ARCHITECTURE_DESIGN.md：架构设计与原则、组件边界、演进路线
+- ARCHITECTURE_DIAGRAMS.md：架构图与 Mermaid 图
+- docs/schemas/article_input.schema.json、docs/schemas/article_processed.schema.json、docs/schemas/daily_report.schema.json：数据契约的 JSON Schema 示例
+
 ## 📝 许可证
 
 本项目采用 MIT License - 详见 [LICENSE](LICENSE) 文件。

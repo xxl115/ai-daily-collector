@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "DailyReport",
+  "type": "object",
+  "properties": {
+    "date": {"type": "string", "format": "date"},
+    "articles": {
+      "type": "array",
+      "items": {"$ref": "./article_processed.schema.json"}
+    },
+    "summary": {"type": "string"},
+    "version": {"type": "string"}
+  },
+  "required": ["date", "articles", "summary", "version"],
+  "definitions": {
+    "ArticleProcessed": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string"},
+        "url": {"type": "string", "format": "uri"},
+        "title": {"type": "string"},
+        "version": {"type": "string"}
+      },
+      "required": ["id", "url", "title", "version"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

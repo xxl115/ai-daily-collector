@@ -1,0 +1,481 @@
+openapi: 3.0.3
+info:
+  title: AI Daily Collector API
+  description: AI 资讯自动采集系统的 REST API
+  version: 1.0.0
+  contact:
+    name: AI Daily Collector
+    url: https://github.com/xxl115/ai-daily-collector
+
+servers:
+  - url: http://localhost:8000
+    description: 本地开发环境
+  - url: https://api.example.com
+    description: 生产环境
+
+tags:
+  - name: health
+    description: 健康检查
+  - name: articles
+    description: 文章管理
+  - name: report
+    description: 日报管理
+  - name: categories
+    description: 分类管理
+  - name: stats
+    description: 统计信息
+
+paths:
+  /:
+    get:
+      tags:
+        - health
+      summary: 健康检查
+      description: 检查 API 服务是否正常运行
+      operationId: healthCheck
+      responses:
+        '200':
+          description: 服务正常
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: 2026-02-14T12:00:00Z
+
+  /api/v1/articles:
+    get:
+      tags:
+        - articles
+      summary: 获取文章列表
+      description: 分页获取已处理的文章列表
+      operationId: listArticles
+      parameters:
+        - name: page
+          in: query
+          description: 页码（从 1 开始）
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: page_size
+          in: query
+          description: 每页数量
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: category
+          in: query
+          description: 按分类筛选
+          required: false
+          schema:
+            type: string
+            enum:
+              - "1"
+              - "2"
+              - "3"
+              - "4"
+              - "5"
+              - "6"
+              - "7"
+              - "8"
+              - "new"
+        - name: source
+          in: query
+          description: 按来源筛选
+          required: false
+          schema:
+            type: string
+        - name: from_date
+          in: query
+          description: 起始日期（ISO 格式）
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          description: 结束日期（ISO 格式）
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 成功返回文章列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/articles/{id}:
+    get:
+      tags:
+        - articles
+      summary: 获取单篇文章
+      description: 根据文章 ID 获取详细信息
+      operationId: getArticle
+      parameters:
+        - name: id
+          in: path
+          description: 文章 ID
+          required: true
+          schema:
+            type: string
+            example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      responses:
+        '200':
+          description: 成功返回文章详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/report/today:
+    get:
+      tags:
+        - report
+      summary: 获取今日日报
+      description: 获取当日的 AI 资讯日报
+      operationId: getTodayReport
+      responses:
+        '200':
+          description: 成功返回日报内容
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyReport'
+        '404':
+          description: 今日日报不存在
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/report/{date}:
+    get:
+      tags:
+        - report
+      summary: 获取指定日期日报
+      description: 根据日期获取历史日报
+      operationId: getReportByDate
+      parameters:
+        - name: date
+          in: path
+          description: 日期（YYYY-MM-DD 格式）
+          required: true
+          schema:
+            type: string
+            pattern: '^\\d{4}-\\d{2}-\\d{2}$'
+            example: "2026-02-14"
+      responses:
+        '200':
+          description: 成功返回指定日期日报
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyReport'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: 指定日期日报不存在
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/categories:
+    get:
+      tags:
+        - categories
+      summary: 获取分类列表
+      description: 获取所有可用的分类及其统计信息
+      operationId: listCategories
+      responses:
+        '200':
+          description: 成功返回分类列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+                  total_articles:
+                    type: integer
+                    example: 150
+
+  /api/v1/stats:
+    get:
+      tags:
+        - stats
+      summary: 获取统计信息
+      description: 获取系统运行统计信息
+      operationId: getStats
+      responses:
+        '200':
+          description: 成功返回统计信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStats'
+
+components:
+  schemas:
+    Article:
+      type: object
+      description: 文章摘要信息
+      properties:
+        id:
+          type: string
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        title:
+          type: string
+          example: "Claude Enterprise 正式发布"
+        url:
+          type: string
+          format: uri
+          example: "https://www.anthropic.com/news/claude-enterprise"
+        source:
+          type: string
+          example: "MIT Tech Review"
+        category:
+          type: string
+          enum:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+            - "6"
+            - "7"
+            - "8"
+            - "new"
+          example: "2"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["Anthropic", "Claude", "企业级"]
+        summary:
+          type: string
+          example: "Anthropic 推出 Claude Enterprise..."
+        processed_at:
+          type: string
+          format: date-time
+          example: "2026-02-14T12:05:23Z"
+
+    ArticleDetail:
+      type: object
+      description: 文章详细信息
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+          format: uri
+        content:
+          type: string
+          example: "完整文章内容..."
+        summary:
+          type: string
+        source:
+          type: string
+        category:
+          type: string
+          enum:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+            - "6"
+            - "7"
+            - "8"
+            - "new"
+        tags:
+          type: array
+          items:
+            type: string
+        extracted_at:
+          type: string
+          format: date-time
+        processed_at:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: "v1"
+
+    Category:
+      type: object
+      description: 分类信息
+      properties:
+        id:
+          type: string
+          enum:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+            - "6"
+            - "7"
+            - "8"
+            - "new"
+        name:
+          type: string
+          example: "大厂/人物"
+        description:
+          type: string
+          example: "Anthropic、OpenAI、Google 等动向"
+        count:
+          type: integer
+          example: 25
+
+    DailyReport:
+      type: object
+      description: 日报信息
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2026-02-14"
+        total_articles:
+          type: integer
+          example: 30
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              articles:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Article'
+        generated_at:
+          type: string
+          format: date-time
+          example: "2026-02-14T18:00:00Z"
+
+    Pagination:
+      type: object
+      description: 分页信息
+      properties:
+        page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 20
+        total_items:
+          type: integer
+          example: 150
+        total_pages:
+          type: integer
+          example: 8
+        has_next:
+          type: boolean
+          example: true
+        has_previous:
+          type: boolean
+          example: false
+
+    SystemStats:
+      type: object
+      description: 系统统计信息
+      properties:
+        total_articles:
+          type: integer
+          example: 1500
+        total_sources:
+          type: integer
+          example: 15
+        last_run:
+          type: string
+          format: date-time
+          example: "2026-02-14T18:00:00Z"
+        uptime_days:
+          type: number
+          example: 45.5
+        storage_used_mb:
+          type: number
+          example: 125.5
+
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid date format"
+              message:
+                type: string
+                example: "日期格式应为 YYYY-MM-DD"
+
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Not Found"
+              message:
+                type: string
+                example: "文章不存在"
+
+    InternalError:
+      description: 服务器内部错误
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Internal Server Error"
+              message:
+                type: string
+                example: "处理请求时发生内部错误"
+
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
