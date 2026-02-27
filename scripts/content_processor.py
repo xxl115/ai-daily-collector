@@ -435,21 +435,22 @@ def main():
         except Exception as e:
             logger.error(f"更新 D1 失败: {e}")
 
-    output_dir = Path(args.output)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
+    # 仅在非 D1 模式时保存到本地文件
     write_errors = []
-    for result in results:
-        safe_title = result["title"][:50].replace(" ", "_").replace("/", "_")
-        if not safe_title:
-            safe_title = "article"
-        output_file = output_dir / (safe_title + ".json")
-        try:
-            with open(output_file, "w", encoding="utf-8") as f:
-                json.dump(result, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            write_errors.append({"file": str(output_file), "error": str(e)})
-            logger.error(f"文件写入失败 {output_file}: {e}")
+    if args.source != "d1":
+        output_dir = Path(args.output)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        for result in results:
+            safe_title = result["title"][:50].replace(" ", "_").replace("/", "_")
+            if not safe_title:
+                safe_title = "article"
+            output_file = output_dir / (safe_title + ".json")
+            try:
+                with open(output_file, "w", encoding="utf-8") as f:
+                    json.dump(result, f, ensure_ascii=False, indent=2)
+            except Exception as e:
+                write_errors.append({"file": str(output_file), "error": str(e)})
+                logger.error(f"文件写入失败 {output_file}: {e}")
 
     # 生成日报 (仅在全量模式或非提取模式时)
     if args.mode == "full" and results:
