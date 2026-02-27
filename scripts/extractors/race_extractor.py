@@ -127,4 +127,4 @@ class FastExtractor:
                 logger.debug(f"Crawl4AI failed: {e}")
 
         logger.info(f"所有提取器失败: {url}")
-        return None, "failed"
+        return "-1", "failed"
