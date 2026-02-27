@@ -72,9 +72,10 @@ class ContentProcessor:
     _semaphore = SemaphoreLimiter(max_concurrent=5)
     _rate_limiter = RateLimiter(max_calls=60, period=60.0)
 
-    def __init__(self, max_articles: int = 30, mode: str = "full"):
+    def __init__(self, max_articles: int = 30, mode: str = "full", d1_adapter=None):
         self.max_articles = max_articles
         self.mode = mode
+        self.d1_adapter = d1_adapter
         self.extractor = TrafilaturaExtractor()
         self.fallback_extractor = JinaExtractor()
         self.fallback_extractor_2 = Crawl4AIExtractor()
@@ -303,6 +304,16 @@ class ContentProcessor:
                     elapsed = time.time() - start
                     logger.info(f"处理耗时: {elapsed:.2f}s")
                     results.append(result)
+
+                    # 立即更新 D1（如果提供了 d1_adapter）
+                    if self.d1_adapter and result.get("id") and result.get("content"):
+                        self.d1_adapter.update_article_content(
+                            result["id"],
+                            result["content"],
+                            result.get("extraction_method", "unknown"),
+                        )
+                        logger.info(f"已更新 D1 文章 content: {result['id']}")
+
                     if url:
                         seen.add(url)
                         self._save_seen()
@@ -425,29 +436,21 @@ def main():
             title = lines[1].replace("标题:", "").strip() if len(lines) > 1 else f.name
             articles.append({"url": url, "title": title, "file": f.name})
 
-    processor = ContentProcessor(max_articles=args.max_articles, mode=args.mode)
-    results, errors = processor.process_batch(articles)
-
-    # 如果从 D1 读取并处于提取模式，将提取的内容写回 D1
+    # 创建 D1 adapter（如果使用 D1 模式）
+    d1_adapter = None
     if args.source == "d1" and args.mode in ("extract-only", "full"):
-        try:
-            from ingestor.storage.d1_adapter import D1StorageAdapter
+        from ingestor.storage.d1_adapter import D1StorageAdapter
 
-            d1 = D1StorageAdapter(
-                account_id=args.d1_account_id,
-                database_id=args.d1_database_id,
-                api_token=args.d1_api_token,
-            )
-            for result in results:
-                article_id = result.get("id")
-                content = result.get("content", "")
-                extraction_method = result.get("extraction_method", "unknown")
-                if article_id and content:
-                    d1.update_article_content(article_id, content, extraction_method)
-                    logger.info(f"已更新 D1 文章 content: {article_id}")
-            logger.info(f"已更新 {len(results)} 篇文章到 D1")
-        except Exception as e:
-            logger.error(f"更新 D1 失败: {e}")
+        d1_adapter = D1StorageAdapter(
+            account_id=args.d1_account_id,
+            database_id=args.d1_database_id,
+            api_token=args.d1_api_token,
+        )
+
+    processor = ContentProcessor(
+        max_articles=args.max_articles, mode=args.mode, d1_adapter=d1_adapter
+    )
+    results, errors = processor.process_batch(articles)
 
     # 仅在非 D1 模式时保存到本地文件
     write_errors = []
