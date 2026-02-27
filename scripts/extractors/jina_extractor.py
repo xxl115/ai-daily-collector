@@ -18,15 +18,16 @@ class JinaExtractor:
             self.headers["Authorization"] = f"Bearer {self.api_key}"
 
     @retry_with_exponential_backoff(
-        max_retries=3,
+        max_retries=1,
         initial_delay=1.0,
         exceptions=(requests.RequestException, TimeoutError),
         on_retry=lambda e, n: logger.warning(f"Jina 提取重试 {n}: {e}"),
     )
     def extract(self, url: str) -> Optional[str]:
         try:
+            timeout = int(os.environ.get("JINA_TIMEOUT", "10"))
             response = requests.get(
-                f"https://r.jina.ai/{url}", headers=self.headers, timeout=30
+                f"https://r.jina.ai/{url}", headers=self.headers, timeout=timeout
             )
             if response.status_code == 200:
                 text = response.text
