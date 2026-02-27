@@ -218,7 +218,14 @@ class ContentProcessor:
             extraction_method = "dry-run"
         else:
             try:
-                content, extraction_method = self.fast_extractor.extract(url)
+                use_jina_race = (
+                    os.environ.get("USE_JINA_RACE", "true").lower() == "true"
+                )
+                if use_jina_race:
+                    content, extraction_method = self.fast_extractor.extract(url)
+                else:
+                    content = self.extractor.extract(url)
+                    extraction_method = "trafilatura" if content else "failed"
 
                 if content:
                     if extraction_method == "trafilatura":
