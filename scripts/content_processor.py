@@ -307,12 +307,18 @@ class ContentProcessor:
                     logger.info(f"处理耗时: {elapsed:.2f}s")
                     results.append(result)
 
-                    # 立即更新 D1（如果提供了 d1_adapter）
-                    if self.d1_adapter and result.get("id") and result.get("content"):
+                    # 立即更新 D1（如果提供了 d1_adapter 且提取成功）
+                    extraction_method = result.get("extraction_method", "unknown")
+                    if (
+                        self.d1_adapter
+                        and result.get("id")
+                        and result.get("content")
+                        and extraction_method != "failed"
+                    ):
                         self.d1_adapter.update_article_content(
                             result["id"],
                             result["content"],
-                            result.get("extraction_method", "unknown"),
+                            extraction_method,
                         )
                         logger.info(f"已更新 D1 文章 content: {result['id']}")
 
