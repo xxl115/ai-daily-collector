@@ -33,14 +33,21 @@ class JinaExtractor:
                 self.api_endpoint, json=payload, headers=headers, timeout=timeout
             )
             if response.status_code == 200:
-                data = response.json()
-                text = data.get("data", "") or data.get("content", "")
+                content_type = response.headers.get("content-type", "")
+                if "application/json" in content_type:
+                    data = response.json()
+                    text = data.get("data", "") or data.get("content", "")
+                else:
+                    text = response.text
                 if text and len(text) > 100:
                     return text.strip()
             else:
                 logger.warning(
                     f"Jina API 返回 {response.status_code}: {response.text[:200]}"
                 )
+            return None
+        except Exception as e:
+            logger.error(f"Jina 提取失败 {url}: {e}")
             return None
         except Exception as e:
             logger.error(f"Jina 提取失败 {url}: {e}")
