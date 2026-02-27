@@ -74,25 +74,26 @@ class RaceExtractor:
 
 
 class FastExtractor:
-    """快速提取器 - Trafilatura 和 Jina 并发竞速
+    """快速提取器 - Trafilatura、Jina 和 Crawl4AI 并发竞速
 
-    同时调用 Trafilatura 和 Jina Reader，返回最先成功的内容。
-    如果都失败，则降级到 Crawl4AI。
+    三个提取器同时竞争，谁先成功用谁。
     """
 
     def __init__(self, trafilatura_extractor, jina_extractor, crawl4ai_extractor=None):
         self.trafilatura = trafilatura_extractor
         self.jina = jina_extractor
         self.crawl4ai = crawl4ai_extractor
-        self.timeout = 5.0  # 减少竞速超时，防止长时间等待
+        self.timeout = 8.0  # 竞速超时
 
+        # 三个提取器一起竞速
         self.race_extractor = RaceExtractor(
-            [trafilatura_extractor, jina_extractor], timeout=self.timeout
+            [trafilatura_extractor, jina_extractor, crawl4ai_extractor],
+            timeout=self.timeout
         )
 
     def extract(self, url: str, use_race: bool = True) -> tuple[Optional[str], str]:
         """
-        提取内容 - 只执行竞速模式，不重试
+        提取内容 - 只执行一次竞速模式，不重试
 
         Args:
             url: 目标 URL
@@ -101,18 +102,23 @@ class FastExtractor:
         Returns:
             (content, method): 内容和方法名
         """
-        # 只使用竞速模式，不执行 fallback
-        if use_race:
-            content = self.race_extractor.extract(url)
-            winner_idx = self.race_extractor.get_winner_method()
+        if not use_race:
+            return None, "failed"
 
-            if content:
-                method = "trafilatura" if winner_idx == 0 else "jina"
-                logger.info(f"竞速模式 - {method} 获胜: {url}")
-                return content, method
+        # 三个提取器一起竞速
+        content = self.race_extractor.extract(url)
+        winner_idx = self.race_extractor.get_winner_method()
+
+        if content:
+            if winner_idx == 0:
+                method = "trafilatura"
+            elif winner_idx == 1:
+                method = "jina"
             else:
-                # 竞速超时/失败，返回空
-                logger.info(f"竞速模式失败: {url}")
-                return None, "failed"
-
-        return None, "failed"
+                method = "crawl4ai"
+            logger.info(f"竞速模式 - {method} 获胜: {url}")
+            return content, method
+        else:
+            # 竞速超时/失败，返回空
+            logger.info(f"竞速模式失败: {url}")
+            return None, "failed"
