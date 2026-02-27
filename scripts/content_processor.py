@@ -390,8 +390,15 @@ def main():
             ORDER BY ingested_at DESC 
             LIMIT ?
         """
+        logger.info(f"D1 SQL: {sql}")
+        logger.info(f"D1 params: [{args.max_articles}]")
         result = d1._execute_sql(sql, [args.max_articles])
+        logger.info(f"D1 result keys: {result.keys()}")
         rows = result.get("result", [])
+        logger.info(f"D1 rows count: {len(rows)}")
+        if rows:
+            logger.info(f"D1 first row keys: {rows[0].keys()}")
+            logger.info(f"D1 first row: {rows[0]}")
         for row in rows:
             articles.append(
                 {
