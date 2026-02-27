@@ -12,10 +12,15 @@ from datetime import datetime
 from typing import List, Dict
 
 try:
-    from scripts.extractors import TrafilaturaExtractor, JinaExtractor
+    from scripts.extractors import (
+        TrafilaturaExtractor,
+        JinaExtractor,
+        Crawl4AIExtractor,
+    )
 except Exception:
     from scripts.extractors.trafilatura_extractor import TrafilaturaExtractor
     from scripts.extractors.jina_extractor import JinaExtractor
+    from scripts.extractors.crawl4ai_extractor import Crawl4AIExtractor
 try:
     from scripts.summarizers import OllamaSummarizer
 except Exception:
@@ -66,10 +71,20 @@ class ContentProcessor:
         self.max_articles = max_articles
         self.extractor = TrafilaturaExtractor()
         self.fallback_extractor = JinaExtractor()
+        self.fallback_extractor_2 = Crawl4AIExtractor()  # 第三层降级
         self.summarizer = OllamaSummarizer()
         self.classifier = BGEClassifier()
         self.report_generator = ReportGenerator()
         self.metrics = self._init_metrics()
+
+        # 抓取状态记录
+        self.extraction_stats = {
+            "trafilatura_success": 0,
+            "jina_success": 0,
+            "crawl4ai_success": 0,
+            "all_failed": 0,
+            "failed_urls": [],  # 记录失败 URL 和原因
+        }
         # 记录已处理的 URL 以实现简单的幂等/去重（持久化到磁盘）
         self._seen_path = Path(".ai_cache/processed_urls.json")
         self._seen_path.parent.mkdir(parents=True, exist_ok=True)
@@ -175,20 +190,64 @@ class ContentProcessor:
             "version": "v1",
         }
         logger.info(f"提取内容: {url}")
-        # 干跑开关
+
+        # 三层降级提取策略
+        extraction_method = None
+        extraction_error = None
+
         if os.environ.get("DRY_RUN", "0") == "1":
             content = f"占位文本，原文 {url}"
         else:
+            # 第一层：Trafilatura
             content = self.extractor.extract(url)
+            if content:
+                extraction_method = "trafilatura"
+                self.extraction_stats["trafilatura_success"] += 1
+                logger.info(f"Trafilatura 提取成功: {url}")
+            else:
+                # 第二层：Jina Reader
+                content = self.fallback_extractor.extract(url)
+                if content:
+                    extraction_method = "jina"
+                    self.extraction_stats["jina_success"] += 1
+                    logger.info(f"Jina Reader 提取成功: {url}")
+                else:
+                    # 第三层：Crawl4AI
+                    try:
+                        content = self.fallback_extractor_2.extract(url)
+                        if content:
+                            extraction_method = "crawl4ai"
+                            self.extraction_stats["crawl4ai_success"] += 1
+                            logger.info(f"Crawl4AI 提取成功: {url}")
+                        else:
+                            extraction_method = "failed"
+                            extraction_error = "All extractors returned empty"
+                            self.extraction_stats["all_failed"] += 1
+                            self.extraction_stats["failed_urls"].append(
+                                {"url": url, "error": extraction_error}
+                            )
+                            logger.warning(f"所有提取器失败: {url}")
+                    except Exception as e:
+                        extraction_method = "failed"
+                        extraction_error = str(e)
+                        self.extraction_stats["all_failed"] += 1
+                        self.extraction_stats["failed_urls"].append(
+                            {"url": url, "error": extraction_error}
+                        )
+                        logger.error(f"Crawl4AI 提取异常: {url}, {e}")
+
         if not content:
             content = title
         if os.environ.get("DRY_RUN", "0") == "1":
             result["content"] = (content or title)[:10000]
+            result["extraction_method"] = "dry-run"
             result["summary"] = "dry-run 摘要"
             result["category"] = "new"
             result["tags"] = []
             return result
         result["content"] = content[:10000]
+        result["extraction_method"] = extraction_method or "unknown"
+        result["extraction_error"] = extraction_error
 
         logger.info("生成摘要...")
         result["summary"] = self.summarizer.summarize(content[:3000])
@@ -230,7 +289,9 @@ class ContentProcessor:
                         self._save_seen()
                 except Exception as e:
                     logger.error(f"处理失败: {e}")
-                    errors.append({"url": url, "error": str(e), "title": article.get("title", "")})
+                    errors.append(
+                        {"url": url, "error": str(e), "title": article.get("title", "")}
+                    )
                     continue
         # Emit metrics for this batch execution
         self._emit_metrics()
@@ -274,7 +335,7 @@ def main():
 
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     write_errors = []
     for result in results:
         safe_title = result["title"][:50].replace(" ", "_").replace("/", "_")
@@ -297,12 +358,31 @@ def main():
         write_errors.append({"file": "ai/daily/REPORT.md", "error": str(e)})
 
     # 输出处理统计
-    logger.info(f"处理完成: {len(results)} 篇文章, {len(errors)} 个处理错误, {len(write_errors)} 个写入错误")
-    
+    logger.info(
+        f"处理完成: {len(results)} 篇文章, {len(errors)} 个处理错误, {len(write_errors)} 个写入错误"
+    )
+
+    # 输出抓取状态统计
+    if hasattr(processor, "extraction_stats"):
+        stats = processor.extraction_stats
+        logger.info(
+            f"抓取状态: Trafilatura成功={stats['trafilatura_success']}, "
+            f"Jina成功={stats['jina_success']}, "
+            f"Crawl4AI成功={stats['crawl4ai_success']}, "
+            f"全部失败={stats['all_failed']}"
+        )
+
+        if stats["failed_urls"]:
+            logger.warning("抓取失败的URL:")
+            for fail in stats["failed_urls"][:5]:
+                logger.warning(f"  - {fail['url']}: {fail['error']}")
+
     if errors:
         logger.warning("处理错误详情:")
         for err in errors[:5]:
-            logger.warning(f"  - {err.get('url', 'unknown')}: {err.get('error', 'unknown')}")
+            logger.warning(
+                f"  - {err.get('url', 'unknown')}: {err.get('error', 'unknown')}"
+            )
 
 
 if __name__ == "__main__":
