@@ -1,6 +1,7 @@
 """
 Cloudflare Workers Python 入口文件 - v2.2 DEBUG
 """
+
 from workers import WorkerEntrypoint
 from js import Response
 import json
@@ -9,6 +10,7 @@ from urllib.parse import urlparse, parse_qs
 
 # 版本号用于强制刷新
 VERSION = "2.2.0"
+
 
 class Default(WorkerEntrypoint):
     """Cloudflare Python Workers 默认入口类"""
@@ -25,16 +27,16 @@ class Default(WorkerEntrypoint):
             db = None
             db_error = None
             env_info = {}
-            
+
             # 在 Python Workers 中，绑定通过 self.env 访问
             try:
                 worker_env = self.env
                 env_info = {
                     "env_type": str(type(worker_env)),
-                    "has_DB": hasattr(worker_env, 'DB'),
+                    "has_DB": hasattr(worker_env, "DB"),
                 }
-                
-                if hasattr(worker_env, 'DB'):
+
+                if hasattr(worker_env, "DB"):
                     db = worker_env.DB
                     if db is None:
                         db_error = "self.env.DB is None"
@@ -71,14 +73,23 @@ class Default(WorkerEntrypoint):
                     return self._method_not_allowed()
                 return await self._sources_response(storage)
 
+            elif path == "/api/v2/crawl-logs":
+                if method != "GET":
+                    return self._method_not_allowed()
+                return await self._crawl_logs_response(parsed_url, storage)
+
+            elif path == "/api/v2/crawl-stats":
+                if method != "GET":
+                    return self._method_not_allowed()
+                return await self._crawl_stats_response(storage)
+
             else:
                 return self._json_response({"error": "Not found"}, status=404)
 
         except Exception as e:
-            return self._json_response({
-                "error": "Internal server error",
-                "message": str(e)
-            }, status=500)
+            return self._json_response(
+                {"error": "Internal server error", "message": str(e)}, status=500
+            )
 
     async def _health_response(self, storage, db_error=None, env_info=None):
         """健康检查响应 - 显示数据库连接状态"""
@@ -93,7 +104,7 @@ class Default(WorkerEntrypoint):
                     db_count = stats.get("total", 0)
                     db_details = {
                         "sources": stats.get("sources", {}),
-                        "tables": await storage._list_tables()
+                        "tables": await storage._list_tables(),
                     }
                 else:
                     db_count = f"ERROR: stats is not dict, type={type(stats)}"
@@ -106,9 +117,9 @@ class Default(WorkerEntrypoint):
             "database": {
                 "connected": db_connected,
                 "article_count": db_count,
-                "error": db_error
+                "error": db_error,
             },
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
         if db_details:
@@ -122,13 +133,15 @@ class Default(WorkerEntrypoint):
     async def _articles_response(self, parsed_url, storage):
         """文章列表响应 - 返回空列表当没有数据"""
         if not storage:
-            return self._json_response({
-                "total": 0,
-                "articles": [],
-                "page": 1,
-                "page_size": 20,
-                "message": "Database configured but no data yet"
-            })
+            return self._json_response(
+                {
+                    "total": 0,
+                    "articles": [],
+                    "page": 1,
+                    "page_size": 20,
+                    "message": "Database configured but no data yet",
+                }
+            )
 
         try:
             query_params = parse_qs(parsed_url.query)
@@ -141,21 +154,23 @@ class Default(WorkerEntrypoint):
                 filters["source"] = source
 
             offset = (page - 1) * page_size
-            articles = await storage.fetch_articles(filters=filters, limit=page_size, offset=offset)
+            articles = await storage.fetch_articles(
+                filters=filters, limit=page_size, offset=offset
+            )
             stats = await storage.get_stats()
 
-            return self._json_response({
-                "total": stats.get("total", len(articles)),
-                "articles": articles,
-                "page": page,
-                "page_size": page_size
-            })
+            return self._json_response(
+                {
+                    "total": stats.get("total", len(articles)),
+                    "articles": articles,
+                    "page": page,
+                    "page_size": page_size,
+                }
+            )
         except Exception as e:
-            return self._json_response({
-                "error": str(e),
-                "total": 0,
-                "articles": []
-            }, status=500)
+            return self._json_response(
+                {"error": str(e), "total": 0, "articles": []}, status=500
+            )
 
     async def _article_detail_response(self, path, storage):
         """单篇文章详情响应"""
@@ -176,22 +191,22 @@ class Default(WorkerEntrypoint):
     async def _stats_response(self, storage):
         """统计信息响应"""
         if not storage:
-            return self._json_response({
-                "total_articles": 0,
-                "sources": [],
-                "message": "No data yet"
-            })
+            return self._json_response(
+                {"total_articles": 0, "sources": [], "message": "No data yet"}
+            )
 
         try:
             stats = await storage.get_stats()
-            return self._json_response({
-                "total_articles": stats.get("total", 0),
-                "sources": [
-                    {"source": k, "count": v}
-                    for k, v in stats.get("sources", {}).items()
-                ],
-                "last_updated": datetime.utcnow().isoformat() + "Z"
-            })
+            return self._json_response(
+                {
+                    "total_articles": stats.get("total", 0),
+                    "sources": [
+                        {"source": k, "count": v}
+                        for k, v in stats.get("sources", {}).items()
+                    ],
+                    "last_updated": datetime.utcnow().isoformat() + "Z",
+                }
+            )
         except Exception as e:
             return self._json_response({"error": str(e)}, status=500)
 
@@ -206,14 +221,50 @@ class Default(WorkerEntrypoint):
         except Exception as e:
             return self._json_response({"error": str(e)}, status=500)
 
+    async def _crawl_logs_response(self, parsed_url, storage):
+        """抓取日志响应"""
+        if not storage:
+            return self._json_response(
+                {"total": 0, "logs": [], "page": 1, "page_size": 20}
+            )
+
+        try:
+            query_params = parse_qs(parsed_url.query)
+            page = int(query_params.get("page", ["1"])[0])
+            page_size = min(int(query_params.get("page_size", ["20"])[0]), 100)
+
+            offset = (page - 1) * page_size
+            logs = await storage.get_crawl_logs(limit=page_size, offset=offset)
+
+            return self._json_response(
+                {"total": len(logs), "logs": logs, "page": page, "page_size": page_size}
+            )
+        except Exception as e:
+            return self._json_response({"error": str(e)}, status=500)
+
+    async def _crawl_stats_response(self, storage):
+        """抓取统计响应"""
+        if not storage:
+            return self._json_response(
+                {
+                    "total_crawls": 0,
+                    "status_counts": {},
+                    "total_articles_captured": 0,
+                    "avg_duration_ms": 0,
+                }
+            )
+
+        try:
+            stats = await storage.get_crawl_stats()
+            return self._json_response(stats)
+        except Exception as e:
+            return self._json_response({"error": str(e)}, status=500)
+
     def _json_response(self, data, status=200):
         """创建 JSON 响应"""
         return Response.new(
             json.dumps(data, ensure_ascii=False, default=str),
-            {
-                "status": status,
-                "headers": {"Content-Type": "application/json"}
-            }
+            {"status": status, "headers": {"Content-Type": "application/json"}},
         )
 
     def _method_not_allowed(self):
@@ -237,23 +288,16 @@ class WorkersD1StorageAdapter:
 
             # D1 API 返回的结果格式处理
             results = []
-            if hasattr(result, 'results'):
+            if hasattr(result, "results"):
                 results = list(result.results)
             elif isinstance(result, list):
                 results = result
-            elif hasattr(result, '__iter__'):
+            elif hasattr(result, "__iter__"):
                 results = list(result)
 
-            return {
-                "success": True,
-                "results": results
-            }
+            return {"success": True, "results": results}
         except Exception as e:
-            return {
-                "success": False,
-                "errors": [{"message": str(e)}],
-                "sql": sql
-            }
+            return {"success": False, "errors": [{"message": str(e)}], "sql": sql}
 
     async def fetch_articles(self, filters=None, limit=50, offset=0):
         """Fetch articles with optional filtering"""
@@ -296,14 +340,18 @@ class WorkersD1StorageAdapter:
         """Get database statistics"""
         try:
             # Get total count
-            count_result = await self._execute_sql("SELECT COUNT(*) as total FROM articles")
+            count_result = await self._execute_sql(
+                "SELECT COUNT(*) as total FROM articles"
+            )
             total = 0
             if count_result.get("success") and count_result.get("results"):
                 row = count_result["results"][0]
                 if isinstance(row, dict):
                     total = row.get("total", 0)
                 else:
-                    total = getattr(row, 'total', None) or getattr(row, 'COUNT(*)', 0) or 0
+                    total = (
+                        getattr(row, "total", None) or getattr(row, "COUNT(*)", 0) or 0
+                    )
 
             # Get sources breakdown
             sources_result = await self._execute_sql(
@@ -315,14 +363,11 @@ class WorkersD1StorageAdapter:
                     if isinstance(row, dict):
                         sources[row.get("source", "unknown")] = row.get("count", 0)
                     else:
-                        source = getattr(row, 'source', 'unknown')
-                        count = getattr(row, 'count', 0) or getattr(row, 'COUNT(*)', 0)
+                        source = getattr(row, "source", "unknown")
+                        count = getattr(row, "count", 0) or getattr(row, "COUNT(*)", 0)
                         sources[source] = count
 
-            return {
-                "total": total,
-                "sources": sources
-            }
+            return {"total": total, "sources": sources}
         except Exception as e:
             return {"total": 0, "sources": {}, "error": f"Stats error: {str(e)}"}
 
@@ -340,6 +385,7 @@ class WorkersD1StorageAdapter:
 
     def _row_to_dict(self, row):
         """Convert database row to dict"""
+
         # Handle object-type rows (not just dict)
         def get_value(field, default=""):
             if isinstance(row, dict):
@@ -369,10 +415,97 @@ class WorkersD1StorageAdapter:
             "title": str(get_value("title", "")),
             "content": str(get_value("content", "")),
             "url": str(get_value("url", "")),
-            "published_at": str(get_value("published_at")) if get_value("published_at") else None,
+            "published_at": str(get_value("published_at"))
+            if get_value("published_at")
+            else None,
             "source": str(get_value("source", "")),
             "categories": categories,
             "tags": tags,
             "summary": str(get_value("summary", "")),
-            "ingested_at": str(get_value("ingested_at", ""))
+            "ingested_at": str(get_value("ingested_at", "")),
+        }
+
+    async def get_crawl_logs(self, limit=50, offset=0):
+        """获取抓取日志"""
+        try:
+            sql = "SELECT * FROM crawl_logs ORDER BY crawled_at DESC LIMIT ? OFFSET ?"
+            result = await self._execute_sql(sql, [limit, offset])
+
+            logs = []
+            if result.get("success"):
+                for row in result.get("results", []):
+                    logs.append(self._crawl_log_to_dict(row))
+
+            return logs
+        except Exception as e:
+            return []
+
+    async def get_crawl_stats(self):
+        """获取抓取统计"""
+        try:
+            # Total crawls
+            total_result = await self._execute_sql(
+                "SELECT COUNT(*) as total FROM crawl_logs"
+            )
+            total = 0
+            if total_result.get("success") and total_result.get("results"):
+                total = total_result["results"][0].get("total", 0) or 0
+
+            # Status breakdown
+            status_result = await self._execute_sql(
+                "SELECT status, COUNT(*) as count FROM crawl_logs GROUP BY status"
+            )
+            status_counts = {}
+            if status_result.get("success"):
+                for row in status_result.get("results", []):
+                    status_counts[row.get("status", "")] = row.get("count", 0)
+
+            # Total articles
+            articles_result = await self._execute_sql(
+                "SELECT SUM(articles_count) as total FROM crawl_logs WHERE status = 'success'"
+            )
+            total_articles = 0
+            if articles_result.get("success") and articles_result.get("results"):
+                total_articles = articles_result["results"][0].get("total", 0) or 0
+
+            # Average duration
+            avg_result = await self._execute_sql(
+                "SELECT AVG(duration_ms) as avg_duration FROM crawl_logs WHERE status = 'success'"
+            )
+            avg_duration = 0
+            if avg_result.get("success") and avg_result.get("results"):
+                avg_duration = int(avg_result["results"][0].get("avg_duration", 0) or 0)
+
+            return {
+                "total_crawls": total,
+                "status_counts": status_counts,
+                "total_articles_captured": total_articles,
+                "avg_duration_ms": avg_duration,
+            }
+        except Exception as e:
+            return {
+                "total_crawls": 0,
+                "status_counts": {},
+                "total_articles_captured": 0,
+                "avg_duration_ms": 0,
+            }
+
+    def _crawl_log_to_dict(self, row):
+        """将抓取日志行转换为字典"""
+
+        def get_value(field, default=""):
+            if isinstance(row, dict):
+                return row.get(field, default)
+            else:
+                return getattr(row, field, default)
+
+        return {
+            "id": get_value("id", 0),
+            "source_name": get_value("source_name", ""),
+            "source_type": get_value("source_type", ""),
+            "articles_count": get_value("articles_count", 0),
+            "duration_ms": get_value("duration_ms", 0),
+            "status": get_value("status", ""),
+            "error_message": get_value("error_message"),
+            "crawled_at": get_value("crawled_at", ""),
         }
