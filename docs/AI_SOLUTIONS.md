@@ -8,57 +8,43 @@
 
 | # | 方案 | 免费额度 | GPU | 速度 | 中文支持 | 隐私 | 复杂度 |
 |---|------|----------|-----|------|----------|------|--------|
-| 1 | Cloudflare Workers AI | 10万次/天 | ✅ | 快 | ✅ | ✅ | 低 |
-| 2 | 智谱 API | 200万Token/月 | - | 快 | ✅✅ | ❌ | 低 |
-| 3 | Groq API | 有速率限制 | ✅ | 最快 | 一般 | ❌ | 低 |
-| 4 | Gemini API | 15次/分钟 | ✅ | 快 | ✅ | ❌ | 低 |
-| 5 | HuggingFace Spaces | 2核CPU | ❌ | 慢 | ✅ | ✅ | 中 |
-| 6 | 本地 Ollama | 无限 | 自备 | 慢 | ✅ | ✅ | 中 |
+| 1 | 智谱 API (ZHIPU) | GLM-4-Flash 永久免费，新用户送2000万 Tokens | - | 快 | ✅✅ | ❌ | 低 |
+| 2 | 通义千问 (阿里云) | Qwen-Max: 100万 Tokens/90天 | - | 快 | ✅ | ❌ | 低 |
+| 3 | Groq API | 有免费额度（需注册查看） | ✅ | 最快 | 一般 | ❌ | 低 |
+| 4 | Gemini API | 15 RPM，100K TPM（约1500次/天） | ✅ | 快 | ✅ | ❌ | 低 |
+| 5 | Kimi (Moonshot AI) | 注册送100万 Tokens（限时） | - | 快 | ✅ | ❌ | 低 |
+| 6 | Jina Reader | 200次/分钟 | ❌ | 快 | ✅ | ✅ | 低 |
+| 7 | HuggingFace Spaces | 2核CPU，16GB RAM | ❌ | 慢 | ✅ | ✅ | 中 |
+| 8 | Cloudflare Workers AI | 10K Neurons/天（严重不足） | ✅ | 快 | ✅ | ✅ | 低 |
+
+---
+
+## 场景需求估算
+
+### 每日 30 篇文章摘要的需求
+
+| 方案 | 每日消耗 | 免费额度 | 是否够用 |
+|------|---------|----------|----------|
+| 智谱 | ~60K tokens | GLM-4-Flash 免费 | ✅ 充足 |
+| 通义千问 | ~60K tokens | 100万/90天 | ✅ 充足 |
+| Groq | ~60K tokens | 有额度 | ⚠️ 需确认 |
+| Gemini | ~60K tokens | 15 RPM × 1440分钟 ≈ 21,600次/天 | ❌ 不够 |
+| Cloudflare Workers AI | ~1500K Neurons | 10K Neurons/天 | ❌ 严重不足 |
 
 ---
 
 ## 方案详情
 
-### 方案一：Cloudflare Workers AI（推荐）
+### 方案一：智谱 API（最推荐）
 
 **优势**
-- 每天 10 万次免费请求
-- 无需额外 API Key（与 Worker 绑定）
-- 全球 CDN，延迟低
-- 支持 Llama 3, Mistral, Gemma 等 50+ 模型
-
-**劣势**
-- 免费额度有速率限制
-- 模型选择受限
-
-**实现方式**
-```python
-# worker.py 中添加 AI 端点
-from workers import WorkerEntrypoint
-
-class Default(WorkerEntrypoint):
-    async def on_fetch(self, request, env, ctx):
-        # 调用 Workers AI
-        response = await env.AI.run(
-            "@cf/meta/llama-3-8b-instruct",
-            {"prompt": f"总结：{text}"}
-        )
-```
-
-**切换指数**：⭐⭐⭐⭐⭐（最简单，已在 Cloudflare 生态中）
-
----
-
-### 方案二：智谱 API（国内首选）
-
-**优势**
+- GLM-4-Flash 模型永久免费
+- 新用户赠送 2000万 Tokens 体验包
+- 每分钟 60 次请求
 - 中文理解能力极强
-- 免费额度充足（200万Token/月）
 - 国内访问速度快
-- 价格便宜
 
 **劣势**
-- 需要注册获取 API Key
 - 数据需发送到第三方
 
 **实现方式**
@@ -79,20 +65,79 @@ def summarize(text):
 2. 获取 API Key
 3. 添加到 GitHub Secrets: `ZHIPU_API_KEY`
 
-**切换指数**：⭐⭐⭐⭐
+**切换指数**：⭐⭐⭐⭐（免费额度最充足）
 
 ---
 
-### 方案三：Groq API
+### 方案二：通义千问（阿里云）
 
 **优势**
-- 推理速度最快
-- 支持 Llama 3, Mixtral 等
-- 免费额度尚可
+- 100万 Tokens/90天有效期
+- 极低价格：¥1.6/百万 Token
+- 国内访问快
+
+**劣势**
+- 需要阿里云账号
+
+**实现方式**
+```python
+import requests
+
+def summarize(text):
+    response = requests.post(
+        "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
+        headers={"Authorization": f"Bearer {os.getenv('QWEN_API_KEY')}"},
+        json={
+            "model": "qwen-max",
+            "input": f"总结：{text[:2000]}"
+        }
+    )
+    return response.json()["Output"]["text"]
+```
+
+**切换指数**：⭐⭐⭐
+
+---
+
+### 方案三：Gemini API
+
+**优势**
+- 上下文极长（100万 Token）
+- Google 基础设施，稳定
+- 无需信用卡
+- 免费额度：15 RPM, 100K TPM
 
 **劣势**
 - 国内访问可能不稳定
+- 免费额度有限
+
+**实现方式**
+```python
+import requests
+
+def summarize(text):
+    response = requests.post(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        params={"key": os.getenv("GEMINI_API_KEY")},
+        json={"contents": [{"parts": [{"text": f"总结：{text}"}]}]}
+    )
+    return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+```
+
+**切换指数**：⭐⭐⭐
+
+---
+
+### 方案四：Groq API
+
+**优势**
+- 推理速度最快
+- 支持 Llama 3, Mixtral, Gemma 等模型
+- 免费额度尚可
+
+**劣势**
 - 速率限制严格
+- 国内访问可能不稳定
 
 **实现方式**
 ```python
@@ -114,15 +159,15 @@ def summarize(text):
 
 ---
 
-### 方案四：Gemini API
+### 方案五：Kimi (Moonshot AI)
 
 **优势**
-- 上下文极长（100万Token）
-- Google 基础设施，稳定
+- 注册送 100万 Tokens（限时）
+- 中文好
+- Tier 0 有免费版本
 
 **劣势**
-- 国内访问不稳定
-- 免费额度有限
+- 通过 OpenRouter 调用
 
 **实现方式**
 ```python
@@ -130,18 +175,32 @@ import requests
 
 def summarize(text):
     response = requests.post(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-        params={"key": os.getenv("GEMINI_API_KEY")},
-        json={"contents": [{"parts": [{"text": f"总结：{text}"}]}]}
+        "https://api.moonshot.cn/v1/chat",
+        headers={"Authorization": f"Bearer {os.getenv('KIMI_API_KEY')}"},
+        json={"model": "kimi", "messages": [{"role": "user", "content": f"总结：{text}"}]}
     )
-    return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+    return response.json()["choices"][0]["message"]["content"]
 ```
 
 **切换指数**：⭐⭐⭐
 
 ---
 
-### 方案五：HuggingFace Spaces
+### 方案六：Jina Reader（已有集成）
+
+**优势**
+- 你已集成在项目中
+- 200次/分钟
+- 免费（有 API key）
+
+**劣势**
+- 仅内容提取，非推理
+
+**切换指数**：⭐⭐⭐（已在使用）
+
+---
+
+### 方案七：HuggingFace Spaces
 
 **优势**
 - 完全免费（CPU）
@@ -159,33 +218,27 @@ summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 result = summarizer(text, max_length=100, min_length=30)
 ```
 
-**切换指数**：⭐⭐
+**切换指数**：⭐（不推荐，太慢）
 
 ---
 
-### 方案六：本地 Ollama
+### 方案八：Cloudflare Workers AI
 
 **优势**
-- 完全免费，无限使用
-- 隐私最好
+- 每天 10K Neurons 免费额度
+- 全球 CDN，延迟低
+- 无需额外 API Key
 
 **劣势**
-- GitHub Actions 无 GPU，无法运行
-- 适合本地使用
+- 免费额度严重不足
 
-**实现方式**
-```python
-import requests
+**成本计算**
+- 10K Neurons ≈ 2,000-4,000 tokens
+- 每篇摘要约需 50K Neurons（2000 tokens）
+- 10K Neurons 只能处理约 0.04-0.2 篇文章
+- 每天处理 30 篇 ≈ 1500K Neurons，超出免费额度
 
-def summarize(text):
-    response = requests.post(
-        "http://localhost:11434/api/generate",
-        json={"model": "qwen2.5:1.5b", "prompt": f"总结：{text}"}
-    )
-    return response.json()["response"]
-```
-
-**切换指数**：⭐（需本地运行）
+**结论**：❌ 免费额度严重不足，不推荐用于内容处理
 
 ---
 
@@ -193,12 +246,12 @@ def summarize(text):
 
 | 方案 | 费用 | 超出费用 |
 |------|------|----------|
-| Cloudflare Workers AI | **免费** | 无 |
-| 智谱 API | 免费额度 | ¥1/百万Token |
-| Groq | 免费额度 | $0.05/千Token |
-| Gemini | 免费额度 | $0.075/千Token |
+| 智谱 API | 免费 + 调用量限制 | ¥1/百万 Token |
+| 通义千问 | 免费（100万/90天） | ¥1.6/百万 Token |
+| Groq | 免费额度 | $0.05/千 Token |
+| Gemini | 免费额度 | $0.075/千 Token |
 | HuggingFace | 免费(CPU) | $0.26/小时(GPU) |
-| 本地 Ollama | 需自备 GPU | 电费 |
+| Cloudflare Workers AI | 免费 | 超出需付费 |
 
 ---
 
@@ -206,10 +259,10 @@ def summarize(text):
 
 | 场景 | 推荐方案 |
 |------|----------|
-| 个人项目，免费优先 | Cloudflare Workers AI |
-| 高质量中文摘要 | 智谱 API |
-| 追求最快速度 | Groq |
-| 完全离线/隐私 | 本地 Ollama |
+| 中文摘要为主，免费额度充足 | **智谱** (GLM-4-Flash 永久免费) |
+| 追求最快推理速度 | **Groq** |
+| 100万长上下文 | **Gemini** |
+| 内容提取 | **Jina Reader**（已集成） |
 
 ---
 
@@ -218,27 +271,30 @@ def summarize(text):
 - **摘要生成**：`scripts/summarizers/ollama_summarizer.py`（支持降级到原文截取）
 - **分类**：`scripts/classifiers/bge_classifier.py`
 - **Worker API**：`worker.py`
+- **Jina Reader**：已集成
 
 ---
 
 ## 切换指南
 
-### 切换到 Cloudflare Workers AI
-1. 在 wrangler.toml 添加 AI binding
-2. 修改 worker.py 添加 /api/v1/summarize 端点
-3. 修改 content_processor.py 调用 Worker API
-
 ### 切换到智谱 API
 1. 注册获取 API Key
-2. 添加到 GitHub Secrets
-3. 修改 `scripts/summarizers/ollama_summarizer.py` 为 `zhipu_summarizer.py`
-4. 更新 content_processor.py 使用新 summarizer
+2. 添加到 GitHub Secrets: `ZHIPU_API_KEY`
+3. 创建 `scripts/summarizers/zhipu_summarizer.py`
+4. 更新 `content_processor.py` 使用新 summarizer
+
+### 切换到通义千问
+1. 获取阿里云 API Key
+2. 添加到 GitHub Secrets: `QWEN_API_KEY`
+3. 创建 `scripts/summarizers/qwen_summarizer.py`
+4. 更新 `content_processor.py` 使用新 summarizer
 
 ---
 
 ## 相关链接
 
-- [Cloudflare Workers AI 文档](https://developers.cloudflare.com/workers-ai/)
 - [智谱 AI 开放平台](https://open.bigmodel.cn)
+- [通义千问](https://help.aliyun.com/zh/model-studio)
 - [Groq Console](https://console.groq.com)
 - [Google AI Studio](https://aistudio.google.com/app/apikey)
+- [Cloudflare Workers AI 文档](https://developers.cloudflare.com/workers-ai/)
