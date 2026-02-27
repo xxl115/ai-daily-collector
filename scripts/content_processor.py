@@ -72,7 +72,7 @@ class ContentProcessor:
 
     # 类级别的限流器
     _semaphore = SemaphoreLimiter(max_concurrent=5)
-    _rate_limiter = RateLimiter(max_calls=60, period=60.0)
+    _rate_limiter = RateLimiter(max_calls=120, period=60.0)  # 每分钟120次请求，提高速度
 
     def __init__(self, max_articles: int = 30, mode: str = "full", d1_adapter=None):
         self.max_articles = max_articles

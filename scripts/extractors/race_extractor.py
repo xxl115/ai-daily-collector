@@ -84,7 +84,7 @@ class FastExtractor:
         self.trafilatura = trafilatura_extractor
         self.jina = jina_extractor
         self.crawl4ai = crawl4ai_extractor
-        self.timeout = 15.0  # 减少竞速超时，防止长时间等待
+        self.timeout = 5.0  # 减少竞速超时，防止长时间等待
 
         self.race_extractor = RaceExtractor(
             [trafilatura_extractor, jina_extractor], timeout=self.timeout
@@ -112,6 +112,9 @@ class FastExtractor:
                 method = "trafilatura" if winner_idx == 0 else "jina"
                 logger.info(f"竞速模式 - {method} 获胜: {url}")
                 return content, method
+            else:
+                # 竞速超时，两个都失败了，继续 fallback
+                logger.info(f"竞速模式超时，继续 fallback: {url}")
 
         if not content:
             try:
