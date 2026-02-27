@@ -13,7 +13,7 @@ from js import fetch
 from workers import Response
 
 
-async def on_fetch(request):
+async def on_fetch(request, env):
     try:
         url_str = str(request.url)
 
@@ -40,8 +40,13 @@ async def on_fetch(request):
 
             target_url = unquote(parts[1])
 
-            # 环境变量通过 os.environ 获取
-            jina_key = os.environ.get("JINA_API_KEY", "")
+            # 通过 env 获取 secret（Cloudflare Workers 正确方式）
+            jina_key = ""
+            if env:
+                try:
+                    jina_key = getattr(env, "JINA_API_KEY", "") or ""
+                except Exception:
+                    pass
 
             headers_list = [("Accept", "application/json")]
             if jina_key:
