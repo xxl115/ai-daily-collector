@@ -211,3 +211,103 @@ async def health_check():
         database=db_status,
         timestamp=datetime.utcnow().isoformat(),
     )
+
+
+# ==================== Crawl Logs API ====================
+
+
+class CrawlLogResponse(BaseModel):
+    """Crawl log response model."""
+
+    id: int
+    source_name: str
+    source_type: str
+    articles_count: int
+    duration_ms: int
+    status: str
+    error_message: Optional[str]
+    crawled_at: str
+
+
+class CrawlLogsResponse(BaseModel):
+    """Crawl logs list response."""
+
+    total: int
+    logs: List[CrawlLogResponse]
+    page: int
+    page_size: int
+
+
+class CrawlStatsResponse(BaseModel):
+    """Crawl statistics response."""
+
+    total_crawls: int
+    status_counts: Dict[str, int]
+    total_articles_captured: int
+    avg_duration_ms: int
+
+
+@router.get("/crawl-logs", response_model=CrawlLogsResponse)
+async def get_crawl_logs(
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    dao: ArticleDAO = Depends(get_article_dao),
+):
+    """Get crawl logs with pagination."""
+    try:
+        storage = dao.storage
+        if not hasattr(storage, "get_crawl_logs"):
+            raise HTTPException(status_code=501, detail="Crawl logs not supported")
+
+        offset = (page - 1) * page_size
+        logs = storage.get_crawl_logs(limit=page_size, offset=offset)
+
+        log_responses = []
+        for log in logs:
+            log_responses.append(
+                CrawlLogResponse(
+                    id=log.get("id", 0),
+                    source_name=log.get("source_name", ""),
+                    source_type=log.get("source_type", ""),
+                    articles_count=log.get("articles_count", 0),
+                    duration_ms=log.get("duration_ms", 0),
+                    status=log.get("status", ""),
+                    error_message=log.get("error_message"),
+                    crawled_at=log.get("crawled_at", ""),
+                )
+            )
+
+        return CrawlLogsResponse(
+            total=len(log_responses),
+            logs=log_responses,
+            page=page,
+            page_size=page_size,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@router.get("/crawl-stats", response_model=CrawlStatsResponse)
+async def get_crawl_stats(dao: ArticleDAO = Depends(get_article_dao)):
+    """Get crawl statistics."""
+    try:
+        storage = dao.storage
+        if not hasattr(storage, "get_crawl_stats"):
+            raise HTTPException(status_code=501, detail="Crawl stats not supported")
+
+        stats = storage.get_crawl_stats()
+
+        return CrawlStatsResponse(
+            total_crawls=stats.get("total_crawls", 0),
+            status_counts=stats.get("status_counts", {}),
+            total_articles_captured=stats.get("total_articles_captured", 0),
+            avg_duration_ms=stats.get("avg_duration_ms", 0),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
