@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """AI 文章内容处理器（方案 A 基线实现）"""
 
+import sys
+from pathlib import Path
+
+# Add project root to Python path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import argparse
 import time
 import json
 import logging
 import os
 import uuid
-from pathlib import Path
 from datetime import datetime
 from typing import List, Dict
 
