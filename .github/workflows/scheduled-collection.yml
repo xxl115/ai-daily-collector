@@ -40,10 +40,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
-          # Remove dev/test dependencies we don't need in CI
-          pip uninstall -y pytest pytest-cov pytest-asyncio flake8 black mypy pre-commit ipython fastapi uvicorn pydantic cryptography redis || true
-          sudo apt-get install -y jq
+          pip install -e ".[local]"
+          pip install jq
 
       - name: Run AI Daily Collection
         env:
