@@ -246,26 +246,28 @@ class ContentProcessor:
                 logger.error(f"提取异常: {url}, {e}")
 
         if not content:
-            content = title
+            content = "-1"
         if os.environ.get("DRY_RUN", "0") == "1":
-            result["content"] = (content or title)[:10000]
+            result["content"] = (
+                content if content == "-1" else (content or title)[:10000]
+            )
             result["extraction_method"] = "dry-run"
             result["summary"] = "dry-run 摘要"
             result["category"] = "new"
             result["tags"] = []
             return result
-        result["content"] = content[:10000]
+        result["content"] = content if content == "-1" else content[:10000]
         result["extraction_method"] = extraction_method or "unknown"
         result["extraction_error"] = extraction_error
 
         # 根据 mode 决定是否执行后续步骤
-        if self.mode in ("full", "summarize-only"):
+        if self.mode in ("full", "summarize-only") and content != "-1":
             logger.info("生成摘要...")
             result["summary"] = self.summarizer.summarize(content[:3000])
         else:
             result["summary"] = None
 
-        if self.mode in ("full", "classify-only"):
+        if self.mode in ("full", "classify-only") and content != "-1":
             logger.info("智能分类...")
             classification = self.classifier.classify(
                 title + " " + (result["summary"] or "")
