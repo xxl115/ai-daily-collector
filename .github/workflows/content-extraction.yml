@@ -39,6 +39,8 @@ jobs:
           pip install trafilatura requests beautifulsoup4 jieba pyyaml
           pip install crawl4ai
           pip install cloudflare
+          pip install playwright
+          playwright install chromium --with-deps
 
       - name: Run extraction from D1
         run: |
