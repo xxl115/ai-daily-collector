@@ -311,6 +311,23 @@ class D1StorageAdapter(StorageAdapter):
 
         return None
 
+    def update_article_content(
+        self, article_id: str, content: str, extraction_method: str
+    ) -> None:
+        """Update article content after extraction.
+
+        Args:
+            article_id: Article ID to update
+            content: Extracted content
+            extraction_method: Method used for extraction (trafilatura/jina/crawl4ai)
+        """
+        sql = """
+            UPDATE articles 
+            SET content = ?, raw_markdown = ?
+            WHERE id = ?
+        """
+        self._execute_sql(sql, [content, extraction_method, article_id])
+
     def get_stats(self) -> Dict[str, Any]:
         """Get database statistics.
 
