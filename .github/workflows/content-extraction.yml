@@ -43,6 +43,7 @@ jobs:
           playwright install chromium --with-deps
 
       - name: Run extraction from D1
+        timeout-minutes: 45
         env:
           JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
           JINA_PROXY_URL: ${{ secrets.JINA_PROXY_URL }}

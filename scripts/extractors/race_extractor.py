@@ -84,7 +84,7 @@ class FastExtractor:
         self.trafilatura = trafilatura_extractor
         self.jina = jina_extractor
         self.crawl4ai = crawl4ai_extractor
-        self.timeout = 30.0
+        self.timeout = 15.0  # 减少竞速超时，防止长时间等待
 
         self.race_extractor = RaceExtractor(
             [trafilatura_extractor, jina_extractor], timeout=self.timeout
