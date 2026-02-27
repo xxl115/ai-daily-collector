@@ -9,11 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 class JinaExtractor:
-    """Jina Reader 提取器（使用 api.jina.ai v2 API）"""
+    """Jina Reader 提取器（使用 r.jina.ai API）"""
 
     def __init__(self, api_key: str = None):
         self.api_key = api_key or os.environ.get("JINA_API_KEY", "")
-        self.api_endpoint = "https://api.jina.ai/v1/extract"
+        self.api_endpoint = "https://r.jina.ai/"
 
     @retry_with_exponential_backoff(
         max_retries=1,
@@ -34,13 +34,16 @@ class JinaExtractor:
             )
             if response.status_code == 200:
                 data = response.json()
-                text = data.get("content", "")
+                text = data.get("data", "") or data.get("content", "")
                 if text and len(text) > 100:
                     return text.strip()
             else:
                 logger.warning(
                     f"Jina API 返回 {response.status_code}: {response.text[:200]}"
                 )
+            return None
+        except Exception as e:
+            logger.error(f"Jina 提取失败 {url}: {e}")
             return None
         except Exception as e:
             logger.error(f"Jina 提取失败 {url}: {e}")
