@@ -45,7 +45,8 @@ jobs:
       - name: Run extraction from D1
         env:
           JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
-          USE_JINA_RACE: 'false'
+          JINA_PROXY_URL: ${{ secrets.JINA_PROXY_URL }}
+          USE_JINA_RACE: 'true'
         run: |
           python scripts/content_processor.py \
             --source d1 \
