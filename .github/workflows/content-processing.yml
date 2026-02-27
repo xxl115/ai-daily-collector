@@ -25,6 +25,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-content-v1-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-content-v1-
+
+      - name: Cache Ollama model
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama
+          key: ${{ runner.os }}-ollama-qwen2.5-1.5b-v1
 
       - name: Install dependencies
         run: |
@@ -36,7 +51,7 @@ jobs:
       - name: Install and start Ollama
         run: |
           curl -fsSL https://ollama.ai/install.sh | sh
-          ollama pull qwen2.5:1.5b
+          ollama pull qwen2.5:1.5b || echo "Model already cached"
           ollama serve &
           sleep 10
 
