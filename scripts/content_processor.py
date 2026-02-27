@@ -13,7 +13,7 @@ import json
 import logging
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict
 
 try:
@@ -181,7 +181,7 @@ class ContentProcessor:
     def process_article(self, url: str, title: str, original_id: str = None) -> Dict:
         # 使用原始 ID（如果是 D1）或生成新 UUID
         article_id = original_id if original_id else str(uuid.uuid4())
-        extracted_at = datetime.utcnow().isoformat() + "Z"
+        extracted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
         result = {
             "id": article_id,
@@ -193,7 +193,9 @@ class ContentProcessor:
             "tags": [],
             "source": self._detect_source(url),
             "extracted_at": extracted_at,
-            "processed_at": datetime.utcnow().isoformat() + "Z",
+            "processed_at": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
             "version": "v1",
         }
         logger.info(f"提取内容: {url}")
