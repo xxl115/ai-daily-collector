@@ -9,22 +9,40 @@ logger = logging.getLogger(__name__)
 
 
 class JinaExtractor:
-    """Jina Reader 提取器（使用 r.jina.ai API）"""
+    """Jina Reader 提取器（使用 r.jina.ai API，可选代理）"""
 
     def __init__(self, api_key: str = None):
         self.api_key = api_key or os.environ.get("JINA_API_KEY", "")
-        self.api_endpoint = "https://r.jina.ai/"
+        # 支持自定义代理 URL（用于 Cloudflare Workers 等）
+        self.proxy_url = os.environ.get("JINA_PROXY_URL", "").rstrip("/")
+
+    def _get_endpoint(self, url: str) -> str:
+        """获取提取端点"""
+        if self.proxy_url:
+            from urllib.parse import quote
+
+            return f"{self.proxy_url}/extract?url={quote(url)}"
+        return f"https://r.jina.ai/{url}"
+
+    def _get_headers(self) -> dict:
+        """获取请求头"""
+        if self.proxy_url:
+            # 代理模式不需要额外 header
+            return {"Accept": "application/json"}
+
+        # 直接访问 r.jina.ai
+        headers = {"Accept": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
 
     def extract(self, url: str) -> Optional[str]:
         try:
             timeout = int(os.environ.get("JINA_TIMEOUT", "15"))
-            headers = {"Accept": "application/json"}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
+            endpoint = self._get_endpoint(url)
+            headers = self._get_headers()
 
-            response = requests.get(
-                f"https://r.jina.ai/{url}", headers=headers, timeout=timeout
-            )
+            response = requests.get(endpoint, headers=headers, timeout=timeout)
 
             if response.status_code == 200:
                 content_type = response.headers.get("content-type", "")
