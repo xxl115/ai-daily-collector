@@ -52,6 +52,10 @@ class JinaExtractor:
 
             logger.info(f"Jina 响应: url={url}, status={response.status_code}, content_type={response.headers.get('content-type', 'none')}")
 
+            # 记录响应体前 200 字符，方便排查问题
+            response_preview = response.text[:200]
+            logger.info(f"Jina 响应体预览: url={url}, body={response_preview}")
+
             if response.status_code == 200:
                 content_type = response.headers.get("content-type", "")
                 text = ""
