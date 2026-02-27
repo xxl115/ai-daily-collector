@@ -74,9 +74,10 @@ class RaceExtractor:
 
 
 class FastExtractor:
-    """快速提取器 - Trafilatura、Jina 和 Crawl4AI 并发竞速
+    """快速提取器 - Trafilatura 和 Jina 并发竞速
 
-    三个提取器同时竞争，谁先成功用谁。
+    Trafilatura 和 Jina 并发竞速，都失败则降级到 Crawl4AI。
+    三个提取器都只执行一次，不重试。
     """
 
     def __init__(self, trafilatura_extractor, jina_extractor, crawl4ai_extractor=None):
@@ -85,15 +86,16 @@ class FastExtractor:
         self.crawl4ai = crawl4ai_extractor
         self.timeout = 8.0  # 竞速超时
 
-        # 三个提取器一起竞速
+        # Trafilatura 和 Jina 竞速
         self.race_extractor = RaceExtractor(
-            [trafilatura_extractor, jina_extractor, crawl4ai_extractor],
+            [trafilatura_extractor, jina_extractor],
             timeout=self.timeout
         )
 
     def extract(self, url: str, use_race: bool = True) -> tuple[Optional[str], str]:
         """
-        提取内容 - 只执行一次竞速模式，不重试
+        提取内容 - Trafilatura 和 Jina 竞速，都失败则降级到 Crawl4AI
+        三个提取器都只执行一次，不重试
 
         Args:
             url: 目标 URL
@@ -105,20 +107,24 @@ class FastExtractor:
         if not use_race:
             return None, "failed"
 
-        # 三个提取器一起竞速
+        # 第一轮：Trafilatura 和 Jina 竞速
         content = self.race_extractor.extract(url)
         winner_idx = self.race_extractor.get_winner_method()
 
         if content:
-            if winner_idx == 0:
-                method = "trafilatura"
-            elif winner_idx == 1:
-                method = "jina"
-            else:
-                method = "crawl4ai"
+            method = "trafilatura" if winner_idx == 0 else "jina"
             logger.info(f"竞速模式 - {method} 获胜: {url}")
             return content, method
-        else:
-            # 竞速超时/失败，返回空
-            logger.info(f"竞速模式失败: {url}")
-            return None, "failed"
+
+        # 第二轮：降级到 Crawl4AI（只执行一次）
+        if self.crawl4ai:
+            try:
+                content = self.crawl4ai.extract(url)
+                if content:
+                    logger.info(f"Crawl4AI 提取成功: {url}")
+                    return content, "crawl4ai"
+            except Exception as e:
+                logger.debug(f"Crawl4AI failed: {e}")
+
+        logger.info(f"所有提取器失败: {url}")
+        return None, "failed"
