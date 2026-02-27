@@ -199,8 +199,9 @@ class ContentProcessor:
         result["tags"] = classification.get("tags", [])
         return result
 
-    def process_batch(self, articles: List[Dict]) -> List[Dict]:
+    def process_batch(self, articles: List[Dict]) -> tuple[List[Dict], List[Dict]]:
         results: List[Dict] = []
+        errors: List[Dict] = []
         seen = self._load_seen()
         for i, article in enumerate(articles[: self.max_articles]):
             url = article.get("url")
@@ -229,12 +230,13 @@ class ContentProcessor:
                         self._save_seen()
                 except Exception as e:
                     logger.error(f"处理失败: {e}")
+                    errors.append({"url": url, "error": str(e), "title": article.get("title", "")})
                     continue
         # Emit metrics for this batch execution
         self._emit_metrics()
         if articles:
             self._save_seen()
-        return results
+        return results, errors
 
     def _detect_source(self, url: str) -> str:
         domains = {
@@ -268,22 +270,39 @@ def main():
         articles.append({"url": url, "title": title, "file": f.name})
 
     processor = ContentProcessor(max_articles=args.max_articles)
-    results = processor.process_batch(articles)
+    results, errors = processor.process_batch(articles)
 
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
+    
+    write_errors = []
     for result in results:
         safe_title = result["title"][:50].replace(" ", "_").replace("/", "_")
         if not safe_title:
             safe_title = "article"
         output_file = output_dir / (safe_title + ".json")
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
+        try:
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            write_errors.append({"file": str(output_file), "error": str(e)})
+            logger.error(f"文件写入失败 {output_file}: {e}")
 
     # 生成日报
-    processor = ContentProcessor(max_articles=args.max_articles)
-    processor.report_generator.generate(results, "ai/daily/REPORT.md")
-    logger.info(f"处理完成: {len(results)} 篇文章")
+    try:
+        processor = ContentProcessor(max_articles=args.max_articles)
+        processor.report_generator.generate(results, "ai/daily/REPORT.md")
+    except Exception as e:
+        logger.error(f"日报生成失败: {e}")
+        write_errors.append({"file": "ai/daily/REPORT.md", "error": str(e)})
+
+    # 输出处理统计
+    logger.info(f"处理完成: {len(results)} 篇文章, {len(errors)} 个处理错误, {len(write_errors)} 个写入错误")
+    
+    if errors:
+        logger.warning("处理错误详情:")
+        for err in errors[:5]:
+            logger.warning(f"  - {err.get('url', 'unknown')}: {err.get('error', 'unknown')}")
 
 
 if __name__ == "__main__":

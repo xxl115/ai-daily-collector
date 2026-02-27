@@ -1,5 +1,9 @@
 import numpy as np
+import logging
 from typing import Dict, List
+from utils.retry import retry_with_exponential_backoff
+
+logger = logging.getLogger(__name__)
 
 try:
     from sentence_transformers import SentenceTransformer
@@ -15,7 +19,8 @@ class BGEClassifier:
         if SentenceTransformer is not None:
             try:
                 self.model = SentenceTransformer('BAAI/bge-m3')
-            except Exception:
+            except Exception as e:
+                logger.warning(f"BGE 模型加载失败: {e}")
                 self.model = None
         # 分类模板
         self.templates = {
@@ -45,22 +50,32 @@ class BGEClassifier:
             embs = self.model.encode(texts)
             self.template_embs[cat] = np.mean(embs, axis=0)
 
+    @retry_with_exponential_backoff(
+        max_retries=2,
+        initial_delay=1.0,
+        exceptions=(OSError, RuntimeError),
+        on_retry=lambda e, n: logger.warning(f"BGE 分类重试 {n}: {e}")
+    )
     def classify(self, text: str) -> Dict[str, object]:
         if not text:
             return {'category': 'new', 'tags': [], 'scores': {}}
         text = text[:1000]
         if self.model is None:
             return {'category': 'new', 'tags': [], 'scores': {}}
-        text_emb = self.model.encode([text])
-        scores: Dict[str, float] = {}
-        for cat, template_emb in self.template_embs.items():
-            sim = float(np.dot(text_emb, template_emb.T)[0])
-            scores[cat] = sim
-        category = max(scores, key=scores.get) if scores else 'new'
-        if scores.get(category, 0) < 0.3:
-            category = 'new'
-        tags = self._extract_tags(text)
-        return {'category': category, 'tags': tags[:3], 'scores': scores}
+        try:
+            text_emb = self.model.encode([text])
+            scores: Dict[str, float] = {}
+            for cat, template_emb in self.template_embs.items():
+                sim = float(np.dot(text_emb, template_emb.T)[0])
+                scores[cat] = sim
+            category = max(scores, key=scores.get) if scores else 'new'
+            if scores.get(category, 0) < 0.3:
+                category = 'new'
+            tags = self._extract_tags(text)
+            return {'category': category, 'tags': tags[:3], 'scores': scores}
+        except Exception as e:
+            logger.error(f"BGE 分类失败: {e}")
+            return {'category': 'new', 'tags': [], 'scores': {}}
 
     def _extract_tags(self, text: str) -> List[str]:
         text_lower = text.lower()

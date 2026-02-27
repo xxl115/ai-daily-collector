@@ -8,7 +8,7 @@ version = "0.2.0"
 description = "AI 热点资讯自动采集与分发系统"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 authors = [
     {name = "xxl115", email = "contact@example.com"}
 ]
@@ -38,6 +38,8 @@ dev = [
     "pytest-asyncio>=0.23.0",
     "pytest-mock>=3.12.0",
     "httpx>=0.26.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
     "black>=24.0.0",
     "isort>=5.13.0",
     "flake8>=7.0.0",
@@ -71,11 +73,11 @@ exclude = ["tests*", "docs*"]
 
 [tool.black]
 line-length = 100
-target-version = ['py312']
+target-version = ['py310', 'py311', 'py312']
 
 [tool.isort]
 profile = "black"
 line_length = 100
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.10"
