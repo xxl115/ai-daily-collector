@@ -8,7 +8,7 @@ version = "0.2.0"
 description = "AI 热点资讯自动采集与分发系统"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = [
     {name = "xxl115", email = "contact@example.com"}
 ]
@@ -73,11 +73,11 @@ exclude = ["tests*", "docs*"]
 
 [tool.black]
 line-length = 100
-target-version = ['py310', 'py311', 'py312']
+target-version = ['py312']
 
 [tool.isort]
 profile = "black"
 line_length = 100
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
