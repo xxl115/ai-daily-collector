@@ -386,7 +386,7 @@ def main():
             SELECT id, url, title, source, ingested_at 
             FROM articles 
             WHERE (content IS NULL OR content = '') 
-            AND url IS NOT NULL AND url != ''
+            AND url IS NOT NULL AND TRIM(url) != ''
             ORDER BY ingested_at DESC 
             LIMIT ?
         """
