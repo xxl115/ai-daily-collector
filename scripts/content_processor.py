@@ -177,9 +177,9 @@ class ContentProcessor:
         except Exception as e:
             logger.warning(f"写入 metrics 失败: {e}")
 
-    def process_article(self, url: str, title: str) -> Dict:
-        # 生成唯一 ID 和提取时间戳
-        article_id = str(uuid.uuid4())
+    def process_article(self, url: str, title: str, original_id: str = None) -> Dict:
+        # 使用原始 ID（如果是 D1）或生成新 UUID
+        article_id = original_id if original_id else str(uuid.uuid4())
         extracted_at = datetime.utcnow().isoformat() + "Z"
 
         result = {
@@ -298,7 +298,7 @@ class ContentProcessor:
                 try:
                     start = time.time()
                     result = self.process_article(
-                        article["url"], article.get("title", "")
+                        article["url"], article.get("title", ""), article.get("id")
                     )
                     elapsed = time.time() - start
                     logger.info(f"处理耗时: {elapsed:.2f}s")
