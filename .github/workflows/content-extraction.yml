@@ -5,11 +5,11 @@ on:
     - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
-      source_dir:
-        type: string
-        description: 'Source directory for original articles'
+      max_articles:
+        type: number
+        description: 'Maximum articles to process'
         required: false
-        default: 'ai/articles/original'
+        default: 30
 
 env:
   PYTHON_VERSION: "3.12"
@@ -38,13 +38,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install trafilatura requests beautifulsoup4 jieba pyyaml
           pip install crawl4ai
+          pip install cloudflare
 
-      - name: Run extraction
+      - name: Run extraction from D1
         run: |
           python scripts/content_processor.py \
-            --input ${{ inputs.source_dir || 'ai/articles/original' }} \
-            --output ai/articles/processed \
-            --mode extract-only
+            --source d1 \
+            --mode extract-only \
+            --max-articles ${{ inputs.max_articles || 30 }} \
+            --d1-account-id ${{ secrets.CF_ACCOUNT_ID }} \
+            --d1-database-id ${{ secrets.CF_D1_DATABASE_ID }} \
+            --d1-api-token ${{ secrets.CF_API_TOKEN }}
 
       - name: Commit results
         if: success()
