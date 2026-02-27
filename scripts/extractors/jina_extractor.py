@@ -16,6 +16,10 @@ class JinaExtractor:
         # 支持自定义代理 URL（用于 Cloudflare Workers 等）
         self.proxy_url = os.environ.get("JINA_PROXY_URL", "").rstrip("/")
 
+        # 记录初始化信息
+        mode = "proxy" if self.proxy_url else "direct"
+        logger.info(f"JinaExtractor 初始化: mode={mode}, proxy_url={self.proxy_url[:50] if self.proxy_url else 'none'}...")
+
     def _get_endpoint(self, url: str) -> str:
         """获取提取端点"""
         if self.proxy_url:
@@ -42,7 +46,11 @@ class JinaExtractor:
             endpoint = self._get_endpoint(url)
             headers = self._get_headers()
 
+            logger.info(f"Jina 请求: url={url}, endpoint={endpoint[:80]}..., timeout={timeout}")
+
             response = requests.get(endpoint, headers=headers, timeout=timeout)
+
+            logger.info(f"Jina 响应: url={url}, status={response.status_code}, content_type={response.headers.get('content-type', 'none')}")
 
             if response.status_code == 200:
                 content_type = response.headers.get("content-type", "")
@@ -50,6 +58,8 @@ class JinaExtractor:
                 if "application/json" in content_type:
                     try:
                         data = response.json()
+                        logger.debug(f"Jina JSON 响应: url={url}, keys={list(data.keys())}")
+
                         if "data" in data and isinstance(data["data"], dict):
                             text = data["data"].get("content", "") or data["data"].get(
                                 "markdown", ""
@@ -58,12 +68,14 @@ class JinaExtractor:
                             text = data["data"]
                         else:
                             text = str(data)
-                    except Exception:
+                    except Exception as e:
+                        logger.warning(f"Jina JSON 解析失败: url={url}, error={e}")
                         text = response.text
                 else:
                     text = response.text
 
                 if text and len(text) > 100:
+                    logger.info(f"Jina 提取成功: url={url}, content_length={len(text)}")
                     return text.strip()
                 logger.warning(f"Jina 返回内容过短 ({len(text)}): {url}")
             else:
@@ -73,29 +85,11 @@ class JinaExtractor:
 
             return None
         except requests.exceptions.Timeout:
-            logger.error(f"Jina 超时 {url}")
+            logger.error(f"Jina 超时: {url}")
             return None
         except requests.exceptions.RequestException as e:
-            logger.error(f"Jina 请求失败 {url}: {e}")
+            logger.error(f"Jina 请求失败: {url}, error={e}")
             return None
         except Exception as e:
-            logger.error(f"Jina 提取失败 {url}: {e}")
-            return None
-        except requests.exceptions.Timeout:
-            logger.error(f"Jina 超时 {url}")
-            return None
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Jina 请求失败 {url}: {e}")
-            return None
-        except Exception as e:
-            logger.error(f"Jina 提取失败 {url}: {e}")
-            return None
-        except requests.exceptions.Timeout:
-            logger.error(f"Jina 超时 {url}")
-            return None
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Jina 请求失败 {url}: {e}")
-            return None
-        except Exception as e:
-            logger.error(f"Jina 提取失败 {url}: {e}")
+            logger.error(f"Jina 提取失败: {url}, error={e}")
             return None
