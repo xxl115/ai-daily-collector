@@ -22,10 +22,12 @@ try:
         JinaExtractor,
         Crawl4AIExtractor,
     )
+    from scripts.extractors.race_extractor import FastExtractor
 except Exception:
     from scripts.extractors.trafilatura_extractor import TrafilaturaExtractor
     from scripts.extractors.jina_extractor import JinaExtractor
     from scripts.extractors.crawl4ai_extractor import Crawl4AIExtractor
+    from scripts.extractors.race_extractor import FastExtractor
 try:
     from scripts.summarizers import OllamaSummarizer
 except Exception:
@@ -76,9 +78,16 @@ class ContentProcessor:
         self.max_articles = max_articles
         self.mode = mode
         self.d1_adapter = d1_adapter
-        self.extractor = TrafilaturaExtractor()
-        self.fallback_extractor = JinaExtractor()
-        self.fallback_extractor_2 = Crawl4AIExtractor()
+
+        trafilatura = TrafilaturaExtractor()
+        jina = JinaExtractor(api_key=os.environ.get("JINA_API_KEY", ""))
+        crawl4ai = Crawl4AIExtractor()
+
+        self.fast_extractor = FastExtractor(trafilatura, jina, crawl4ai)
+        self.extractor = trafilatura
+        self.fallback_extractor = jina
+        self.fallback_extractor_2 = crawl4ai
+
         self.summarizer = OllamaSummarizer()
         self.classifier = BGEClassifier()
         self.report_generator = ReportGenerator()
@@ -200,50 +209,41 @@ class ContentProcessor:
         }
         logger.info(f"提取内容: {url}")
 
-        # 三层降级提取策略
         extraction_method = None
         extraction_error = None
+        content = None
 
         if os.environ.get("DRY_RUN", "0") == "1":
             content = f"占位文本，原文 {url}"
+            extraction_method = "dry-run"
         else:
-            # 第一层：Trafilatura
-            content = self.extractor.extract(url)
-            if content:
-                extraction_method = "trafilatura"
-                self.extraction_stats["trafilatura_success"] += 1
-                logger.info(f"Trafilatura 提取成功: {url}")
-            else:
-                # 第二层：Jina Reader
-                content = self.fallback_extractor.extract(url)
+            try:
+                content, extraction_method = self.fast_extractor.extract(url)
+
                 if content:
-                    extraction_method = "jina"
-                    self.extraction_stats["jina_success"] += 1
-                    logger.info(f"Jina Reader 提取成功: {url}")
+                    if extraction_method == "trafilatura":
+                        self.extraction_stats["trafilatura_success"] += 1
+                    elif extraction_method == "jina":
+                        self.extraction_stats["jina_success"] += 1
+                    elif extraction_method == "crawl4ai":
+                        self.extraction_stats["crawl4ai_success"] += 1
+                    logger.info(f"{extraction_method} 提取成功: {url}")
                 else:
-                    # 第三层：Crawl4AI
-                    try:
-                        content = self.fallback_extractor_2.extract(url)
-                        if content:
-                            extraction_method = "crawl4ai"
-                            self.extraction_stats["crawl4ai_success"] += 1
-                            logger.info(f"Crawl4AI 提取成功: {url}")
-                        else:
-                            extraction_method = "failed"
-                            extraction_error = "All extractors returned empty"
-                            self.extraction_stats["all_failed"] += 1
-                            self.extraction_stats["failed_urls"].append(
-                                {"url": url, "error": extraction_error}
-                            )
-                            logger.warning(f"所有提取器失败: {url}")
-                    except Exception as e:
-                        extraction_method = "failed"
-                        extraction_error = str(e)
-                        self.extraction_stats["all_failed"] += 1
-                        self.extraction_stats["failed_urls"].append(
-                            {"url": url, "error": extraction_error}
-                        )
-                        logger.error(f"Crawl4AI 提取异常: {url}, {e}")
+                    extraction_method = "failed"
+                    extraction_error = "All extractors returned empty"
+                    self.extraction_stats["all_failed"] += 1
+                    self.extraction_stats["failed_urls"].append(
+                        {"url": url, "error": extraction_error}
+                    )
+                    logger.warning(f"所有提取器失败: {url}")
+            except Exception as e:
+                extraction_method = "failed"
+                extraction_error = str(e)
+                self.extraction_stats["all_failed"] += 1
+                self.extraction_stats["failed_urls"].append(
+                    {"url": url, "error": extraction_error}
+                )
+                logger.error(f"提取异常: {url}, {e}")
 
         if not content:
             content = title
