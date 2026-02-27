@@ -280,6 +280,9 @@ class ContentProcessor:
         seen = self._load_seen()
         for i, article in enumerate(articles[: self.max_articles]):
             url = article.get("url")
+            if not url:
+                logger.warning(f"跳过空 URL 文章: {article.get('title', 'unknown')}")
+                continue
             if url in seen:
                 logger.info(f"跳过已处理的 URL: {url}")
                 continue
@@ -378,11 +381,12 @@ def main():
             database_id=args.d1_database_id,
             api_token=args.d1_api_token,
         )
-        # 查询 content 为空（未提取）的文章
+        # 查询 content 为空（未提取）且有有效 URL 的文章
         sql = """
             SELECT id, url, title, source, ingested_at 
             FROM articles 
-            WHERE content IS NULL OR content = '' 
+            WHERE (content IS NULL OR content = '') 
+            AND url IS NOT NULL AND url != ''
             ORDER BY ingested_at DESC 
             LIMIT ?
         """
