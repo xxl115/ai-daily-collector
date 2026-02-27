@@ -394,7 +394,14 @@ def main():
         logger.info(f"D1 params: [{args.max_articles}]")
         result = d1._execute_sql(sql, [args.max_articles])
         logger.info(f"D1 result keys: {result.keys()}")
-        rows = result.get("result", [])
+
+        # D1 API returns: {"result": [{"results": [...], "success": true, "meta": {...}}], "success": true}
+        raw_result = result.get("result", [])
+        if raw_result and isinstance(raw_result, list) and len(raw_result) > 0:
+            rows = raw_result[0].get("results", [])
+        else:
+            rows = []
+
         logger.info(f"D1 rows count: {len(rows)}")
         if rows:
             logger.info(f"D1 first row keys: {rows[0].keys()}")
