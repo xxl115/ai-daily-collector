@@ -10,7 +10,7 @@ on:
         type: number
         description: 'Maximum articles to process'
         required: false
-        default: 30
+        default: 100
 
 env:
   PYTHON_VERSION: "3.12"
