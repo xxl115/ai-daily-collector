@@ -50,10 +50,11 @@ jobs:
 
       - name: Install and start Ollama
         run: |
-          curl -fsSL https://ollama.ai/install.sh | sh
-          ollama pull qwen2.5:1.5b || echo "Model already cached"
+          curl -fsSL https://ollama.ai/install.sh | sh || true
+          ollama pull qwen2.5:1.5b || echo "Model pull failed, will use fallback"
           ollama serve &
-          sleep 10
+          sleep 5
+        continue-on-error: true
 
       - name: Run processing pipeline
         run: |
