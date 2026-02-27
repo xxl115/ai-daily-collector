@@ -1,0 +1,60 @@
+name: Content Extraction
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+    inputs:
+      source_dir:
+        type: string
+        description: 'Source directory for original articles'
+        required: false
+        default: 'ai/articles/original'
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  extraction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-extract-v1-${{ hashFiles('pyproject.toml') }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install trafilatura requests beautifulsoup4 jieba pyyaml
+          pip install crawl4ai
+
+      - name: Run extraction
+        run: |
+          python scripts/content_processor.py \
+            --input ${{ inputs.source_dir || 'ai/articles/original' }} \
+            --output ai/articles/processed \
+            --mode extract-only
+
+      - name: Commit results
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ai/
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Content Extraction: $(date +%Y-%m-%d)" || true
+            git push
+          else
+            echo "No changes to commit."
+          fi
