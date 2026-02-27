@@ -67,11 +67,12 @@ class ContentProcessor:
     _semaphore = SemaphoreLimiter(max_concurrent=5)
     _rate_limiter = RateLimiter(max_calls=60, period=60.0)
 
-    def __init__(self, max_articles: int = 30):
+    def __init__(self, max_articles: int = 30, mode: str = "full"):
         self.max_articles = max_articles
+        self.mode = mode
         self.extractor = TrafilaturaExtractor()
         self.fallback_extractor = JinaExtractor()
-        self.fallback_extractor_2 = Crawl4AIExtractor()  # 第三层降级
+        self.fallback_extractor_2 = Crawl4AIExtractor()
         self.summarizer = OllamaSummarizer()
         self.classifier = BGEClassifier()
         self.report_generator = ReportGenerator()
@@ -249,13 +250,23 @@ class ContentProcessor:
         result["extraction_method"] = extraction_method or "unknown"
         result["extraction_error"] = extraction_error
 
-        logger.info("生成摘要...")
-        result["summary"] = self.summarizer.summarize(content[:3000])
+        # 根据 mode 决定是否执行后续步骤
+        if self.mode in ("full", "summarize-only"):
+            logger.info("生成摘要...")
+            result["summary"] = self.summarizer.summarize(content[:3000])
+        else:
+            result["summary"] = None
 
-        logger.info("智能分类...")
-        classification = self.classifier.classify(title + " " + result["summary"])
-        result["category"] = classification.get("category", "new")
-        result["tags"] = classification.get("tags", [])
+        if self.mode in ("full", "classify-only"):
+            logger.info("智能分类...")
+            classification = self.classifier.classify(
+                title + " " + (result["summary"] or "")
+            )
+            result["category"] = classification.get("category", "new")
+            result["tags"] = classification.get("tags", [])
+        else:
+            result["category"] = None
+            result["tags"] = []
         return result
 
     def process_batch(self, articles: List[Dict]) -> tuple[List[Dict], List[Dict]]:
@@ -319,19 +330,101 @@ def main():
     parser.add_argument("--input", type=Path, default="ai/articles/original")
     parser.add_argument("--output", type=Path, default="ai/articles/processed")
     parser.add_argument("--max-articles", type=int, default=30)
+    parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["full", "extract-only", "summarize-only", "classify-only"],
+        default="full",
+        help="Processing mode: full (extract+summarize+classify) or single stage",
+    )
+    parser.add_argument(
+        "--source",
+        type=str,
+        choices=["local", "d1"],
+        default="local",
+        help="Data source: local files or D1 database",
+    )
+    parser.add_argument(
+        "--d1-account-id", type=str, default=os.environ.get("CF_ACCOUNT_ID", "")
+    )
+    parser.add_argument(
+        "--d1-database-id", type=str, default=os.environ.get("CF_D1_DATABASE_ID", "")
+    )
+    parser.add_argument(
+        "--d1-api-token", type=str, default=os.environ.get("CF_API_TOKEN", "")
+    )
     args = parser.parse_args()
 
     input_dir = Path(args.input)
     articles = []
-    for f in input_dir.glob("*.md"):
-        content = f.read_text(encoding="utf-8")
-        lines = content.split("\n")
-        url = lines[0].replace("URL:", "").strip() if lines else ""
-        title = lines[1].replace("标题:", "").strip() if len(lines) > 1 else f.name
-        articles.append({"url": url, "title": title, "file": f.name})
 
-    processor = ContentProcessor(max_articles=args.max_articles)
+    if args.source == "d1":
+        # 从 D1 读取未提取的文章
+        if not args.d1_account_id or not args.d1_database_id or not args.d1_api_token:
+            logger.error(
+                "D1 模式需要提供 --d1-account-id, --d1-database-id, --d1-api-token"
+            )
+            return
+
+        from ingestor.storage.d1_adapter import D1StorageAdapter
+
+        d1 = D1StorageAdapter(
+            account_id=args.d1_account_id,
+            database_id=args.d1_database_id,
+            api_token=args.d1_api_token,
+        )
+        # 查询 content 为空（未提取）的文章
+        sql = """
+            SELECT id, url, title, source, ingested_at 
+            FROM articles 
+            WHERE content IS NULL OR content = '' 
+            ORDER BY ingested_at DESC 
+            LIMIT ?
+        """
+        result = d1._execute_sql(sql, [args.max_articles])
+        rows = result.get("result", [])
+        for row in rows:
+            articles.append(
+                {
+                    "url": row.get("url", ""),
+                    "title": row.get("title", ""),
+                    "id": row.get("id", ""),
+                    "source": row.get("source", ""),
+                }
+            )
+        logger.info(f"从 D1 加载了 {len(articles)} 篇未提取的文章")
+    else:
+        # 从本地目录读取
+        for f in input_dir.glob("*.md"):
+            content = f.read_text(encoding="utf-8")
+            lines = content.split("\n")
+            url = lines[0].replace("URL:", "").strip() if lines else ""
+            title = lines[1].replace("标题:", "").strip() if len(lines) > 1 else f.name
+            articles.append({"url": url, "title": title, "file": f.name})
+
+    processor = ContentProcessor(max_articles=args.max_articles, mode=args.mode)
     results, errors = processor.process_batch(articles)
+
+    # 如果从 D1 读取并处于提取模式，将提取的内容写回 D1
+    if args.source == "d1" and args.mode in ("extract-only", "full"):
+        try:
+            from ingestor.storage.d1_adapter import D1StorageAdapter
+
+            d1 = D1StorageAdapter(
+                account_id=args.d1_account_id,
+                database_id=args.d1_database_id,
+                api_token=args.d1_api_token,
+            )
+            for result in results:
+                article_id = result.get("id")
+                content = result.get("content", "")
+                extraction_method = result.get("extraction_method", "unknown")
+                if article_id and content:
+                    d1.update_article_content(article_id, content, extraction_method)
+                    logger.info(f"已更新 D1 文章 content: {article_id}")
+            logger.info(f"已更新 {len(results)} 篇文章到 D1")
+        except Exception as e:
+            logger.error(f"更新 D1 失败: {e}")
 
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -349,13 +442,14 @@ def main():
             write_errors.append({"file": str(output_file), "error": str(e)})
             logger.error(f"文件写入失败 {output_file}: {e}")
 
-    # 生成日报
-    try:
-        processor = ContentProcessor(max_articles=args.max_articles)
-        processor.report_generator.generate(results, "ai/daily/REPORT.md")
-    except Exception as e:
-        logger.error(f"日报生成失败: {e}")
-        write_errors.append({"file": "ai/daily/REPORT.md", "error": str(e)})
+    # 生成日报 (仅在全量模式或非提取模式时)
+    if args.mode == "full" and results:
+        try:
+            processor = ContentProcessor(max_articles=args.max_articles, mode=args.mode)
+            processor.report_generator.generate(results, "ai/daily/REPORT.md")
+        except Exception as e:
+            logger.error(f"日报生成失败: {e}")
+            write_errors.append({"file": "ai/daily/REPORT.md", "error": str(e)})
 
     # 输出处理统计
     logger.info(
