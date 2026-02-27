@@ -8,17 +8,23 @@ Cloudflare Worker - Jina Reader API 代理
 
 import json
 import os
-from urllib.parse import unquote
+from urllib.parse import unquote, urlparse
 from js import fetch
 from workers import Response
 
 
 async def on_fetch(request, env):
     try:
+        # 获取完整 URL 字符串
         url_str = str(request.url)
 
+        # 解析 URL
+        parsed = urlparse(url_str)
+        path = parsed.path
+        query = parsed.query
+
         # 健康检查端点
-        if "/health" in url_str or url_str.endswith("/"):
+        if path == "/health" or path == "/" or path == "":
             return Response(
                 '{"status": "ok", "service": "jina-proxy"}',
                 headers=[
@@ -27,9 +33,12 @@ async def on_fetch(request, env):
                 ],
             )
 
-        if "/extract?url=" in url_str:
-            parts = url_str.split("/extract?url=")
-            if len(parts) < 2 or not parts[1]:
+        # 提取端点: /extract?url=xxx
+        if path == "/extract" and query:
+            # 解析 url 参数
+            from urllib.parse import parse_qs
+            params = parse_qs(query)
+            if 'url' not in params or not params['url']:
                 return Response(
                     json.dumps({"error": "Missing url parameter"}),
                     headers=[
@@ -38,7 +47,8 @@ async def on_fetch(request, env):
                     ],
                 )
 
-            target_url = unquote(parts[1])
+            target_url = params['url'][0]
+            target_url = unquote(target_url)
 
             # 通过 env 获取 secret（Cloudflare Workers 正确方式）
             jina_key = ""
