@@ -92,7 +92,7 @@ class FastExtractor:
 
     def extract(self, url: str, use_race: bool = True) -> tuple[Optional[str], str]:
         """
-        提取内容
+        提取内容 - 只执行竞速模式，不重试
 
         Args:
             url: 目标 URL
@@ -101,9 +101,7 @@ class FastExtractor:
         Returns:
             (content, method): 内容和方法名
         """
-        content = None
-        method = None
-
+        # 只使用竞速模式，不执行 fallback
         if use_race:
             content = self.race_extractor.extract(url)
             winner_idx = self.race_extractor.get_winner_method()
@@ -113,34 +111,8 @@ class FastExtractor:
                 logger.info(f"竞速模式 - {method} 获胜: {url}")
                 return content, method
             else:
-                # 竞速超时，两个都失败了，继续 fallback
-                logger.info(f"竞速模式超时，继续 fallback: {url}")
+                # 竞速超时/失败，返回空
+                logger.info(f"竞速模式失败: {url}")
+                return None, "failed"
 
-        if not content:
-            try:
-                content = self.trafilatura.extract(url)
-                if content:
-                    method = "trafilatura"
-            except Exception as e:
-                logger.debug(f"Trafilatura failed: {e}")
-
-        if not content:
-            try:
-                content = self.jina.extract(url)
-                if content:
-                    method = "jina"
-            except Exception as e:
-                logger.debug(f"Jina failed: {e}")
-
-        if not content and self.crawl4ai:
-            try:
-                content = self.crawl4ai.extract(url)
-                if content:
-                    method = "crawl4ai"
-            except Exception as e:
-                logger.debug(f"Crawl4AI failed: {e}")
-
-        if not content:
-            method = "failed"
-
-        return content, method
+        return None, "failed"
