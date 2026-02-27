@@ -1,53 +1,80 @@
 """
 Cloudflare Worker - Jina Reader API 代理
 用于绕过 GitHub Actions 网络限制
+
+用法:
+  /extract?url=https://example.com
 """
 
-import os
 import json
-from js import fetch, Response
+import os
+from urllib.parse import unquote
+from js import fetch
+from workers import Response
 
 
 async def on_fetch(request):
     try:
-        # 从 URL 获取要提取的 URL
-        url_path = request.url.split("/extract?url=")[-1]
-        if not url_path:
-            return Response.new(
-                json.dumps({"error": "Missing url parameter"}),
-                headers={"content-type": "application/json"},
+        url_str = str(request.url)
+
+        # 健康检查端点
+        if "/health" in url_str or url_str.endswith("/"):
+            return Response(
+                '{"status": "ok", "service": "jina-proxy"}',
+                headers=[
+                    ("content-type", "application/json"),
+                    ("Access-Control-Allow-Origin", "*"),
+                ],
             )
 
-        # URL 解码
-        from urllib.parse import unquote
+        if "/extract?url=" in url_str:
+            parts = url_str.split("/extract?url=")
+            if len(parts) < 2 or not parts[1]:
+                return Response(
+                    json.dumps({"error": "Missing url parameter"}),
+                    headers=[
+                        ("content-type", "application/json"),
+                        ("Access-Control-Allow-Origin", "*"),
+                    ],
+                )
 
-        target_url = unquote(url_path)
+            target_url = unquote(parts[1])
 
-        # 获取 Jina API Key
-        jina_key = os.environ.get("JINA_API_KEY", "")
+            # 环境变量通过 os.environ 获取
+            jina_key = os.environ.get("JINA_API_KEY", "")
 
-        # 构建请求头
-        headers = {
-            "Accept": "application/json",
-        }
-        if jina_key:
-            headers["Authorization"] = f"Bearer {jina_key}"
+            headers_list = [("Accept", "application/json")]
+            if jina_key:
+                headers_list.append(("Authorization", f"Bearer {jina_key}"))
 
-        # 转发到 r.jina.ai
-        jina_url = f"https://r.jina.ai/{target_url}"
-        resp = await fetch(jina_url, headers=headers)
+            jina_url = f"https://r.jina.ai/{target_url}"
+            resp = await fetch(jina_url, headers=headers_list)
 
-        # 返回结果
-        body = await resp.text()
-        return Response.new(
-            body,
-            headers={
-                "content-type": resp.headers.get("content-type", "text/plain"),
-                "Access-Control-Allow-Origin": "*",
-            },
+            body = await resp.text()
+            content_type = resp.headers.get("content-type", "text/plain")
+            return Response(
+                body,
+                headers=[
+                    ("content-type", content_type),
+                    ("Access-Control-Allow-Origin", "*"),
+                ],
+            )
+
+        return Response(
+            '{"error": "Not found"}',
+            status=404,
+            headers=[
+                ("content-type", "application/json"),
+                ("Access-Control-Allow-Origin", "*"),
+            ],
         )
 
     except Exception as e:
-        return Response.new(
-            json.dumps({"error": str(e)}), headers={"content-type": "application/json"}
+        return Response(
+            json.dumps({"error": str(e)}),
+            status=500,
+            headers=[
+                ("content-type", "application/json"),
+                ("Access-Control-Allow-Origin", "*"),
+            ],
         )

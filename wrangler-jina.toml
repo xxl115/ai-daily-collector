@@ -1,0 +1,8 @@
+name = "jina-proxy"
+main = "worker-jina-proxy.py"
+compatibility_date = "2024-01-15"
+compatibility_flags = ["python_workers"]
+
+[build]
+command = ""
+exclude = [".venv", "node_modules", "*.pyc", "__pycache__"]
