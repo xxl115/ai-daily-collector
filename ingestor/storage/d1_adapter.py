@@ -93,6 +93,46 @@ class D1StorageAdapter(StorageAdapter):
             error_body = e.read().decode("utf-8")
             raise Exception(f"D1 HTTP error {e.code}: {error_body}")
 
+    def _parse_result(self, result: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Parse D1 API response to get rows.
+
+        D1 API returns:
+        {
+            "success": true,
+            "result": [
+                {
+                    "results": [...],  // actual row data
+                    "success": true,
+                    "meta": {...}
+                }
+            ]
+        }
+
+        Args:
+            result: Raw D1 API response
+
+        Returns:
+            List of row dictionaries
+        """
+        raw_result = result.get("result", [])
+        if raw_result and isinstance(raw_result, list) and len(raw_result) > 0:
+            return raw_result[0].get("results", [])
+        return []
+
+    def _parse_single_result(self, result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Parse D1 API response for single row query.
+
+        Args:
+            result: Raw D1 API response
+
+        Returns:
+            Single row dictionary or None
+        """
+        rows = self._parse_result(result)
+        if rows and len(rows) > 0:
+            return rows[0]
+        return None
+
     def ensure_schema(self) -> None:
         """Create articles and crawl_logs tables if they don't exist."""
         create_table_sql = """
@@ -145,6 +185,32 @@ class D1StorageAdapter(StorageAdapter):
         self._execute_sql(create_index_date_sql)
         self._execute_sql(create_crawl_logs_index_sql)
 
+
+    def _decode_double_encoded(self, text: str) -> str:
+        """Decode double-encoded Unicode strings.
+
+        This handles the case where text has been JSON-encoded twice,
+        resulting in strings like '\\u949b\\u5a92\\u4f53' instead of Chinese characters.
+
+        Args:
+            text: Potentially double-encoded text
+
+        Returns:
+            Decoded text
+        """
+        if not text:
+            return text
+
+        # Check if the text contains Unicode escape sequences
+        if '\\u' not in text:
+            return text
+
+        try:
+            # Try to decode the double-encoded string
+            return text.encode('utf-8').decode('unicode_escape')
+        except Exception:
+            return text
+
     def _article_to_row(self, article: ArticleModel) -> tuple:
         """Convert ArticleModel to database row.
 
@@ -164,8 +230,8 @@ class D1StorageAdapter(StorageAdapter):
         tags = get("tags", [])
 
         # Convert lists to JSON strings
-        categories_json = json.dumps(categories) if categories else "[]"
-        tags_json = json.dumps(tags) if tags else "[]"
+        categories_json = json.dumps(categories, ensure_ascii=False) if categories else "[]"
+        tags_json = json.dumps(tags, ensure_ascii=False) if tags else "[]"
 
         published_at = get("published_at")
         if isinstance(published_at, datetime):
@@ -184,7 +250,7 @@ class D1StorageAdapter(StorageAdapter):
             get("source"),
             categories_json,
             tags_json,
-            get("summary"),
+            self._decode_double_encoded(get("summary")) if get("summary") else None,
             get("raw_markdown"),
             ingested_at or datetime.utcnow().isoformat(),
         )
@@ -283,13 +349,12 @@ class D1StorageAdapter(StorageAdapter):
 
         result = self._execute_sql(sql, params)
 
-        # Parse results
+        # Parse results using helper
         articles = []
-        rows = result.get("result", [])
-        if isinstance(rows, list):
-            for row in rows:
-                if isinstance(row, dict):
-                    articles.append(self._row_to_article(row))
+        rows = self._parse_result(result)
+        for row in rows:
+            if isinstance(row, dict):
+                articles.append(self._row_to_article(row))
 
         return articles
 
@@ -305,9 +370,9 @@ class D1StorageAdapter(StorageAdapter):
         sql = "SELECT * FROM articles WHERE id = ? LIMIT 1"
         result = self._execute_sql(sql, [article_id])
 
-        rows = result.get("result", [])
-        if rows and isinstance(rows, list) and len(rows) > 0:
-            return self._row_to_article(rows[0])
+        row = self._parse_single_result(result)
+        if row:
+            return self._row_to_article(row)
 
         return None
 
@@ -337,17 +402,18 @@ class D1StorageAdapter(StorageAdapter):
         # Total count
         count_result = self._execute_sql("SELECT COUNT(*) as total FROM articles")
         total = 0
-        if count_result.get("result"):
-            total = count_result["result"][0].get("total", 0)
+        rows = self._parse_result(count_result)
+        if rows:
+            total = rows[0].get("total", 0)
 
         # Source breakdown
         sources_result = self._execute_sql(
             "SELECT source, COUNT(*) as count FROM articles GROUP BY source"
         )
         sources = {}
-        if sources_result.get("result"):
-            for row in sources_result["result"]:
-                sources[row["source"]] = row["count"]
+        rows = self._parse_result(sources_result)
+        for row in rows:
+            sources[row["source"]] = row["count"]
 
         return {"total": total, "sources": sources}
 
@@ -427,7 +493,7 @@ class D1StorageAdapter(StorageAdapter):
         """
 
         result = self._execute_sql(sql, [limit, offset])
-        return result.get("result", [])
+        return self._parse_result(result)
 
     def get_crawl_stats(self) -> Dict[str, Any]:
         """Get crawl statistics.
@@ -437,40 +503,31 @@ class D1StorageAdapter(StorageAdapter):
         """
         # Total crawls
         total_result = self._execute_sql("SELECT COUNT(*) as total FROM crawl_logs")
-        total = (
-            total_result.get("result", [{}])[0].get("total", 0)
-            if total_result.get("result")
-            else 0
-        )
+        rows = self._parse_result(total_result)
+        total = rows[0].get("total", 0) if rows else 0
 
         # Success/failed breakdown
         status_result = self._execute_sql(
             "SELECT status, COUNT(*) as count FROM crawl_logs GROUP BY status"
         )
         status_counts = {}
-        if status_result.get("result"):
-            for row in status_result["result"]:
-                status_counts[row["status"]] = row["count"]
+        rows = self._parse_result(status_result)
+        for row in rows:
+            status_counts[row["status"]] = row["count"]
 
         # Total articles captured
         articles_result = self._execute_sql(
             "SELECT SUM(articles_count) as total FROM crawl_logs WHERE status = 'success'"
         )
-        total_articles = (
-            articles_result.get("result", [{}])[0].get("total", 0)
-            if articles_result.get("result")
-            else 0
-        )
+        rows = self._parse_result(articles_result)
+        total_articles = rows[0].get("total", 0) if rows else 0
 
         # Average duration
         avg_duration_result = self._execute_sql(
             "SELECT AVG(duration_ms) as avg_duration FROM crawl_logs WHERE status = 'success'"
         )
-        avg_duration = (
-            avg_duration_result.get("result", [{}])[0].get("avg_duration", 0)
-            if avg_duration_result.get("result")
-            else 0
-        )
+        rows = self._parse_result(avg_duration_result)
+        avg_duration = rows[0].get("avg_duration", 0) if rows else 0
 
         return {
             "total_crawls": total,
