@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import time
+import re
 from typing import List, Dict, Any
 from datetime import datetime
 
@@ -45,6 +46,38 @@ def _load_sources_config(path: str) -> List[Dict[str, Any]]:
         return []
 
 
+def _filter_by_keyword(items: List[Dict[str, Any]], keyword: str) -> List[Dict[str, Any]]:
+    """Filter articles by keyword pattern.
+
+    Args:
+        items: List of article dictionaries
+        keyword: Keyword pattern (supports regex like "AI|大模型|人工智能")
+
+    Returns:
+        Filtered list of articles
+    """
+    if not keyword:
+        return items
+
+    try:
+        keyword_pattern = re.compile(keyword, re.IGNORECASE)
+    except re.error:
+        # Invalid regex pattern, return all items
+        return items
+
+    filtered = []
+    for item in items:
+        # Check title and description for keyword match
+        title = item.get("title", "")
+        description = item.get("description", "") or item.get("summary", "")
+        text_to_check = f"{title} {description}"
+
+        if keyword_pattern.search(text_to_check):
+            filtered.append(item)
+
+    return filtered
+
+
 def _fetch_from_source(src: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Fetch articles from a single source based on its type."""
     source_type = src.get("type", "rss")
@@ -53,7 +86,9 @@ def _fetch_from_source(src: Dict[str, Any]) -> List[Dict[str, Any]]:
     if source_type == "rss":
         url = src.get("url")
         if url:
-            return fetch_rss(url)
+            items = fetch_rss(url)
+            keyword = filters.get("keyword", "")
+            return _filter_by_keyword(items, keyword)
 
     elif source_type == "newsnow":
         return fetch_newsnow(
@@ -92,13 +127,17 @@ def _fetch_from_source(src: Dict[str, Any]) -> List[Dict[str, Any]]:
     elif source_type in ("ai_blogs", "tech_media", "podcast", "producthunt"):
         url = src.get("url")
         if url:
-            return fetch_rss(url)
+            items = fetch_rss(url)
+            keyword = filters.get("keyword", "")
+            return _filter_by_keyword(items, keyword)
 
     elif source_type == "youtube":
         channel_id = src.get("channel_id")
         if channel_id:
             url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
-            return fetch_rss(url)
+            items = fetch_rss(url)
+            keyword = filters.get("keyword", "")
+            return _filter_by_keyword(items, keyword)
 
     return []
 
