@@ -93,6 +93,8 @@ curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
     "arguments": {
       "article_id": "文章ID",
       "summary": "你撰写的中文摘要",
+      "category": "大厂/人物",
+      "tags": ["LLM", "中国"],
       "auto_classify": true
     }
   }'
@@ -103,6 +105,8 @@ curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
 |------|------|------|
 | article_id | string | 文章唯一标识（URL） |
 | summary | string | 中文摘要（用户手工撰写） |
+| category | string | 手动指定分类，优先级高于自动分类 |
+| tags | array | 手动指定标签数组 |
 | auto_classify | boolean | 是否自动分类，默认 true |
 
 **响应示例：**
@@ -139,6 +143,138 @@ curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
 curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
   -H "Content-Type: application/json" \
   -d '{"tool": "list_categories"}'
+```
+
+---
+
+## 分类和标签配置（数据库管理）
+
+> 新增功能：分类和标签规则存储在数据库中，可通过 API 动态管理。
+
+### 分类管理 API
+
+#### 获取所有分类
+
+```bash
+curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "get_categories"}'
+```
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "categories": [
+    {"id": 1, "name": "大厂/人物", "keywords": ["OpenAI", "Anthropic", "Google", ...]},
+    {"id": 2, "name": "Agent工作流", "keywords": ["Agent", "MCP", "A2A", ...]}
+  ]
+}
+```
+
+#### 创建分类
+
+```bash
+curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "create_category",
+    "arguments": {
+      "name": "新分类名称",
+      "keywords": ["关键词1", "关键词2", "关键词3"]
+    }
+  }'
+```
+
+#### 更新分类
+
+```bash
+curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "update_category",
+    "arguments": {
+      "id": 1,
+      "name": "新分类名称",
+      "keywords": ["新关键词1", "新关键词2"]
+    }
+  }'
+```
+
+#### 删除分类
+
+```bash
+curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "delete_category",
+    "arguments": {"id": 1}
+  }'
+```
+
+### 标签管理 API
+
+#### 获取所有标签
+
+```bash
+curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "get_tags"}'
+```
+
+#### 创建标签
+
+```bash
+curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "create_tag",
+    "arguments": {
+      "name": "新标签名称",
+      "keywords": ["关键词1", "关键词2"]
+    }
+  }'
+```
+
+#### 更新标签
+
+```bash
+curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "update_tag",
+    "arguments": {
+      "id": 1,
+      "name": "新标签名称",
+      "keywords": ["新关键词"]
+    }
+  }'
+```
+
+#### 删除标签
+
+```bash
+curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "delete_tag",
+    "arguments": {"id": 1}
+  }'
+```
+
+### 初始化默认数据
+
+首次部署或表为空时，可以初始化默认分类和标签：
+
+```bash
+curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "init_default_categories"}'
+```
+
+**响应：**
+```json
+{"success": true, "message": "Initialized 16 categories/tags"}
 ```
 
 ---
@@ -296,6 +432,9 @@ npx wrangler d1 execute ai-daily-collector \
 | 工具列表 | `curl https://your-worker.workers.dev/mcp/tools` |
 | 获取待处理 | `curl -X POST https://your-worker.workers.dev/mcp -d '{"tool":"get_articles_needing_summary"}'` |
 | 提交摘要 | `curl -X POST https://your-worker.workers.dev/mcp -d '{"tool":"update_article_summary_and_category",...}'` |
+| 获取分类 | `curl -X POST https://your-worker.workers.dev/mcp -d '{"tool":"get_categories"}'` |
+| 创建分类 | `curl -X POST https://your-worker.workers.dev/mcp -d '{"tool":"create_category",...}'` |
+| 获取标签 | `curl -X POST https://your-worker.workers.dev/mcp -d '{"tool":"get_tags"}'` |
 | 部署 Worker | `npx wrangler deploy` |
 
 ### 本地开发
