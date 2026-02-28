@@ -12,9 +12,7 @@ command = ""
 [[d1_databases]]
 binding = "DB"
 database_name = "ai-daily-collector"
-# 注意：部署前需要替换为真实的 D1 数据库 ID
-# 在 Cloudflare Dashboard → D1 中找到你的数据库 ID
-database_id = "your-database-id-here"
+database_id = "62f5766f-e837-402c-9237-390d4dbbdb52"
 
 # 环境变量
 [vars]
@@ -22,3 +20,7 @@ ENVIRONMENT = "production"
 LOG_LEVEL = "INFO"
 LOG_FORMAT = "json"
 DATABASE_PROVIDER = "d1"
+
+# Secrets (部署时设置)
+# wrangler secret put CF_API_TOKEN
+# wrangler secret put D7CCJtlrneIx9TW2J98Xc8FE17beUQ7tKbFTVkTi

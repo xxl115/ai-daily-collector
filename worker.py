@@ -83,6 +83,17 @@ class Default(WorkerEntrypoint):
                     return self._method_not_allowed()
                 return await self._crawl_stats_response(storage)
 
+            # MCP 端点
+            elif path == "/mcp" or path == "/api/mcp":
+                if method == "POST":
+                    return await self._mcp_request(request, storage)
+                elif method == "GET":
+                    return self._mcp_info()
+
+            # MCP 工具列表
+            elif path == "/mcp/tools" or path == "/api/mcp/tools":
+                return self._mcp_tools_list()
+
             else:
                 return self._json_response({"error": "Not found"}, status=404)
 
@@ -509,3 +520,448 @@ class WorkersD1StorageAdapter:
             "error_message": get_value("error_message"),
             "crawled_at": get_value("crawled_at", ""),
         }
+
+    # ============================================================
+    # MCP 端点方法
+    # ============================================================
+
+    def _mcp_info(self):
+        """返回 MCP 服务器信息"""
+        return self._json_response(
+            {
+                "name": "D1 MCP Tools",
+                "version": "1.0.0",
+                "description": "AI Daily Collector D1 Tools for article summary and classification",
+            }
+        )
+
+    def _mcp_tools_list(self):
+        """列出可用工具"""
+        tools = [
+            {
+                "name": "get_articles_needing_summary",
+                "description": "获取需要总结的文章列表",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "limit": {
+                            "type": "number",
+                            "description": "返回文章数量，默认10",
+                        }
+                    },
+                },
+            },
+            {
+                "name": "get_articles_for_processing",
+                "description": "获取需要处理的文章（需要总结或分类）",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "limit": {
+                            "type": "number",
+                            "description": "返回文章数量，默认10",
+                        }
+                    },
+                },
+            },
+            {
+                "name": "update_article_summary",
+                "description": "更新文章摘要",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "article_id": {"type": "string", "description": "文章ID"},
+                        "summary": {"type": "string", "description": "摘要内容"},
+                    },
+                    "required": ["article_id", "summary"],
+                },
+            },
+            {
+                "name": "update_article_summary_and_category",
+                "description": "更新文章摘要并自动分类",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "article_id": {"type": "string", "description": "文章ID"},
+                        "summary": {"type": "string", "description": "摘要内容"},
+                        "auto_classify": {
+                            "type": "boolean",
+                            "description": "是否自动分类，默认true",
+                        },
+                    },
+                    "required": ["article_id", "summary"],
+                },
+            },
+            {
+                "name": "classify_article",
+                "description": "对文章进行自动分类（基于关键词规则）",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "article_id": {"type": "string", "description": "文章ID"},
+                        "content": {
+                            "type": "string",
+                            "description": "文章内容（可选）",
+                        },
+                    },
+                    "required": ["article_id"],
+                },
+            },
+            {"name": "list_categories", "description": "列出所有分类规则"},
+        ]
+
+        return self._json_response({"tools": tools})
+
+    async def _mcp_request(self, request, storage):
+        """处理 MCP 请求"""
+        try:
+            body = await request.json()
+
+            tool_name = body.get("tool")
+            arguments = body.get("arguments", {})
+
+            if not tool_name:
+                return self._json_response(
+                    {"error": "Missing 'tool' parameter"}, status=400
+                )
+
+            # 执行工具
+            result = await self._execute_mcp_tool(tool_name, arguments, storage)
+
+            return self._json_response(result)
+
+        except Exception as e:
+            return self._json_response({"error": str(e)}, status=500)
+
+    async def _execute_mcp_tool(self, tool_name, arguments, storage):
+        """执行 MCP 工具"""
+
+        # 分类规则
+        CATEGORY_RULES = {
+            "大厂/人物": [
+                "OpenAI",
+                "Anthropic",
+                "Google",
+                "Meta",
+                "微软",
+                "Apple",
+                "Amazon",
+                "英伟达",
+                "NVIDIA",
+                "AMD",
+                "Intel",
+                "高通",
+                "三星",
+                "华为",
+                "阿里",
+                "腾讯",
+                "百度",
+                "字节",
+                "特斯拉",
+                "Tesla",
+                "SpaceX",
+                "马斯克",
+                "Sam Altman",
+                "黄仁勋",
+                "苏姿丰",
+                "GPT",
+                "Claude",
+                "Gemini",
+                "Llama",
+                "Mistral",
+                "Qwen",
+                "通义",
+                "文心",
+                "Kimi",
+                "豆包",
+            ],
+            "Agent工作流": [
+                "Agent",
+                "智能体",
+                "MCP",
+                "Model Context Protocol",
+                "A2A",
+                "Autogen",
+                "CrewAI",
+                "LangChain",
+                "LangGraph",
+                "AutoGPT",
+                "BabyAGI",
+                "工作流",
+                "Workflow",
+                "RAG",
+            ],
+            "编程助手": [
+                "Cursor",
+                "Windsurf",
+                "Cline",
+                "GitHub Copilot",
+                "Codeium",
+                "Tabnine",
+                "IDE",
+                "VS Code",
+                "JetBrains",
+                "编程",
+                "代码生成",
+                "Devin",
+                "v0",
+            ],
+            "内容生成": [
+                "Midjourney",
+                "DALL-E",
+                "Stable Diffusion",
+                "SDXL",
+                "Runway",
+                "视频生成",
+                "Sora",
+                "Pika",
+                "Luma",
+                "Kling",
+                "语音合成",
+                "TTS",
+                "ElevenLabs",
+                "音乐生成",
+                "Suno",
+                "多模态",
+                "图像生成",
+                "AI绘画",
+                "文生视频",
+            ],
+            "工具生态": [
+                "LangChain",
+                "LlamaIndex",
+                "Hugging Face",
+                "PyTorch",
+                "TensorFlow",
+                "JAX",
+                "Ollama",
+                "LM Studio",
+                "vLLM",
+                "开源",
+                "框架",
+            ],
+            "安全风险": [
+                "安全",
+                "漏洞",
+                "攻击",
+                "恶意",
+                "病毒",
+                "隐私",
+                "数据泄露",
+                "监管",
+                "Deepfake",
+                "幻觉",
+                "越狱",
+                "黑客",
+            ],
+            "算力基建": [
+                "GPU",
+                "TPU",
+                "芯片",
+                "算力",
+                "智算中心",
+                "训练",
+                "推理",
+                "部署",
+                "一体机",
+                "服务器",
+                "云计算",
+            ],
+            "商业应用": [
+                "电商",
+                "购物",
+                "金融",
+                "银行",
+                "医疗",
+                "教育",
+                "企业",
+                "融资",
+            ],
+        }
+
+        TAG_RULES = {
+            "LLM": ["大模型", "语言模型", "LLM", "GPT", "Claude"],
+            "多模态": ["多模态", "视觉", "图像", "视频", "音频"],
+            "开源": ["开源", "Open Source", "Apache", "MIT", "GitHub"],
+            "发布": ["发布", "上线", "更新", "版本", "新功能"],
+            "研究": ["论文", "arXiv", "研究", "实验", "学术"],
+            "中国": ["中国", "国产", "本土", "国内"],
+        }
+
+        DEFAULT_CATEGORY = "其他"
+
+        def classify(text):
+            if not text:
+                return {"category": DEFAULT_CATEGORY, "tags": [], "scores": {}}
+
+            text_lower = text.lower()
+            scores = {}
+
+            for category, keywords in CATEGORY_RULES.items():
+                score = sum(1 for kw in keywords if kw.lower() in text_lower)
+                if score > 0:
+                    scores[category] = score
+
+            if scores:
+                category = max(scores, key=scores.get)
+                confidence = scores[category] / sum(scores.values())
+            else:
+                category = DEFAULT_CATEGORY
+                confidence = 0.0
+
+            tags = []
+            for tag, keywords in TAG_RULES.items():
+                if any(kw.lower() in text_lower for kw in keywords):
+                    tags.append(tag)
+
+            return {
+                "category": category,
+                "category_confidence": round(confidence, 2),
+                "tags": tags[:5],
+            }
+
+        # 执行对应的工具
+        if tool_name == "get_articles_needing_summary":
+            limit = arguments.get("limit", 10)
+            sql = f"""
+            SELECT id, title, url, content, source, ingested_at
+            FROM articles 
+            WHERE content IS NOT NULL AND content != '' 
+            AND (summary IS NULL OR summary = '')
+            ORDER BY ingested_at DESC 
+            LIMIT {limit}
+            """
+            rows = storage.fetch_articles(limit=limit) if storage else []
+            articles = []
+            for row in rows:
+                if row.content and (not row.summary):
+                    articles.append(
+                        {
+                            "id": row.id,
+                            "title": row.title,
+                            "url": row.url,
+                            "source": row.source,
+                            "content_preview": row.content[:300] + "..."
+                            if len(row.content) > 300
+                            else row.content,
+                            "content_length": len(row.content),
+                            "ingested_at": row.ingested_at,
+                        }
+                    )
+            return {"success": True, "count": len(articles), "articles": articles}
+
+        elif tool_name == "get_articles_for_processing":
+            limit = arguments.get("limit", 10)
+            rows = storage.fetch_articles(limit=limit) if storage else []
+            articles = []
+            for row in rows:
+                if row.content:
+                    needs_summary = not row.summary
+                    articles.append(
+                        {
+                            "id": row.id,
+                            "title": row.title,
+                            "url": row.url,
+                            "source": row.source,
+                            "content_preview": row.content[:200] + "..."
+                            if len(row.content) > 200
+                            else row.content,
+                            "needs_summary": needs_summary,
+                            "ingested_at": row.ingested_at,
+                        }
+                    )
+            return {"success": True, "count": len(articles), "articles": articles}
+
+        elif tool_name == "update_article_summary":
+            article_id = arguments.get("article_id")
+            summary = arguments.get("summary")
+            if not article_id or not summary:
+                return {"error": "Missing article_id or summary"}
+
+            # 更新数据库
+            article = storage.get_article_by_id(article_id) if storage else None
+            if article:
+                article.summary = summary
+                storage.upsert_article(article)
+                return {"success": True, "message": f"Updated summary for {article_id}"}
+            return {"error": "Article not found"}
+
+        elif tool_name == "update_article_summary_and_category":
+            article_id = arguments.get("article_id")
+            summary = arguments.get("summary")
+            auto_classify = arguments.get("auto_classify", True)
+
+            if not article_id or not summary:
+                return {"error": "Missing article_id or summary"}
+
+            article = storage.get_article_by_id(article_id) if storage else None
+            if not article:
+                return {"error": "Article not found"}
+
+            # 更新摘要
+            article.summary = summary
+
+            # 自动分类
+            category_result = None
+            if auto_classify and article.content:
+                category_result = classify(article.content + " " + summary)
+                article.categories = [category_result["category"]]
+                article.tags = category_result["tags"]
+
+            storage.upsert_article(article)
+
+            return {
+                "success": True,
+                "message": f"Updated article {article_id}",
+                "category": category_result["category"] if category_result else None,
+                "tags": category_result["tags"] if category_result else [],
+            }
+
+        elif tool_name == "classify_article":
+            article_id = arguments.get("article_id")
+            content = arguments.get("content", "")
+
+            if not article_id:
+                return {"error": "Missing article_id"}
+
+            article = storage.get_article_by_id(article_id) if storage else None
+            if not article:
+                return {"error": "Article not found"}
+
+            # 如果没有传入 content，从文章获取
+            if not content:
+                content = (article.content or "") + " " + (article.title or "")
+
+            result = classify(content)
+
+            # 更新数据库
+            article.categories = [result["category"]]
+            article.tags = result["tags"]
+            storage.upsert_article(article)
+
+            return {
+                "success": True,
+                "article_id": article_id,
+                "category": result["category"],
+                "confidence": result["category_confidence"],
+                "tags": result["tags"],
+            }
+
+        elif tool_name == "list_categories":
+            categories = []
+            for cat, keywords in CATEGORY_RULES.items():
+                categories.append(
+                    {
+                        "name": cat,
+                        "keyword_count": len(keywords),
+                        "sample_keywords": keywords[:5],
+                    }
+                )
+            return {
+                "success": True,
+                "categories": categories,
+                "default": DEFAULT_CATEGORY,
+            }
+
+        else:
+            return {"error": f"Unknown tool: {tool_name}"}
