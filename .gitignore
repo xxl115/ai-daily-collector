@@ -63,3 +63,5 @@ htmlcov/
 
 # Editor backup
 *~
+.env.development
+.env.development.local
