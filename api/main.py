@@ -21,7 +21,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # 导入 API v2 路由
-from api.v2 import v2_router
+from api.v2 import v2_router, daily_router
+from api.mcp import router as mcp_router
 
 # ==================== 限流中间件 ====================
 
@@ -102,6 +103,12 @@ app.add_middleware(
 
 # 注册 API v2 路由
 app.include_router(v2_router)
+
+# 注册 Daily 路由
+app.include_router(daily_router)
+
+# 注册 MCP 路由
+app.include_router(mcp_router)
 
 
 class HealthResponse(BaseModel):
