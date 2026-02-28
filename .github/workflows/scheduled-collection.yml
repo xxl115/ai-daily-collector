@@ -2,10 +2,7 @@ name: AI Daily Collection (Scheduled)
 
 on:
   schedule:
-    # 每天 6:00, 14:00, 22:00 UTC (北京时间 14:00, 22:00, 06:00)
-    - cron: '0 6 * * *'
-    - cron: '0 14 * * *'
-    - cron: '0 22 * * *'
+    - cron: '0 */2 * * *'
   workflow_dispatch:
     inputs:
       reason:
