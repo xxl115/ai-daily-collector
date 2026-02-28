@@ -48,6 +48,13 @@ class Default(WorkerEntrypoint):
             # 初始化存储适配器
             storage = WorkersD1StorageAdapter(db) if db else None
 
+            # 初始化配置表（如果不存在）
+            if storage:
+                try:
+                    await storage.init_config_tables()
+                except Exception as e:
+                    pass  # 表可能已存在
+
             # 健康检查端点 - 显示数据库连接状态
             if path == "/" or path == "/health":
                 return await self._health_response(storage, db_error, env_info)
@@ -378,6 +385,111 @@ class Default(WorkerEntrypoint):
                 },
             },
             {"name": "list_categories", "description": "列出所有分类规则"},
+            # 分类管理
+            {
+                "name": "get_categories",
+                "description": "获取所有分类（从数据库）",
+                "parameters": {"type": "object", "properties": {}},
+            },
+            {
+                "name": "create_category",
+                "description": "创建新分类",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "分类名称"},
+                        "keywords": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "关键词数组",
+                        },
+                    },
+                    "required": ["name", "keywords"],
+                },
+            },
+            {
+                "name": "update_category",
+                "description": "更新分类",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "number", "description": "分类ID"},
+                        "name": {"type": "string", "description": "分类名称"},
+                        "keywords": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "关键词数组",
+                        },
+                    },
+                    "required": ["id", "name", "keywords"],
+                },
+            },
+            {
+                "name": "delete_category",
+                "description": "删除分类",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "number", "description": "分类ID"},
+                    },
+                    "required": ["id"],
+                },
+            },
+            # 标签管理
+            {
+                "name": "get_tags",
+                "description": "获取所有标签（从数据库）",
+                "parameters": {"type": "object", "properties": {}},
+            },
+            {
+                "name": "create_tag",
+                "description": "创建新标签",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "标签名称"},
+                        "keywords": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "关键词数组",
+                        },
+                    },
+                    "required": ["name", "keywords"],
+                },
+            },
+            {
+                "name": "update_tag",
+                "description": "更新标签",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "number", "description": "标签ID"},
+                        "name": {"type": "string", "description": "标签名称"},
+                        "keywords": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "关键词数组",
+                        },
+                    },
+                    "required": ["id", "name", "keywords"],
+                },
+            },
+            {
+                "name": "delete_tag",
+                "description": "删除标签",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "number", "description": "标签ID"},
+                    },
+                    "required": ["id"],
+                },
+            },
+            {
+                "name": "init_default_categories",
+                "description": "初始化默认分类和标签数据",
+                "parameters": {"type": "object", "properties": {}},
+            },
         ]
 
         return self._json_response({"tools": tools})
@@ -560,14 +672,25 @@ class Default(WorkerEntrypoint):
 
         DEFAULT_CATEGORY = "其他"
 
-        def classify(text):
+        async def get_db_rules():
+            """从数据库获取分类规则"""
+            if storage:
+                return await storage.get_classification_rules()
+            return None, None
+
+        def classify(text, category_rules=None, tag_rules=None):
+            """分类函数 - 可选使用数据库规则或默认规则"""
             if not text:
                 return {"category": DEFAULT_CATEGORY, "tags": [], "scores": {}}
+
+            # 使用传入的规则或默认规则
+            rules = category_rules if category_rules else CATEGORY_RULES
+            tags_rules = tag_rules if tag_rules else TAG_RULES
 
             text_lower = text.lower()
             scores = {}
 
-            for category, keywords in CATEGORY_RULES.items():
+            for category, keywords in rules.items():
                 score = sum(1 for kw in keywords if kw.lower() in text_lower)
                 if score > 0:
                     scores[category] = score
@@ -580,7 +703,7 @@ class Default(WorkerEntrypoint):
                 confidence = 0.0
 
             tags = []
-            for tag, keywords in TAG_RULES.items():
+            for tag, keywords in tags_rules.items():
                 if any(kw.lower() in text_lower for kw in keywords):
                     tags.append(tag)
 
@@ -679,8 +802,20 @@ class Default(WorkerEntrypoint):
                 # 手动指定分类
                 article["categories"] = [manual_category]
             elif auto_classify and article.get("content"):
-                # 自动分类
-                category_result = classify(article.get("content", "") + " " + summary)
+                # 自动分类 - 优先使用数据库规则
+                db_category_rules, db_tag_rules = await get_db_rules()
+                if db_category_rules:
+                    # 使用数据库规则
+                    category_result = classify(
+                        article.get("content", "") + " " + summary,
+                        db_category_rules,
+                        db_tag_rules,
+                    )
+                else:
+                    # 回退到默认规则
+                    category_result = classify(
+                        article.get("content", "") + " " + summary
+                    )
                 article["categories"] = [category_result["category"]]
 
             if manual_tags:
@@ -751,6 +886,139 @@ class Default(WorkerEntrypoint):
                 "default": DEFAULT_CATEGORY,
             }
 
+        # ========== 分类管理 ==========
+        elif tool_name == "get_categories":
+            categories = await storage.get_all_categories() if storage else []
+            return {"success": True, "categories": categories}
+
+        elif tool_name == "create_category":
+            name = arguments.get("name")
+            keywords = arguments.get("keywords", [])
+            if not name:
+                return {"error": "Missing name"}
+            result = await storage.create_category(name, keywords) if storage else None
+            return {"success": True, "message": f"Created category: {name}"}
+
+        elif tool_name == "update_category":
+            category_id = arguments.get("id")
+            name = arguments.get("name")
+            keywords = arguments.get("keywords", [])
+            if not category_id or not name:
+                return {"error": "Missing id or name"}
+            result = (
+                await storage.update_category(category_id, name, keywords)
+                if storage
+                else None
+            )
+            return {"success": True, "message": f"Updated category: {name}"}
+
+        elif tool_name == "delete_category":
+            category_id = arguments.get("id")
+            if not category_id:
+                return {"error": "Missing id"}
+            result = await storage.delete_category(category_id) if storage else None
+            return {"success": True, "message": f"Deleted category: {category_id}"}
+
+        # ========== 标签管理 ==========
+        elif tool_name == "get_tags":
+            tags = await storage.get_all_tags() if storage else []
+            return {"success": True, "tags": tags}
+
+        elif tool_name == "create_tag":
+            name = arguments.get("name")
+            keywords = arguments.get("keywords", [])
+            if not name:
+                return {"error": "Missing name"}
+            result = await storage.create_tag(name, keywords) if storage else None
+            return {"success": True, "message": f"Created tag: {name}"}
+
+        elif tool_name == "update_tag":
+            tag_id = arguments.get("id")
+            name = arguments.get("name")
+            keywords = arguments.get("keywords", [])
+            if not tag_id or not name:
+                return {"error": "Missing id or name"}
+            result = (
+                await storage.update_tag(tag_id, name, keywords) if storage else None
+            )
+            return {"success": True, "message": f"Updated tag: {name}"}
+
+        elif tool_name == "delete_tag":
+            tag_id = arguments.get("id")
+            if not tag_id:
+                return {"error": "Missing id"}
+            result = await storage.delete_tag(tag_id) if storage else None
+            return {"success": True, "message": f"Deleted tag: {tag_id}"}
+
+        elif tool_name == "init_default_categories":
+            # 初始化默认分类和标签
+            default_categories = [
+                (
+                    "大厂/人物",
+                    [
+                        "OpenAI",
+                        "Anthropic",
+                        "Google",
+                        "Meta",
+                        "微软",
+                        "英伟达",
+                        "马斯克",
+                        "GPT",
+                        "Claude",
+                        "Llama",
+                    ],
+                ),
+                (
+                    "Agent工作流",
+                    ["Agent", "MCP", "A2A", "Autogen", "CrewAI", "LangChain", "工作流"],
+                ),
+                (
+                    "编程助手",
+                    ["Cursor", "Windsurf", "Cline", "GitHub Copilot", "Devin", "IDE"],
+                ),
+                (
+                    "内容生成",
+                    ["Midjourney", "DALL-E", "Sora", "视频生成", "Suno", "多模态"],
+                ),
+                (
+                    "工具生态",
+                    ["LangChain", "LlamaIndex", "Hugging Face", "PyTorch", "Ollama"],
+                ),
+                ("安全风险", ["安全", "漏洞", "攻击", "隐私", "Deepfake"]),
+                ("算力基建", ["GPU", "芯片", "算力", "训练", "A100", "H100"]),
+                ("商业应用", ["电商", "金融", "医疗", "营销", "融资", "财报"]),
+            ]
+            default_tags = [
+                ("LLM", ["大模型", "语言模型", "GPT", "Claude"]),
+                ("编程", ["编程", "代码", "开发"]),
+                ("多模态", ["视觉", "图像", "视频", "音频"]),
+                ("开源", ["开源", "Open Source"]),
+                ("发布", ["发布", "上线", "新功能"]),
+                ("研究", ["论文", "arXiv", "学术"]),
+                ("融资", ["融资", "投资", "估值"]),
+                ("中国", ["中国", "国产"]),
+            ]
+
+            created = 0
+            for name, keywords in default_categories:
+                try:
+                    await storage.create_category(name, keywords)
+                    created += 1
+                except:
+                    pass  # 可能已存在
+
+            for name, keywords in default_tags:
+                try:
+                    await storage.create_tag(name, keywords)
+                    created += 1
+                except:
+                    pass  # 可能已存在
+
+            return {
+                "success": True,
+                "message": f"Initialized {created} categories/tags",
+            }
+
         else:
             return {"error": f"Unknown tool: {tool_name}"}
 
@@ -781,6 +1049,151 @@ class WorkersD1StorageAdapter:
             return {"success": True, "results": results}
         except Exception as e:
             return {"success": False, "errors": [{"message": str(e)}], "sql": sql}
+
+    async def init_config_tables(self):
+        """初始化配置表（categories 和 tags）"""
+        # 创建 categories 表
+        create_categories_sql = """
+        CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            keywords TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+        await self._execute_sql(create_categories_sql)
+
+        # 创建 tags 表
+        create_tags_sql = """
+        CREATE TABLE IF NOT EXISTS tags (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            keywords TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+        await self._execute_sql(create_tags_sql)
+
+    # ========== Categories CRUD ==========
+    async def get_all_categories(self):
+        """获取所有分类"""
+        sql = "SELECT * FROM categories ORDER BY id"
+        result = await self._execute_sql(sql)
+        categories = []
+        if result.get("success"):
+            import json
+
+            for row in result.get("results", []):
+                # Handle both dict and object types
+                if isinstance(row, dict):
+                    categories.append(
+                        {
+                            "id": row.get("id"),
+                            "name": row.get("name"),
+                            "keywords": json.loads(row.get("keywords", "[]"))
+                            if row.get("keywords")
+                            else [],
+                        }
+                    )
+                else:
+                    # Handle object type from D1
+                    categories.append(
+                        {
+                            "id": getattr(row, "id", None),
+                            "name": getattr(row, "name", ""),
+                            "keywords": json.loads(getattr(row, "keywords", "[]"))
+                            if getattr(row, "keywords", None)
+                            else [],
+                        }
+                    )
+        return categories
+
+    async def create_category(self, name, keywords):
+        """创建分类"""
+        import json
+
+        sql = "INSERT INTO categories (name, keywords) VALUES (?, ?)"
+        return await self._execute_sql(sql, [name, json.dumps(keywords)])
+
+    async def update_category(self, category_id, name, keywords):
+        """更新分类"""
+        import json
+
+        sql = "UPDATE categories SET name = ?, keywords = ? WHERE id = ?"
+        return await self._execute_sql(sql, [name, json.dumps(keywords), category_id])
+
+    async def delete_category(self, category_id):
+        """删除分类"""
+        sql = "DELETE FROM categories WHERE id = ?"
+        return await self._execute_sql(sql, [category_id])
+
+    # ========== Tags CRUD ==========
+    async def get_all_tags(self):
+        """获取所有标签"""
+        sql = "SELECT * FROM tags ORDER BY id"
+        result = await self._execute_sql(sql)
+        tags = []
+        if result.get("success"):
+            import json
+
+            for row in result.get("results", []):
+                # Handle both dict and object types
+                if isinstance(row, dict):
+                    tags.append(
+                        {
+                            "id": row.get("id"),
+                            "name": row.get("name"),
+                            "keywords": json.loads(row.get("keywords", "[]"))
+                            if row.get("keywords")
+                            else [],
+                        }
+                    )
+                else:
+                    # Handle object type from D1
+                    tags.append(
+                        {
+                            "id": getattr(row, "id", None),
+                            "name": getattr(row, "name", ""),
+                            "keywords": json.loads(getattr(row, "keywords", "[]"))
+                            if getattr(row, "keywords", None)
+                            else [],
+                        }
+                    )
+        return tags
+
+    async def create_tag(self, name, keywords):
+        """创建标签"""
+        import json
+
+        sql = "INSERT INTO tags (name, keywords) VALUES (?, ?)"
+        return await self._execute_sql(sql, [name, json.dumps(keywords)])
+
+    async def update_tag(self, tag_id, name, keywords):
+        """更新标签"""
+        import json
+
+        sql = "UPDATE tags SET name = ?, keywords = ? WHERE id = ?"
+        return await self._execute_sql(sql, [name, json.dumps(keywords), tag_id])
+
+    async def delete_tag(self, tag_id):
+        """删除标签"""
+        sql = "DELETE FROM tags WHERE id = ?"
+        return await self._execute_sql(sql, [tag_id])
+
+    async def get_classification_rules(self):
+        """获取分类规则（供 classify 函数使用）"""
+        categories = await self.get_all_categories()
+        tags = await self.get_all_tags()
+
+        category_rules = {}
+        for cat in categories:
+            category_rules[cat["name"]] = cat.get("keywords", [])
+
+        tag_rules = {}
+        for tag in tags:
+            tag_rules[tag["name"]] = tag.get("keywords", [])
+
+        return category_rules, tag_rules
 
     async def fetch_articles(self, filters=None, limit=50, offset=0):
         """Fetch articles with optional filtering"""
