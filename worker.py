@@ -339,15 +339,24 @@ class Default(WorkerEntrypoint):
             },
             {
                 "name": "update_article_summary_and_category",
-                "description": "更新文章摘要并自动分类",
+                "description": "更新文章摘要并自动分类，或手动指定分类和标签",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "article_id": {"type": "string", "description": "文章ID"},
                         "summary": {"type": "string", "description": "摘要内容"},
+                        "category": {
+                            "type": "string",
+                            "description": "手动指定分类（如'大厂/人物'），优先级高于自动分类",
+                        },
+                        "tags": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "手动指定标签数组（如['LLM', '中国']）",
+                        },
                         "auto_classify": {
                             "type": "boolean",
-                            "description": "是否自动分类，默认true",
+                            "description": "当未指定category时是否自动分类，默认true",
                         },
                     },
                     "required": ["article_id", "summary"],
@@ -650,6 +659,8 @@ class Default(WorkerEntrypoint):
         elif tool_name == "update_article_summary_and_category":
             article_id = arguments.get("article_id")
             summary = arguments.get("summary")
+            manual_category = arguments.get("category")  # 手动指定的分类
+            manual_tags = arguments.get("tags")  # 手动指定的标签
             auto_classify = arguments.get("auto_classify", True)
 
             if not article_id or not summary:
@@ -662,11 +673,21 @@ class Default(WorkerEntrypoint):
             # article is a dict, update fields
             article["summary"] = summary
 
-            # 自动分类
+            # 处理分类和标签
             category_result = None
-            if auto_classify and article.get("content"):
+            if manual_category:
+                # 手动指定分类
+                article["categories"] = [manual_category]
+            elif auto_classify and article.get("content"):
+                # 自动分类
                 category_result = classify(article.get("content", "") + " " + summary)
                 article["categories"] = [category_result["category"]]
+
+            if manual_tags:
+                # 手动指定标签
+                article["tags"] = manual_tags
+            elif category_result:
+                # 使用自动分类的标签
                 article["tags"] = category_result["tags"]
 
             await storage.upsert_article(article)
@@ -674,8 +695,10 @@ class Default(WorkerEntrypoint):
             return {
                 "success": True,
                 "message": f"Updated article {article_id}",
-                "category": category_result["category"] if category_result else None,
-                "tags": category_result["tags"] if category_result else [],
+                "category": article["categories"][0]
+                if article.get("categories")
+                else None,
+                "tags": article.get("tags", []),
             }
 
         elif tool_name == "classify_article":
