@@ -716,31 +716,54 @@ class Default(WorkerEntrypoint):
         # 执行对应的工具
         if tool_name == "get_articles_needing_summary":
             limit = arguments.get("limit", 10)
-            sql = f"""
-            SELECT id, title, url, content, source, ingested_at
+            # 直接执行 SQL 查询不需要总结的文章
+            sql = """
+            SELECT id, title, url, content, source, summary, ingested_at
             FROM articles 
             WHERE content IS NOT NULL AND content != '' 
             AND (summary IS NULL OR summary = '')
             ORDER BY ingested_at DESC 
-            LIMIT {limit}
+            LIMIT ?
             """
-            rows = await storage.fetch_articles(limit=limit) if storage else []
+            result = await storage._execute_sql(sql, [limit]) if storage else None
+
             articles = []
-            for row in rows:
-                if row["content"] and (not row["summary"]):
-                    articles.append(
-                        {
-                            "id": row["id"],
-                            "title": row["title"],
-                            "url": row["url"],
-                            "source": row["source"],
-                            "content_preview": row["content"][:300] + "..."
-                            if len(row["content"]) > 300
-                            else row["content"],
-                            "content_length": len(row["content"]),
-                            "ingested_at": row["ingested_at"],
-                        }
+            if result and result.get("success"):
+                for row in result.get("results", []):
+                    # Handle both dict and object types
+                    content = (
+                        row.get("content")
+                        if isinstance(row, dict)
+                        else getattr(row, "content", "")
                     )
+                    if content and (
+                        not row.get("summary")
+                        if isinstance(row, dict)
+                        else not getattr(row, "summary", None)
+                    ):
+                        articles.append(
+                            {
+                                "id": row.get("id")
+                                if isinstance(row, dict)
+                                else getattr(row, "id", ""),
+                                "title": row.get("title")
+                                if isinstance(row, dict)
+                                else getattr(row, "title", ""),
+                                "url": row.get("url")
+                                if isinstance(row, dict)
+                                else getattr(row, "url", ""),
+                                "source": row.get("source")
+                                if isinstance(row, dict)
+                                else getattr(row, "source", ""),
+                                "content_preview": content[:300] + "..."
+                                if len(content) > 300
+                                else content,
+                                "content_length": len(content),
+                                "ingested_at": row.get("ingested_at")
+                                if isinstance(row, dict)
+                                else getattr(row, "ingested_at", ""),
+                            }
+                        )
             return {"success": True, "count": len(articles), "articles": articles}
 
         elif tool_name == "get_articles_for_processing":
