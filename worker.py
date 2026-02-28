@@ -282,245 +282,6 @@ class Default(WorkerEntrypoint):
         """405 Method Not Allowed"""
         return self._json_response({"error": "Method not allowed"}, status=405)
 
-
-class WorkersD1StorageAdapter:
-    """适配 Cloudflare Workers D1 绑定的存储适配器"""
-
-    def __init__(self, d1_binding):
-        self.db = d1_binding
-
-    async def _execute_sql(self, sql, params=None):
-        """通过 Workers D1 绑定执行 SQL（异步）"""
-        try:
-            stmt = self.db.prepare(sql)
-            if params:
-                stmt = stmt.bind(*params)
-            result = await stmt.all()
-
-            # D1 API 返回的结果格式处理
-            results = []
-            if hasattr(result, "results"):
-                results = list(result.results)
-            elif isinstance(result, list):
-                results = result
-            elif hasattr(result, "__iter__"):
-                results = list(result)
-
-            return {"success": True, "results": results}
-        except Exception as e:
-            return {"success": False, "errors": [{"message": str(e)}], "sql": sql}
-
-    async def fetch_articles(self, filters=None, limit=50, offset=0):
-        """Fetch articles with optional filtering"""
-        filters = filters or {}
-
-        sql = "SELECT * FROM articles WHERE 1=1"
-        params = []
-
-        if "source" in filters:
-            sql += " AND source = ?"
-            params.append(filters["source"])
-
-        if "id" in filters:
-            sql += " AND id = ?"
-            params.append(filters["id"])
-
-        sql += " ORDER BY ingested_at DESC LIMIT ? OFFSET ?"
-        params.extend([limit, offset])
-
-        result = await self._execute_sql(sql, params)
-
-        articles = []
-        if result.get("success"):
-            for row in result.get("results", []):
-                articles.append(self._row_to_dict(row))
-
-        return articles
-
-    async def fetch_article_by_id(self, article_id):
-        """Get a single article by ID"""
-        sql = "SELECT * FROM articles WHERE id = ? LIMIT 1"
-        result = await self._execute_sql(sql, [article_id])
-
-        if result.get("success") and result.get("results"):
-            return self._row_to_dict(result["results"][0])
-
-        return None
-
-    async def get_stats(self):
-        """Get database statistics"""
-        try:
-            # Get total count
-            count_result = await self._execute_sql(
-                "SELECT COUNT(*) as total FROM articles"
-            )
-            total = 0
-            if count_result.get("success") and count_result.get("results"):
-                row = count_result["results"][0]
-                if isinstance(row, dict):
-                    total = row.get("total", 0)
-                else:
-                    total = (
-                        getattr(row, "total", None) or getattr(row, "COUNT(*)", 0) or 0
-                    )
-
-            # Get sources breakdown
-            sources_result = await self._execute_sql(
-                "SELECT source, COUNT(*) as count FROM articles GROUP BY source"
-            )
-            sources = {}
-            if sources_result.get("success"):
-                for row in sources_result.get("results", []):
-                    if isinstance(row, dict):
-                        sources[row.get("source", "unknown")] = row.get("count", 0)
-                    else:
-                        source = getattr(row, "source", "unknown")
-                        count = getattr(row, "count", 0) or getattr(row, "COUNT(*)", 0)
-                        sources[source] = count
-
-            return {"total": total, "sources": sources}
-        except Exception as e:
-            return {"total": 0, "sources": {}, "error": f"Stats error: {str(e)}"}
-
-    async def _list_tables(self):
-        """List all tables in the database"""
-        try:
-            result = await self._execute_sql(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            )
-            if result.get("success"):
-                return [row.get("name") for row in result.get("results", [])]
-            return []
-        except Exception as e:
-            return [f"Error listing tables: {str(e)}"]
-
-    def _row_to_dict(self, row):
-        """Convert database row to dict"""
-
-        # Handle object-type rows (not just dict)
-        def get_value(field, default=""):
-            if isinstance(row, dict):
-                return row.get(field, default)
-            else:
-                return getattr(row, field, default)
-
-        categories = []
-        tags = []
-
-        cat_value = get_value("categories")
-        if cat_value:
-            try:
-                categories = json.loads(cat_value)
-            except:
-                categories = []
-
-        tag_value = get_value("tags")
-        if tag_value:
-            try:
-                tags = json.loads(tag_value)
-            except:
-                tags = []
-
-        return {
-            "id": str(get_value("id", "")),
-            "title": str(get_value("title", "")),
-            "content": str(get_value("content", "")),
-            "url": str(get_value("url", "")),
-            "published_at": str(get_value("published_at"))
-            if get_value("published_at")
-            else None,
-            "source": str(get_value("source", "")),
-            "categories": categories,
-            "tags": tags,
-            "summary": str(get_value("summary", "")),
-            "ingested_at": str(get_value("ingested_at", "")),
-        }
-
-    async def get_crawl_logs(self, limit=50, offset=0):
-        """获取抓取日志"""
-        try:
-            sql = "SELECT * FROM crawl_logs ORDER BY crawled_at DESC LIMIT ? OFFSET ?"
-            result = await self._execute_sql(sql, [limit, offset])
-
-            logs = []
-            if result.get("success"):
-                for row in result.get("results", []):
-                    logs.append(self._crawl_log_to_dict(row))
-
-            return logs
-        except Exception as e:
-            return []
-
-    async def get_crawl_stats(self):
-        """获取抓取统计"""
-        try:
-            # Total crawls
-            total_result = await self._execute_sql(
-                "SELECT COUNT(*) as total FROM crawl_logs"
-            )
-            total = 0
-            if total_result.get("success") and total_result.get("results"):
-                total = total_result["results"][0].get("total", 0) or 0
-
-            # Status breakdown
-            status_result = await self._execute_sql(
-                "SELECT status, COUNT(*) as count FROM crawl_logs GROUP BY status"
-            )
-            status_counts = {}
-            if status_result.get("success"):
-                for row in status_result.get("results", []):
-                    status_counts[row.get("status", "")] = row.get("count", 0)
-
-            # Total articles
-            articles_result = await self._execute_sql(
-                "SELECT SUM(articles_count) as total FROM crawl_logs WHERE status = 'success'"
-            )
-            total_articles = 0
-            if articles_result.get("success") and articles_result.get("results"):
-                total_articles = articles_result["results"][0].get("total", 0) or 0
-
-            # Average duration
-            avg_result = await self._execute_sql(
-                "SELECT AVG(duration_ms) as avg_duration FROM crawl_logs WHERE status = 'success'"
-            )
-            avg_duration = 0
-            if avg_result.get("success") and avg_result.get("results"):
-                avg_duration = int(avg_result["results"][0].get("avg_duration", 0) or 0)
-
-            return {
-                "total_crawls": total,
-                "status_counts": status_counts,
-                "total_articles_captured": total_articles,
-                "avg_duration_ms": avg_duration,
-            }
-        except Exception as e:
-            return {
-                "total_crawls": 0,
-                "status_counts": {},
-                "total_articles_captured": 0,
-                "avg_duration_ms": 0,
-            }
-
-    def _crawl_log_to_dict(self, row):
-        """将抓取日志行转换为字典"""
-
-        def get_value(field, default=""):
-            if isinstance(row, dict):
-                return row.get(field, default)
-            else:
-                return getattr(row, field, default)
-
-        return {
-            "id": get_value("id", 0),
-            "source_name": get_value("source_name", ""),
-            "source_type": get_value("source_type", ""),
-            "articles_count": get_value("articles_count", 0),
-            "duration_ms": get_value("duration_ms", 0),
-            "status": get_value("status", ""),
-            "error_message": get_value("error_message"),
-            "crawled_at": get_value("crawled_at", ""),
-        }
-
     # ============================================================
     # MCP 端点方法
     # ============================================================
@@ -831,43 +592,43 @@ class WorkersD1StorageAdapter:
             ORDER BY ingested_at DESC 
             LIMIT {limit}
             """
-            rows = storage.fetch_articles(limit=limit) if storage else []
+            rows = await storage.fetch_articles(limit=limit) if storage else []
             articles = []
             for row in rows:
-                if row.content and (not row.summary):
+                if row["content"] and (not row["summary"]):
                     articles.append(
                         {
-                            "id": row.id,
-                            "title": row.title,
-                            "url": row.url,
-                            "source": row.source,
-                            "content_preview": row.content[:300] + "..."
-                            if len(row.content) > 300
-                            else row.content,
-                            "content_length": len(row.content),
-                            "ingested_at": row.ingested_at,
+                            "id": row["id"],
+                            "title": row["title"],
+                            "url": row["url"],
+                            "source": row["source"],
+                            "content_preview": row["content"][:300] + "..."
+                            if len(row["content"]) > 300
+                            else row["content"],
+                            "content_length": len(row["content"]),
+                            "ingested_at": row["ingested_at"],
                         }
                     )
             return {"success": True, "count": len(articles), "articles": articles}
 
         elif tool_name == "get_articles_for_processing":
             limit = arguments.get("limit", 10)
-            rows = storage.fetch_articles(limit=limit) if storage else []
+            rows = await storage.fetch_articles(limit=limit) if storage else []
             articles = []
             for row in rows:
-                if row.content:
-                    needs_summary = not row.summary
+                if row["content"]:
+                    needs_summary = not row["summary"]
                     articles.append(
                         {
-                            "id": row.id,
-                            "title": row.title,
-                            "url": row.url,
-                            "source": row.source,
-                            "content_preview": row.content[:200] + "..."
-                            if len(row.content) > 200
-                            else row.content,
+                            "id": row["id"],
+                            "title": row["title"],
+                            "url": row["url"],
+                            "source": row["source"],
+                            "content_preview": row["content"][:200] + "..."
+                            if len(row["content"]) > 200
+                            else row["content"],
                             "needs_summary": needs_summary,
-                            "ingested_at": row.ingested_at,
+                            "ingested_at": row["ingested_at"],
                         }
                     )
             return {"success": True, "count": len(articles), "articles": articles}
@@ -879,10 +640,10 @@ class WorkersD1StorageAdapter:
                 return {"error": "Missing article_id or summary"}
 
             # 更新数据库
-            article = storage.get_article_by_id(article_id) if storage else None
+            article = await storage.fetch_article_by_id(article_id) if storage else None
             if article:
-                article.summary = summary
-                storage.upsert_article(article)
+                article["summary"] = summary
+                await storage.upsert_article(article)
                 return {"success": True, "message": f"Updated summary for {article_id}"}
             return {"error": "Article not found"}
 
@@ -894,21 +655,21 @@ class WorkersD1StorageAdapter:
             if not article_id or not summary:
                 return {"error": "Missing article_id or summary"}
 
-            article = storage.get_article_by_id(article_id) if storage else None
+            article = await storage.fetch_article_by_id(article_id) if storage else None
             if not article:
                 return {"error": "Article not found"}
 
-            # 更新摘要
-            article.summary = summary
+            # article is a dict, update fields
+            article["summary"] = summary
 
             # 自动分类
             category_result = None
-            if auto_classify and article.content:
-                category_result = classify(article.content + " " + summary)
-                article.categories = [category_result["category"]]
-                article.tags = category_result["tags"]
+            if auto_classify and article.get("content"):
+                category_result = classify(article.get("content", "") + " " + summary)
+                article["categories"] = [category_result["category"]]
+                article["tags"] = category_result["tags"]
 
-            storage.upsert_article(article)
+            await storage.upsert_article(article)
 
             return {
                 "success": True,
@@ -924,20 +685,24 @@ class WorkersD1StorageAdapter:
             if not article_id:
                 return {"error": "Missing article_id"}
 
-            article = storage.get_article_by_id(article_id) if storage else None
+            article = await storage.fetch_article_by_id(article_id) if storage else None
             if not article:
                 return {"error": "Article not found"}
 
             # 如果没有传入 content，从文章获取
             if not content:
-                content = (article.content or "") + " " + (article.title or "")
+                content = (
+                    (article.get("content", "") or "")
+                    + " "
+                    + (article.get("title", "") or "")
+                )
 
             result = classify(content)
 
             # 更新数据库
-            article.categories = [result["category"]]
-            article.tags = result["tags"]
-            storage.upsert_article(article)
+            article["categories"] = [result["category"]]
+            article["tags"] = result["tags"]
+            await storage.upsert_article(article)
 
             return {
                 "success": True,
@@ -965,3 +730,307 @@ class WorkersD1StorageAdapter:
 
         else:
             return {"error": f"Unknown tool: {tool_name}"}
+
+
+class WorkersD1StorageAdapter:
+    """适配 Cloudflare Workers D1 绑定的存储适配器"""
+
+    def __init__(self, d1_binding):
+        self.db = d1_binding
+
+    async def _execute_sql(self, sql, params=None):
+        """通过 Workers D1 绑定执行 SQL（异步）"""
+        try:
+            stmt = self.db.prepare(sql)
+            if params:
+                stmt = stmt.bind(*params)
+            result = await stmt.all()
+
+            # D1 API 返回的结果格式处理
+            results = []
+            if hasattr(result, "results"):
+                results = list(result.results)
+            elif isinstance(result, list):
+                results = result
+            elif hasattr(result, "__iter__"):
+                results = list(result)
+
+            return {"success": True, "results": results}
+        except Exception as e:
+            return {"success": False, "errors": [{"message": str(e)}], "sql": sql}
+
+    async def fetch_articles(self, filters=None, limit=50, offset=0):
+        """Fetch articles with optional filtering"""
+        filters = filters or {}
+
+        sql = "SELECT * FROM articles WHERE 1=1"
+        params = []
+
+        if "source" in filters:
+            sql += " AND source = ?"
+            params.append(filters["source"])
+
+        if "id" in filters:
+            sql += " AND id = ?"
+            params.append(filters["id"])
+
+        sql += " ORDER BY ingested_at DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+
+        result = await self._execute_sql(sql, params)
+
+        articles = []
+        if result.get("success"):
+            for row in result.get("results", []):
+                articles.append(self._row_to_dict(row))
+
+        return articles
+
+    async def fetch_article_by_id(self, article_id):
+        """Get a single article by ID"""
+        sql = "SELECT * FROM articles WHERE id = ? LIMIT 1"
+        result = await self._execute_sql(sql, [article_id])
+
+        if result.get("success") and result.get("results"):
+            return self._row_to_dict(result["results"][0])
+
+        return None
+
+    async def upsert_article(self, article):
+        """Insert or update an article (accepts dict)"""
+        if not article:
+            return {"success": False, "error": "No article data"}
+
+        article_id = article.get("id")
+        if not article_id:
+            return {"success": False, "error": "No article ID"}
+
+        import json
+
+        # Helper to convert None to empty string for D1
+        def val(v):
+            return v if v is not None else ""
+
+        # First try UPDATE
+        sql = """
+            UPDATE articles SET
+                title = ?, content = ?, url = ?, published_at = ?,
+                source = ?, categories = ?, tags = ?, summary = ?, ingested_at = ?
+            WHERE id = ?
+        """
+
+        params = [
+            val(article.get("title")),
+            val(article.get("content")),
+            val(article.get("url")),
+            val(article.get("published_at")),
+            val(article.get("source")),
+            json.dumps(article.get("categories", [])),
+            json.dumps(article.get("tags", [])),
+            val(article.get("summary")),
+            val(article.get("ingested_at")),
+            article_id,
+        ]
+
+        result = await self._execute_sql(sql, params)
+
+        # If update succeeded, check if any row was actually updated
+        if result.get("success"):
+            check_sql = "SELECT id FROM articles WHERE id = ?"
+            check_result = await self._execute_sql(check_sql, [article_id])
+
+            if not check_result.get("results"):
+                # No existing row, do INSERT
+                insert_sql = """
+                    INSERT INTO articles (id, title, content, url, published_at, source, categories, tags, summary, ingested_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """
+                insert_params = [
+                    article_id,
+                    val(article.get("title")),
+                    val(article.get("content")),
+                    val(article.get("url")),
+                    val(article.get("published_at")),
+                    val(article.get("source")),
+                    json.dumps(article.get("categories", [])),
+                    json.dumps(article.get("tags", [])),
+                    val(article.get("summary")),
+                    val(article.get("ingested_at")),
+                ]
+                return await self._execute_sql(insert_sql, insert_params)
+
+        return result
+
+    async def get_stats(self):
+        """Get database statistics"""
+        try:
+            # Get total count
+            count_result = await self._execute_sql(
+                "SELECT COUNT(*) as total FROM articles"
+            )
+            total = 0
+            if count_result.get("success") and count_result.get("results"):
+                row = count_result["results"][0]
+                if isinstance(row, dict):
+                    total = row.get("total", 0)
+                else:
+                    total = (
+                        getattr(row, "total", None) or getattr(row, "COUNT(*)", 0) or 0
+                    )
+
+            # Get sources breakdown
+            sources_result = await self._execute_sql(
+                "SELECT source, COUNT(*) as count FROM articles GROUP BY source"
+            )
+            sources = {}
+            if sources_result.get("success"):
+                for row in sources_result.get("results", []):
+                    if isinstance(row, dict):
+                        sources[row.get("source", "unknown")] = row.get("count", 0)
+                    else:
+                        source = getattr(row, "source", "unknown")
+                        count = getattr(row, "count", 0) or getattr(row, "COUNT(*)", 0)
+                        sources[source] = count
+
+            return {"total": total, "sources": sources}
+        except Exception as e:
+            return {"total": 0, "sources": {}, "error": f"Stats error: {str(e)}"}
+
+    async def _list_tables(self):
+        """List all tables in the database"""
+        try:
+            result = await self._execute_sql(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
+            if result.get("success"):
+                return [row.get("name") for row in result.get("results", [])]
+            return []
+        except Exception as e:
+            return [f"Error listing tables: {str(e)}"]
+
+    def _row_to_dict(self, row):
+        """Convert database row to dict"""
+
+        # Handle object-type rows (not just dict)
+        def get_value(field, default=""):
+            if isinstance(row, dict):
+                return row.get(field, default)
+            else:
+                return getattr(row, field, default)
+
+        categories = []
+        tags = []
+
+        cat_value = get_value("categories")
+        if cat_value:
+            try:
+                categories = json.loads(cat_value)
+            except:
+                categories = []
+
+        tag_value = get_value("tags")
+        if tag_value:
+            try:
+                tags = json.loads(tag_value)
+            except:
+                tags = []
+
+        return {
+            "id": str(get_value("id", "")),
+            "title": str(get_value("title", "")),
+            "content": str(get_value("content", "")),
+            "url": str(get_value("url", "")),
+            "published_at": str(get_value("published_at"))
+            if get_value("published_at")
+            else None,
+            "source": str(get_value("source", "")),
+            "categories": categories,
+            "tags": tags,
+            "summary": str(get_value("summary", "")),
+            "ingested_at": str(get_value("ingested_at", "")),
+        }
+
+    async def get_crawl_logs(self, limit=50, offset=0):
+        """获取抓取日志"""
+        try:
+            sql = "SELECT * FROM crawl_logs ORDER BY crawled_at DESC LIMIT ? OFFSET ?"
+            result = await self._execute_sql(sql, [limit, offset])
+
+            logs = []
+            if result.get("success"):
+                for row in result.get("results", []):
+                    logs.append(self._crawl_log_to_dict(row))
+
+            return logs
+        except Exception as e:
+            return []
+
+    async def get_crawl_stats(self):
+        """获取抓取统计"""
+        try:
+            # Total crawls
+            total_result = await self._execute_sql(
+                "SELECT COUNT(*) as total FROM crawl_logs"
+            )
+            total = 0
+            if total_result.get("success") and total_result.get("results"):
+                total = total_result["results"][0].get("total", 0) or 0
+
+            # Status breakdown
+            status_result = await self._execute_sql(
+                "SELECT status, COUNT(*) as count FROM crawl_logs GROUP BY status"
+            )
+            status_counts = {}
+            if status_result.get("success"):
+                for row in status_result.get("results", []):
+                    status_counts[row.get("status", "")] = row.get("count", 0)
+
+            # Total articles
+            articles_result = await self._execute_sql(
+                "SELECT SUM(articles_count) as total FROM crawl_logs WHERE status = 'success'"
+            )
+            total_articles = 0
+            if articles_result.get("success") and articles_result.get("results"):
+                total_articles = articles_result["results"][0].get("total", 0) or 0
+
+            # Average duration
+            avg_result = await self._execute_sql(
+                "SELECT AVG(duration_ms) as avg_duration FROM crawl_logs WHERE status = 'success'"
+            )
+            avg_duration = 0
+            if avg_result.get("success") and avg_result.get("results"):
+                avg_duration = int(avg_result["results"][0].get("avg_duration", 0) or 0)
+
+            return {
+                "total_crawls": total,
+                "status_counts": status_counts,
+                "total_articles_captured": total_articles,
+                "avg_duration_ms": avg_duration,
+            }
+        except Exception as e:
+            return {
+                "total_crawls": 0,
+                "status_counts": {},
+                "total_articles_captured": 0,
+                "avg_duration_ms": 0,
+            }
+
+    def _crawl_log_to_dict(self, row):
+        """将抓取日志行转换为字典"""
+
+        def get_value(field, default=""):
+            if isinstance(row, dict):
+                return row.get(field, default)
+            else:
+                return getattr(row, field, default)
+
+        return {
+            "id": get_value("id", 0),
+            "source_name": get_value("source_name", ""),
+            "source_type": get_value("source_type", ""),
+            "articles_count": get_value("articles_count", 0),
+            "duration_ms": get_value("duration_ms", 0),
+            "status": get_value("status", ""),
+            "error_message": get_value("error_message"),
+            "crawled_at": get_value("crawled_at", ""),
+        }
