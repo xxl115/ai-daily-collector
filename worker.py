@@ -700,8 +700,8 @@ class Default(WorkerEntrypoint):
                 if row.get("content"):
                     # 检查是否需要处理
                     needs_summary = not row.get("summary") or row.get("summary") == ""
-                    needs_category = not row.get("categories") or len(row.get("categories", [])) == 0
-                    needs_tags = not row.get("tags") or len(row.get("tags", [])) == 0
+                    needs_category = not row.get("categories") or not row.get("categories")
+                    needs_tags = not row.get("tags") or not row.get("tags")
 
                     # 只返回需要处理的文章
                     if needs_summary or needs_category or needs_tags:
