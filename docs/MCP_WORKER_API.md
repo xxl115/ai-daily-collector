@@ -11,6 +11,35 @@ AI Daily Collector 支持两种部署方式：
 
 ---
 
+## 快速开始
+
+### 手动摘要文章流程
+
+```bash
+WORKER_URL="https://ai-daily-collector.xxl185.workers.dev"
+
+# 1. 获取需要摘要的文章
+curl -X POST "$WORKER_URL/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "get_articles_needing_summary", "arguments": {"limit": 5}}'
+
+# 2. 手动撰写摘要后提交更新
+curl -X POST "$WORKER_URL/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "update_article_summary_and_category",
+    "arguments": {
+      "article_id": "雷峰网-07f58b44",
+      "summary": "三星发布Galaxy S26系列，强化与Gemini系统整合...",
+      "category": "AI/大模型",
+      "tags": ["三星", "谷歌", "Gemini"],
+      "auto_classify": false
+    }
+  }'
+```
+
+---
+
 ## Cloudflare Worker API
 
 Worker 部署后可直接调用，无需启动本地服务器。
