@@ -56,37 +56,46 @@ class JinaExtractor:
             response_preview = response.text[:200]
             logger.info(f"Jina 响应体预览: url={url}, body={response_preview}")
 
-            if response.status_code == 200:
-                content_type = response.headers.get("content-type", "")
-                text = ""
-                if "application/json" in content_type:
-                    try:
-                        data = response.json()
-                        logger.debug(f"Jina JSON 响应: url={url}, keys={list(data.keys())}")
-
-                        if "data" in data and isinstance(data["data"], dict):
-                            text = data["data"].get("content", "") or data["data"].get(
-                                "markdown", ""
-                            )
-                        elif "data" in data and isinstance(data["data"], str):
-                            text = data["data"]
-                        else:
-                            text = str(data)
-                    except Exception as e:
-                        logger.warning(f"Jina JSON 解析失败: url={url}, error={e}")
-                        text = response.text
-                else:
-                    text = response.text
-
-                if text and len(text) > 100:
-                    logger.info(f"Jina 提取成功: url={url}, content_length={len(text)}")
-                    return text.strip()
-                logger.warning(f"Jina 返回内容过短 ({len(text)}): {url}")
-            else:
+            # 检查 HTTP 状态码，非 200 时返回 None
+            if response.status_code != 200:
                 logger.warning(
-                    f"Jina API 返回 {response.status_code}: {response.text[:200]}"
+                    f"Jina API 返回非 200 状态码: url={url}, status={response.status_code}, body={response.text[:200]}"
                 )
+                return None
 
+            content_type = response.headers.get("content-type", "")
+            text = ""
+            if "application/json" in content_type:
+                try:
+                    data = response.json()
+                    logger.debug(f"Jina JSON 响应: url={url}, keys={list(data.keys())}")
+
+                    # 检查 API 错误响应（code 字段）
+                    if "code" in data and data["code"] != "Success":
+                        error_detail = data.get("detail", data.get("message", "Unknown error"))
+                        logger.error(f"Jina API 返回错误: url={url}, code={data['code']}, detail={error_detail}")
+                        return None
+
+                    if "data" in data and isinstance(data["data"], dict):
+                        text = data["data"].get("content", "") or data["data"].get(
+                            "markdown", ""
+                        )
+                    elif "data" in data and isinstance(data["data"], str):
+                            text = data["data"]
+                    else:
+                        # 没有预期的 data 字段，记录警告并返回 None
+                        logger.warning(f"Jina 响应格式异常: url={url}, response={data}")
+                        return None
+                except Exception as e:
+                    logger.warning(f"Jina JSON 解析失败: url={url}, error={e}")
+                    text = response.text
+            else:
+                text = response.text
+
+            if text and len(text) > 100:
+                logger.info(f"Jina 提取成功: url={url}, content_length={len(text)}")
+                return text.strip()
+            logger.warning(f"Jina 返回内容过短 ({len(text)}): {url}")
             return None
         except requests.exceptions.Timeout:
             logger.error(f"Jina 超时: {url}")
