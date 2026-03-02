@@ -10,6 +10,137 @@ from typing import Optional, List, Dict
 
 logger = logging.getLogger(__name__)
 
+
+def clean_content(text: str) -> str:
+    """
+    清理提取内容中的噪声（导航、登录、页脚等）
+
+    使用策略：
+    1. 移除固定噪声模式（导航、登录、页脚等）
+    2. 移除短链接行
+    3. 尝试识别并提取文章主体
+    """
+    import re
+
+    if not text:
+        return text
+
+    # 1. 移除大块噪声模式
+    noise_blocks = [
+        # 登录/用户中心区域
+        r"\[?\]\(https://36kr\.com/usercenter[^\)]*\)",
+        r"账号设置.*?退出登录",
+        r"登录\s*搜索",
+        # 导航菜单（连续多行分类链接）
+        r"(\* \[?[^\]]*\]?\(https?://[^\)]+\)\s*){3,}",
+        # logo 图片链接
+        r"!\[.*?\]\(https?://img\.36krcdn\.com[^\)]+\)",
+        # 版权/备案信息
+        r"京ICP证\d+号.*?",
+        r"京ICP备\d+号.*?",
+        r"京公网安备\d+号",
+        r"36氪APP.*?看到未来",
+        r"鲸准.*?领跑行业",
+        # 雷锋网噪声
+        r"您正在使用IE低版浏览器.*?(?:浏览器|体验)",
+        r"为了您的.*?账号安全",
+        # 爱搞机
+        r"爱搞机",
+        r"雷锋网",
+        # 常见噪声
+        r"相关推荐.*?热门文章",
+        r"更多精彩.*?",
+    ]
+
+    for pattern in noise_blocks:
+        text = re.sub(pattern, "", text, flags=re.IGNORECASE | re.MULTILINE)
+
+    # 2. 移除单行噪声
+    lines = text.split("\n")
+    cleaned_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        # 跳过纯图片行
+        if re.match(r"^!\[.*?\]\(.+\)$", stripped):
+            continue
+        # 跳过只有图片链接的行（很短）
+        if len(stripped) < 15 and (
+            "36kr" in stripped or "leiphone" in stripped or "krcdn" in stripped
+        ):
+            continue
+        # 跳过非常短的行
+        if len(stripped) < 5:
+            continue
+        cleaned_lines.append(line)
+
+    text = "\n".join(cleaned_lines)
+
+    # 3. 移除多余空行
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = text.strip()
+
+    return text
+
+    # 移除常见的导航/菜单噪声
+    noise_patterns = [
+        # 登录/注册提示
+        r"您正在使用IE低版浏览器.*?建议使用.*?浏览器",
+        r"为了您的.*?账号安全.*?更好的产品体验",
+        r"立即登录|免费注册|登录注册",
+        r"\[!\[\]\(https?://[^\]]+\)\]\([^)]+\)",  # 图片链接（通常是logo）
+        # 导航栏
+        r"\* \[.*?\]\(https?://[^)]+\)\s*\* \[",  # 导航链接
+        # 版权/页脚
+        r"版权所有.*?\d{4}",
+        r"copyright.*?\d{4}",
+        r"沪ICP备\d+号",
+        r"京ICP备\d+号",
+        # 社交分享
+        r"分享到.*?微博.*?微信",
+        r"扫码.*?关注",
+        # 相关推荐（通常在文章底部）
+        r"相关推荐.*?热门文章",
+        r"更多.*?阅读",
+        r"上一篇.*?下一篇",
+        # 广告
+        r"广告",
+        r" Sponsored ",
+        # 常见噪声词
+        r"爱搞机",
+        r"雷峰网",
+        r"机器之心",
+        r"36kr",
+    ]
+
+    for pattern in noise_patterns:
+        text = re.sub(pattern, "", text, flags=re.IGNORECASE | re.DOTALL)
+
+    # 移除空行和多余空白
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = re.sub(r" {2,}", " ", text)
+
+    # 移除单行噪声（如短链接列表）
+    lines = text.split("\n")
+    cleaned_lines = []
+    for line in lines:
+        # 跳过太短的行（通常是按钮/链接）
+        if len(line.strip()) < 10:
+            continue
+        # 跳过纯链接行
+        if re.match(r"^!?\[.*?\]\(https?://", line):
+            continue
+        cleaned_lines.append(line)
+
+    text = "\n".join(cleaned_lines)
+
+    # 移除首尾空白
+    text = text.strip()
+
+    return text
+
+
 # 全局爬虫实例（类级别复用）
 _crawler = None
 _crawler_config = None
@@ -83,20 +214,10 @@ def _init_crawler():
             CacheMode,
         )
         from crawl4ai import LXMLWebScrapingStrategy
-        from crawl4ai.content_filter_strategy import PruningContentFilter
         from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 
-        # 内容过滤器：清理导航、广告、页脚等无用内容
-        # threshold: 越高越严格，0.45 是平衡值
-        content_filter = PruningContentFilter(
-            threshold=0.45,
-            threshold_type="fixed",
-        )
-
-        # Markdown 生成器：带内容过滤
-        md_generator = DefaultMarkdownGenerator(
-            content_filter=content_filter,
-        )
+        # 不使用内容过滤器，依赖后处理清理噪声
+        md_generator = DefaultMarkdownGenerator()
 
         # 浏览器配置：使用内置浏览器模式，复用浏览器实例
         browser_config = BrowserConfig(
@@ -192,11 +313,20 @@ class Crawl4AIExtractor:
             config = _crawler_config
             result = await crawler.arun(url, config=config["crawl"])
 
-            if result.success and result.markdown:
-                text = result.markdown.strip()
-                if len(text) > 100:
-                    logger.info(f"Crawl4AI 成功: {url}, {len(text)} chars")
-                    return text
+            if result.success:
+                # 优先使用过滤后的内容
+                text = None
+                if hasattr(result, "fit_markdown") and result.fit_markdown:
+                    text = result.fit_markdown.strip()
+                elif hasattr(result, "markdown") and result.markdown:
+                    text = result.markdown.strip()
+
+                if text and len(text) > 100:
+                    # 后处理清理噪声
+                    text = clean_content(text)
+                    if len(text) > 50:  # 清理后仍需保留足够内容
+                        logger.info(f"Crawl4AI 成功: {url}, {len(text)} chars")
+                        return text
 
             error_msg = result.error if hasattr(result, "error") else "Unknown"
             logger.warning(f"Crawl4AI 返回为空: {url} - {error_msg}")
@@ -236,14 +366,23 @@ class Crawl4AIExtractor:
             url = result.url
             completed += 1
 
-            if result.success and result.markdown:
-                text = result.markdown.strip()
-                if len(text) > 100:
-                    results_dict[url] = text
-                    logger.debug(f"OK: {url}")
-                else:
-                    results_dict[url] = None
-                    logger.warning(f"内容过短: {url}")
+            if result.success:
+                # 优先使用过滤后的内容
+                text = None
+                if hasattr(result, "fit_markdown") and result.fit_markdown:
+                    text = result.fit_markdown.strip()
+                elif hasattr(result, "markdown") and result.markdown:
+                    text = result.markdown.strip()
+
+                if text and len(text) > 100:
+                    # 后处理清理噪声
+                    text = clean_content(text)
+                    if len(text) > 50:
+                        results_dict[url] = text
+                        logger.debug(f"OK: {url}")
+                    else:
+                        results_dict[url] = None
+                        logger.warning(f"清理后内容过短: {url}")
             else:
                 results_dict[url] = None
                 error = result.error if hasattr(result, "error") else "Unknown"
