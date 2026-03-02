@@ -13,7 +13,7 @@ Cloudflare Worker for AI Daily Collector
 
 # 提示: 请使用 cloudflare_worker.js 作为实际 Worker 入口
 
-WORKER_CODE = '''
+WORKER_CODE = """
 // cloudflare_worker.js - Cloudflare Workers 入口
 // 复制此代码到 Cloudflare Dashboard 或使用 wrangler 部署
 
@@ -154,10 +154,10 @@ Deploy: https://github.com/xxl115/ai-daily-collector
     }
   }
 };
-'''
+"""
 
 # 使用说明
-USAGE = '''
+USAGE = """
 # Cloudflare Workers 部署
 
 ## 方式 1: 使用 Wrangler CLI
@@ -212,7 +212,7 @@ deploy-cloudflare:
 在 GitHub 仓库添加:
 - CF_API_TOKEN: Cloudflare API Token
 - CF_ACCOUNT_ID: Cloudflare Account ID
-'''
+"""
 
 if __name__ == "__main__":
     print("=" * 60)

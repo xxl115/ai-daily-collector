@@ -1,4 +1,5 @@
 """Data Access Object for API layer to query articles from storage."""
+
 from __future__ import annotations
 
 from typing import List, Dict, Any, Optional
@@ -22,10 +23,7 @@ class ArticleDAO:
         self.storage = storage_adapter
 
     def fetch_articles(
-        self,
-        filters: Optional[Dict[str, Any]] = None,
-        limit: int = 50,
-        offset: int = 0
+        self, filters: Optional[Dict[str, Any]] = None, limit: int = 50, offset: int = 0
     ) -> List[ArticleModel]:
         """Fetch articles with optional filtering and pagination.
 
@@ -56,7 +54,7 @@ class ArticleDAO:
             return None
 
         # Query with filter by id
-        articles = self.storage.fetch_articles({'id': article_id})
+        articles = self.storage.fetch_articles({"id": article_id})
         if articles:
             return articles[0]
         return None
@@ -68,16 +66,13 @@ class ArticleDAO:
             Dictionary with count, sources, etc.
         """
         if self.storage is None:
-            return {'total': 0, 'sources': []}
+            return {"total": 0, "sources": []}
 
         all_articles = self.storage.fetch_articles({})
         sources = set()
         for article in all_articles:
-            source = getattr(article, 'source', None)
+            source = getattr(article, "source", None)
             if source:
                 sources.add(source)
 
-        return {
-            'total': len(all_articles),
-            'sources': list(sources)
-        }
+        return {"total": len(all_articles), "sources": list(sources)}
