@@ -76,7 +76,7 @@ class ContentProcessor:
 
     def __init__(
         self,
-        max_articles: int = 30,
+        max_articles: int = 150,
         mode: str = "full",
         d1_adapter=None,
         use_crawl4ai_batch: bool = False,
@@ -220,7 +220,9 @@ class ContentProcessor:
             "tags": [],
             "source": self._detect_source(url),
             "extracted_at": extracted_at,
-            "processed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "processed_at": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
             "version": "v1",
         }
         logger.info(f"提取内容: {url}")
@@ -262,13 +264,17 @@ class ContentProcessor:
                 extraction_method = "failed"
                 extraction_error = str(e)
                 self.extraction_stats["all_failed"] += 1
-                self.extraction_stats["failed_urls"].append({"url": url, "error": extraction_error})
+                self.extraction_stats["failed_urls"].append(
+                    {"url": url, "error": extraction_error}
+                )
                 logger.error(f"提取异常: {url}, {e}")
 
         if not content:
             content = "-1"
         if os.environ.get("DRY_RUN", "0") == "1":
-            result["content"] = content if content == "-1" else (content or title)[:10000]
+            result["content"] = (
+                content if content == "-1" else (content or title)[:10000]
+            )
             result["extraction_method"] = "dry-run"
             result["summary"] = "dry-run 摘要"
             result["category"] = "new"
@@ -287,7 +293,9 @@ class ContentProcessor:
 
         if self.mode in ("full", "classify-only") and content != "-1":
             logger.info("智能分类...")
-            classification = self.classifier.classify(title + " " + (result["summary"] or ""))
+            classification = self.classifier.classify(
+                title + " " + (result["summary"] or "")
+            )
             result["category"] = classification.get("category", "new")
             result["tags"] = classification.get("tags", [])
         else:
@@ -343,7 +351,9 @@ class ContentProcessor:
             with self._semaphore:
                 try:
                     start = time.time()
-                    pre_content = pre_extracted.get(url) if self.use_crawl4ai_batch else None
+                    pre_content = (
+                        pre_extracted.get(url) if self.use_crawl4ai_batch else None
+                    )
                     result = self.process_article(
                         article["url"],
                         article.get("title", ""),
@@ -374,7 +384,9 @@ class ContentProcessor:
                         self._save_seen()
                 except Exception as e:
                     logger.error(f"处理失败: {e}")
-                    errors.append({"url": url, "error": str(e), "title": article.get("title", "")})
+                    errors.append(
+                        {"url": url, "error": str(e), "title": article.get("title", "")}
+                    )
                     continue
         # Emit metrics for this batch execution
         self._emit_metrics()
@@ -401,7 +413,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, default="ai/articles/original")
     parser.add_argument("--output", type=Path, default="ai/articles/processed")
-    parser.add_argument("--max-articles", type=int, default=30)
+    parser.add_argument("--max-articles", type=int, default=150)
     parser.add_argument(
         "--mode",
         type=str,
@@ -416,11 +428,15 @@ def main():
         default="local",
         help="Data source: local files or D1 database",
     )
-    parser.add_argument("--d1-account-id", type=str, default=os.environ.get("CF_ACCOUNT_ID", ""))
+    parser.add_argument(
+        "--d1-account-id", type=str, default=os.environ.get("CF_ACCOUNT_ID", "")
+    )
     parser.add_argument(
         "--d1-database-id", type=str, default=os.environ.get("CF_D1_DATABASE_ID", "")
     )
-    parser.add_argument("--d1-api-token", type=str, default=os.environ.get("CF_API_TOKEN", ""))
+    parser.add_argument(
+        "--d1-api-token", type=str, default=os.environ.get("CF_API_TOKEN", "")
+    )
     parser.add_argument(
         "--use-crawl4ai-batch",
         action="store_true",
@@ -434,7 +450,9 @@ def main():
     if args.source == "d1":
         # 从 D1 读取未提取的文章
         if not args.d1_account_id or not args.d1_database_id or not args.d1_api_token:
-            logger.error("D1 模式需要提供 --d1-account-id, --d1-database-id, --d1-api-token")
+            logger.error(
+                "D1 模式需要提供 --d1-account-id, --d1-database-id, --d1-api-token"
+            )
             return
 
         from ingestor.storage.d1_adapter import D1StorageAdapter
@@ -556,7 +574,9 @@ def main():
     if errors:
         logger.warning("处理错误详情:")
         for err in errors[:5]:
-            logger.warning(f"  - {err.get('url', 'unknown')}: {err.get('error', 'unknown')}")
+            logger.warning(
+                f"  - {err.get('url', 'unknown')}: {err.get('error', 'unknown')}"
+            )
 
 
 if __name__ == "__main__":
