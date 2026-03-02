@@ -297,10 +297,9 @@ async def list_tools():
                 "name": "get_articles_needing_processing",
                 "description": "获取需要处理的文章列表（需要总结或分类）",
             },
-            {"name": "update_article_summary", "description": "更新文章摘要"},
             {
-                "name": "update_article_summary_and_category",
-                "description": "更新摘要并自动分类",
+                "name": "update_article_summary",
+                "description": "更新文章摘要（支持自动分类）",
             },
             {"name": "classify_article", "description": "自动分类文章"},
             {"name": "list_categories", "description": "列出分类规则"},
@@ -353,20 +352,6 @@ async def call_mcp_tool(request: MCPRequest):
     elif tool_name == "update_article_summary":
         article_id = arguments.get("article_id")
         summary = arguments.get("summary")
-        if not article_id or not summary:
-            return {"error": "Missing article_id or summary"}
-
-        article = dao.fetch_article_by_id(article_id)
-        if not article:
-            return {"error": "Article not found"}
-
-        article.summary = summary
-        storage.upsert_article(article)
-        return {"success": True, "message": f"Updated summary for {article_id}"}
-
-    elif tool_name == "update_article_summary_and_category":
-        article_id = arguments.get("article_id")
-        summary = arguments.get("summary")
         auto_classify = arguments.get("auto_classify", True)
 
         if not article_id or not summary:
@@ -378,6 +363,7 @@ async def call_mcp_tool(request: MCPRequest):
 
         article.summary = summary
 
+        # 自动分类（可选）
         category_result = None
         if auto_classify and article.content:
             text = article.content + " " + (article.title or "") + " " + summary
