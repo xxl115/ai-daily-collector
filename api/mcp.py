@@ -294,12 +294,8 @@ async def list_tools():
     return {
         "tools": [
             {
-                "name": "get_articles_needing_summary",
-                "description": "获取需要总结的文章列表",
-            },
-            {
-                "name": "get_articles_for_processing",
-                "description": "获取需要处理的文章",
+                "name": "get_articles_needing_processing",
+                "description": "获取需要处理的文章列表（需要总结或分类）",
             },
             {"name": "update_article_summary", "description": "更新文章摘要"},
             {
@@ -323,29 +319,8 @@ async def call_mcp_tool(request: MCPRequest):
     if not dao:
         return {"error": "Storage not configured"}
 
-    if tool_name == "get_articles_needing_summary":
-        limit = arguments.get("limit", 10)
-        articles = dao.fetch_articles(limit=100)
-        result = []
-        for a in articles:
-            if a.content and (not a.summary or a.summary == ""):
-                result.append(
-                    {
-                        "id": a.id,
-                        "title": a.title,
-                        "url": a.url,
-                        "source": a.source,
-                        "content_preview": (
-                            a.content[:300] + "..." if len(a.content) > 300 else a.content
-                        ),
-                        "content_length": len(a.content) if a.content else 0,
-                    }
-                )
-                if len(result) >= limit:
-                    break
-        return {"success": True, "count": len(result), "articles": result}
-
-    elif tool_name == "get_articles_for_processing":
+    if tool_name == "get_articles_needing_processing":
+        # 统一获取需要处理的文章（需要总结或分类）
         limit = arguments.get("limit", 10)
         articles = dao.fetch_articles(limit=100)
         result = []
@@ -353,6 +328,7 @@ async def call_mcp_tool(request: MCPRequest):
             if a.content:
                 needs_summary = not a.summary or a.summary == ""
                 needs_category = not a.categories or len(a.categories) == 0
+                # 只返回需要处理的文章
                 if needs_summary or needs_category:
                     result.append(
                         {
@@ -362,6 +338,12 @@ async def call_mcp_tool(request: MCPRequest):
                             "source": a.source,
                             "needs_summary": needs_summary,
                             "needs_category": needs_category,
+                            "content_preview": (
+                                a.content[:300] + "..."
+                                if len(a.content) > 300
+                                else a.content
+                            ),
+                            "content_length": len(a.content) if a.content else 0,
                         }
                     )
                     if len(result) >= limit:
@@ -449,6 +431,43 @@ async def call_mcp_tool(request: MCPRequest):
 
     else:
         return {"error": f"Unknown tool: {tool_name}"}
+
+
+@router.get("/articles/needing-processing")
+async def get_articles_needing_processing(limit: int = 10):
+    """获取需要处理的文章（HTTP 端点）"""
+    storage = get_storage_adapter()
+    dao = ArticleDAO(storage) if storage else None
+
+    if not dao:
+        return {"error": "Storage not configured"}
+
+    articles = dao.fetch_articles(limit=limit)
+    result = []
+    for a in articles:
+        if a.content:
+            needs_summary = not a.summary or a.summary == ""
+            needs_category = not a.categories or len(a.categories) == 0
+            if needs_summary or needs_category:
+                result.append(
+                    {
+                        "id": a.id,
+                        "title": a.title,
+                        "url": a.url,
+                        "source": a.source,
+                        "needs_summary": needs_summary,
+                        "needs_category": needs_category,
+                        "content_preview": (
+                            a.content[:300] + "..."
+                            if a.content and len(a.content) > 300
+                            else a.content
+                        ),
+                        "content_length": len(a.content) if a.content else 0,
+                    }
+                )
+            if len(result) >= limit:
+                break
+    return {"success": True, "count": len(result), "articles": result}
 
 
 @router.get("/articles/need-summary")
