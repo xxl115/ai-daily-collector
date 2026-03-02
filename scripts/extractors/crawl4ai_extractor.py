@@ -83,6 +83,20 @@ def _init_crawler():
             CacheMode,
         )
         from crawl4ai import LXMLWebScrapingStrategy
+        from crawl4ai.content_filter_strategy import PruningContentFilter
+        from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
+
+        # 内容过滤器：清理导航、广告、页脚等无用内容
+        # threshold: 越高越严格，0.45 是平衡值
+        content_filter = PruningContentFilter(
+            threshold=0.45,
+            threshold_type="fixed",
+        )
+
+        # Markdown 生成器：带内容过滤
+        md_generator = DefaultMarkdownGenerator(
+            content_filter=content_filter,
+        )
 
         # 浏览器配置：使用内置浏览器模式，复用浏览器实例
         browser_config = BrowserConfig(
@@ -91,12 +105,13 @@ def _init_crawler():
             browser_mode="builtin",
         )
 
-        # 爬取配置：使用 LXML 解析，速度提升 20x
+        # 爬取配置：使用 LXML 解析 + 内容过滤
         crawl_config = CrawlerRunConfig(
             cache_mode=CacheMode.BYPASS,
             scraping_strategy=LXMLWebScrapingStrategy(),
             page_timeout=20000,
             word_count_threshold=80,
+            markdown_generator=md_generator,
         )
 
         # 调度器：适中并发，避免被封
