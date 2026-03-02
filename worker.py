@@ -313,18 +313,6 @@ class Default(WorkerEntrypoint):
                 },
             },
             {
-                "name": "update_article_summary",
-                "description": "更新文章摘要",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "article_id": {"type": "string", "description": "文章ID"},
-                        "summary": {"type": "string", "description": "摘要内容"},
-                    },
-                    "required": ["article_id", "summary"],
-                },
-            },
-            {
                 "name": "update_article_summary_and_category",
                 "description": "更新文章摘要并自动分类，或手动指定分类和标签",
                 "parameters": {
@@ -729,20 +717,6 @@ class Default(WorkerEntrypoint):
                         break
 
             return {"success": True, "count": len(articles), "articles": articles}
-
-        elif tool_name == "update_article_summary":
-            article_id = arguments.get("article_id")
-            summary = arguments.get("summary")
-            if not article_id or not summary:
-                return {"error": "Missing article_id or summary"}
-
-            # 更新数据库
-            article = await storage.fetch_article_by_id(article_id) if storage else None
-            if article:
-                article["summary"] = summary
-                await storage.upsert_article(article)
-                return {"success": True, "message": f"Updated summary for {article_id}"}
-            return {"error": "Article not found"}
 
         elif tool_name == "update_article_summary_and_category":
             article_id = arguments.get("article_id")
