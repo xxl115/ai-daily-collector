@@ -326,6 +326,19 @@ class Default(WorkerEntrypoint):
                 },
             },
             {
+                "name": "get_articles_needing_processing",
+                "description": "获取需要处理的文章列表（需要总结、分类或标签），返回详细的处理状态",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "limit": {
+                            "type": "number",
+                            "description": "返回文章数量，默认10",
+                        }
+                    },
+                },
+            },
+            {
                 "name": "update_article_summary",
                 "description": "更新文章摘要",
                 "parameters": {
@@ -787,6 +800,44 @@ class Default(WorkerEntrypoint):
                             "ingested_at": row["ingested_at"],
                         }
                     )
+            return {"success": True, "count": len(articles), "articles": articles}
+
+        elif tool_name == "get_articles_needing_processing":
+            # 统一获取需要处理的文章（需要总结、分类或标签）
+            limit = arguments.get("limit", 10)
+            articles = []
+            rows = await storage.fetch_articles(limit=100) if storage else []
+
+            for row in rows:
+                if row.get("content"):
+                    # 检查是否需要处理
+                    needs_summary = not row.get("summary") or row.get("summary") == ""
+                    needs_category = not row.get("categories") or len(row.get("categories", [])) == 0
+                    needs_tags = not row.get("tags") or len(row.get("tags", [])) == 0
+
+                    # 只返回需要处理的文章
+                    if needs_summary or needs_category or needs_tags:
+                        articles.append(
+                            {
+                                "id": row["id"],
+                                "title": row["title"],
+                                "url": row["url"],
+                                "source": row["source"],
+                                "needs_summary": needs_summary,
+                                "needs_category": needs_category,
+                                "needs_tags": needs_tags,
+                                "content_preview": (
+                                    row["content"][:300] + "..."
+                                    if len(row["content"]) > 300
+                                    else row["content"]
+                                ),
+                                "content_length": len(row["content"]) if row["content"] else 0,
+                                "ingested_at": row["ingested_at"],
+                            }
+                        )
+                    if len(articles) >= limit:
+                        break
+
             return {"success": True, "count": len(articles), "articles": articles}
 
         elif tool_name == "update_article_summary":
