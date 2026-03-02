@@ -9,7 +9,7 @@ from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 
 # 版本号用于强制刷新
-VERSION = "2.2.0"
+VERSION = "2.2.1"
 
 
 class Default(WorkerEntrypoint):
