@@ -34,7 +34,7 @@ def _init_crawler():
         browser_config = BrowserConfig(
             headless=True,
             verbose=False,
-            timeout=15000,
+            timeout=20000,
             browser_mode="builtin",
         )
 
@@ -42,15 +42,15 @@ def _init_crawler():
         crawl_config = CrawlerRunConfig(
             cache_mode=CacheMode.BYPASS,
             scraping_strategy=LXMLWebScrapingStrategy(),
-            page_timeout=15000,
-            word_count_threshold=100,
+            page_timeout=20000,
+            word_count_threshold=80,
         )
 
-        # 调度器：提高并发，减少延迟
+        # 调度器：适中并发，避免被封
         dispatcher = MemoryAdaptiveDispatcher(
-            max_session_permit=20,
+            max_session_permit=10,
             rate_limiter=RateLimiter(
-                base_delay=(0.2, 0.5), max_delay=5.0, max_retries=2
+                base_delay=(1.0, 2.0), max_delay=10.0, max_retries=2
             ),
             memory_threshold_percent=80.0,
         )
@@ -62,7 +62,7 @@ def _init_crawler():
         }
 
         _crawler = AsyncWebCrawler()
-        logger.info("Crawl4AI 爬虫初始化完成（并发=20, 延迟=0.2-0.5s）")
+        logger.info("Crawl4AI 爬虫初始化完成（并发=10, 延迟=1-2s）")
         return _crawler
 
     except Exception as e:
