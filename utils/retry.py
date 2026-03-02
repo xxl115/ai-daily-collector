@@ -1,4 +1,5 @@
 """重试工具模块 - 提供指数退避重试机制"""
+
 import time
 import functools
 import logging
@@ -40,14 +41,10 @@ def retry_with_exponential_backoff(
                     last_exception = e
 
                     if attempt == max_retries:
-                        logger.error(
-                            f"{func.__name__} 达到最大重试次数 ({max_retries}), 放弃"
-                        )
+                        logger.error(f"{func.__name__} 达到最大重试次数 ({max_retries}), 放弃")
                         raise
 
-                    delay = min(
-                        initial_delay * (exponential_base ** (attempt - 1)), max_delay
-                    )
+                    delay = min(initial_delay * (exponential_base ** (attempt - 1)), max_delay)
 
                     logger.warning(
                         f"{func.__name__} 第 {attempt}/{max_retries} 次尝试失败: {e}, "
@@ -95,9 +92,7 @@ def retry_with_fixed_interval(
                     last_exception = e
 
                     if attempt == max_retries:
-                        logger.error(
-                            f"{func.__name__} 达到最大重试次数 ({max_retries}), 放弃"
-                        )
+                        logger.error(f"{func.__name__} 达到最大重试次数 ({max_retries}), 放弃")
                         raise
 
                     logger.warning(

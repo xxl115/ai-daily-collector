@@ -28,7 +28,7 @@ class OllamaSummarizer:
         max_retries=2,
         interval=3.0,
         exceptions=(requests.RequestException, TimeoutError, ConnectionError),
-        on_retry=lambda e, n: logger.warning(f"Ollama 重试 {n}: {e}")
+        on_retry=lambda e, n: logger.warning(f"Ollama 重试 {n}: {e}"),
     )
     def summarize(self, text: str) -> str:
         try:
@@ -38,16 +38,13 @@ class OllamaSummarizer:
                     "model": self.model,
                     "prompt": self.prompt_template.format(text[:2000]),
                     "stream": False,
-                    "options": {
-                        "temperature": 0.3,
-                        "num_predict": 100
-                    }
+                    "options": {"temperature": 0.3, "num_predict": 100},
                 },
-                timeout=60
+                timeout=60,
             )
             if response.status_code == 200:
                 result = response.json()
-                return result.get('response', '').strip()
+                return result.get("response", "").strip()
             logger.warning(f"Ollama 返回状态码 {response.status_code}")
             return text[:200]
         except Exception as e:

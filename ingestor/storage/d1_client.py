@@ -10,7 +10,13 @@ import requests
 
 
 class D1Client:
-    def __init__(self, account_id: str, db_name: str, api_token: str, base_url: str = "https://api.cloudflare.com/client/v4"):
+    def __init__(
+        self,
+        account_id: str,
+        db_name: str,
+        api_token: str,
+        base_url: str = "https://api.cloudflare.com/client/v4",
+    ):
         self.account_id = account_id
         self.db_name = db_name
         self.api_token = api_token
@@ -41,7 +47,9 @@ class D1Client:
         Query data from D1 (SELECT).
         """
         payload = {"query": sql, "params": params or []}
-        url = f"{self.base_url}/accounts/{self.account_id}/storage/d1/databases/{self.db_name}/query"
+        url = (
+            f"{self.base_url}/accounts/{self.account_id}/storage/d1/databases/{self.db_name}/query"
+        )
         resp = requests.post(url, headers=self._headers(), json=payload, timeout=30)
         resp.raise_for_status()
         data = resp.json()

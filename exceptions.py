@@ -5,6 +5,7 @@ from datetime import datetime
 
 class AICollectorError(Exception):
     """基础异常类"""
+
     def __init__(self, message: str, details: dict = None):
         super().__init__(message)
         self.message = message
@@ -14,31 +15,37 @@ class AICollectorError(Exception):
 
 class CrawlerError(AICollectorError):
     """采集相关异常"""
+
     pass
 
 
 class RSSFetchError(CrawlerError):
     """RSS 获取失败"""
+
     pass
 
 
 class SummarizerError(AICollectorError):
     """总结生成相关异常"""
+
     pass
 
 
 class ReportError(AICollectorError):
     """日报生成相关异常"""
+
     pass
 
 
 class NotionSyncError(AICollectorError):
     """Notion 同步相关异常"""
+
     pass
 
 
 class ConfigurationError(AICollectorError):
     """配置相关异常"""
+
     pass
 
 
@@ -56,7 +63,9 @@ def handle_exceptions(default_return=None, log_errors: bool = True):
                 if default_return is not None:
                     return default_return
                 raise AICollectorError(f"Unexpected error: {e}") from e
+
         return wrapper
+
     return decorator
 
 

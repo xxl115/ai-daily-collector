@@ -49,9 +49,7 @@ class D1StorageAdapter(StorageAdapter):
             "Content-Type": "application/json",
         }
 
-    def _execute_sql(
-        self, sql: str, params: Optional[List[Any]] = None
-    ) -> Dict[str, Any]:
+    def _execute_sql(self, sql: str, params: Optional[List[Any]] = None) -> Dict[str, Any]:
         """Execute SQL query via D1 API.
 
         Args:
@@ -70,9 +68,7 @@ class D1StorageAdapter(StorageAdapter):
 
         data = json.dumps(payload).encode("utf-8")
 
-        req = urllib.request.Request(
-            url, data=data, headers=self._headers(), method="POST"
-        )
+        req = urllib.request.Request(url, data=data, headers=self._headers(), method="POST")
 
         try:
             with urllib.request.urlopen(req, timeout=30) as response:
@@ -80,11 +76,7 @@ class D1StorageAdapter(StorageAdapter):
 
             if not result.get("success", False):
                 errors = result.get("errors", [])
-                error_msg = (
-                    errors[0].get("message", "Unknown error")
-                    if errors
-                    else "Unknown error"
-                )
+                error_msg = errors[0].get("message", "Unknown error") if errors else "Unknown error"
                 raise Exception(f"D1 API error: {error_msg}")
 
             return result
@@ -185,7 +177,6 @@ class D1StorageAdapter(StorageAdapter):
         self._execute_sql(create_index_date_sql)
         self._execute_sql(create_crawl_logs_index_sql)
 
-
     def _decode_double_encoded(self, text: str) -> str:
         """Decode double-encoded Unicode strings.
 
@@ -202,12 +193,12 @@ class D1StorageAdapter(StorageAdapter):
             return text
 
         # Check if the text contains Unicode escape sequences
-        if '\\u' not in text:
+        if "\\u" not in text:
             return text
 
         try:
             # Try to decode the double-encoded string
-            return text.encode('utf-8').decode('unicode_escape')
+            return text.encode("utf-8").decode("unicode_escape")
         except Exception:
             return text
 
@@ -376,9 +367,7 @@ class D1StorageAdapter(StorageAdapter):
 
         return None
 
-    def update_article_content(
-        self, article_id: str, content: str, extraction_method: str
-    ) -> None:
+    def update_article_content(self, article_id: str, content: str, extraction_method: str) -> None:
         """Update article content after extraction.
 
         Args:

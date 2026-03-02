@@ -89,9 +89,24 @@ async def get_latest_hotspots(
 
             # Keywords that indicate high relevance
             high_value_keywords = [
-                "gpt", "openai", "claude", "anthropic", "gemini", "llama",
-                "发布", "推出", "launch", "release", "模型", "model",
-                "突破", "breakthrough", "融资", "funding", "收购", "acquisition"
+                "gpt",
+                "openai",
+                "claude",
+                "anthropic",
+                "gemini",
+                "llama",
+                "发布",
+                "推出",
+                "launch",
+                "release",
+                "模型",
+                "model",
+                "突破",
+                "breakthrough",
+                "融资",
+                "funding",
+                "收购",
+                "acquisition",
             ]
             for keyword in high_value_keywords:
                 if keyword in title:
@@ -104,7 +119,9 @@ async def get_latest_hotspots(
             # Recent articles get higher scores
             if article.get("ingested_at"):
                 try:
-                    ingested_at = datetime.fromisoformat(article["ingested_at"].replace("Z", "+00:00"))
+                    ingested_at = datetime.fromisoformat(
+                        article["ingested_at"].replace("Z", "+00:00")
+                    )
                     hours_old = (datetime.utcnow() - ingested_at).total_seconds() / 3600
                     score += max(0, 10 - hours_old * 0.1)
                 except:

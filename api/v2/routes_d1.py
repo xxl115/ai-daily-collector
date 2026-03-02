@@ -81,9 +81,7 @@ router = APIRouter(prefix="/api/v2", tags=["API v2 - D1 Storage"])
 @router.get("/articles", response_model=ArticleListResponse)
 async def get_articles(
     source: Optional[str] = Query(None, description="Filter by source"),
-    category: Optional[str] = Query(
-        None, description="Filter by category (1-8 or new)"
-    ),
+    category: Optional[str] = Query(None, description="Filter by category (1-8 or new)"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     dao: ArticleDAO = Depends(get_article_dao),
@@ -129,9 +127,7 @@ async def get_articles(
 
 
 @router.get("/articles/{article_id}", response_model=ArticleResponse)
-async def get_article_by_id(
-    article_id: str, dao: ArticleDAO = Depends(get_article_dao)
-):
+async def get_article_by_id(article_id: str, dao: ArticleDAO = Depends(get_article_dao)):
     """Get a single article by ID."""
     try:
         article = dao.fetch_article_by_id(article_id)

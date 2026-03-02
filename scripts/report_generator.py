@@ -6,19 +6,19 @@ from typing import List, Dict
 
 class ReportGenerator:
     """日报生成器"""
-    
+
     def __init__(self):
         self.categories = {
-            'breaking': '🚨 突发新闻',
-            'hot': '🔥 热门话题',
-            'new': '🆕 新品发布',
-            'deep': '💡 深度分析'
+            "breaking": "🚨 突发新闻",
+            "hot": "🔥 热门话题",
+            "new": "🆕 新品发布",
+            "deep": "💡 深度分析",
         }
 
     def generate(self, articles: List[Dict], output_path: str):
         categorized = {cat: [] for cat in self.categories}
         for article in articles:
-            cat = article.get('category', 'new')
+            cat = article.get("category", "new")
             if cat in categorized:
                 categorized[cat].append(article)
         total = len(articles)
@@ -40,6 +40,6 @@ class ReportGenerator:
         # Ensure directory exists
         parent_dir = os.path.dirname(output_path)
         os.makedirs(parent_dir, exist_ok=True)
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(md)
         print(f"日报已生成: {output_path}")

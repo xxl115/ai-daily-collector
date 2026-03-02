@@ -82,9 +82,7 @@ class TestRetryWithExponentialBackoff:
         """Test delay increases exponentially"""
         delays = []
 
-        @retry_with_exponential_backoff(
-            max_retries=3, initial_delay=0.1, exponential_base=2.0
-        )
+        @retry_with_exponential_backoff(max_retries=3, initial_delay=0.1, exponential_base=2.0)
         def track_delay():
             raise ConnectionError("fail")
 

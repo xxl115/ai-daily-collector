@@ -12,9 +12,7 @@ def generate_article_id(source: str, url: str) -> str:
     if not url:
         from datetime import datetime
 
-        return (
-            f"{hashlib.md5(str(datetime.now().timestamp()).encode()).hexdigest()[:8]}"
-        )
+        return f"{hashlib.md5(str(datetime.now().timestamp()).encode()).hexdigest()[:8]}"
     url_hash = hashlib.md5(url.encode()).hexdigest()[:8]
     clean_source = "".join(c for c in source if c.isalnum())[:20]
     return f"{clean_source}-{url_hash}"

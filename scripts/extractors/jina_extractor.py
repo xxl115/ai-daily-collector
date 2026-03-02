@@ -10,8 +10,16 @@ logger = logging.getLogger(__name__)
 
 class JinaExtractor:
     ERROR_KEYWORDS = [
-        "error", "failed", "insufficient", "balance", "unauthorized",
-        "forbidden", "rate limit", "quota", "exceeded", "payment"
+        "error",
+        "failed",
+        "insufficient",
+        "balance",
+        "unauthorized",
+        "forbidden",
+        "rate limit",
+        "quota",
+        "exceeded",
+        "payment",
     ]
 
     def __init__(self, api_key: str = None):
@@ -23,6 +31,7 @@ class JinaExtractor:
     def _get_endpoint(self, url: str) -> str:
         if self.proxy_url:
             from urllib.parse import quote
+
             return f"{self.proxy_url}/extract?url={quote(url)}"
         return f"https://r.jina.ai/{url}"
 

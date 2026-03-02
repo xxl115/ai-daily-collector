@@ -11,9 +11,11 @@ from typing import Dict, Any
 try:
     from shared.models import ArticleModel
 except Exception:
+
     class ArticleModel(dict):
         def __init__(self, **kwargs):
             super().__init__(kwargs)
+
 
 def transform(raw_item: Dict[str, Any]) -> ArticleModel:
     now = datetime.utcnow()

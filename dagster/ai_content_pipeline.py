@@ -48,9 +48,7 @@ def extract_article(context: OpExecutionContext, url: str) -> Dict[str, Any]:
     name="generate_summary",
     description="Generate summary using Ollama",
 )
-def generate_summary(
-    context: OpExecutionContext, article: Dict[str, Any]
-) -> Dict[str, Any]:
+def generate_summary(context: OpExecutionContext, article: Dict[str, Any]) -> Dict[str, Any]:
     """Generate article summary using LLM."""
     if not article.get("success"):
         return article
@@ -75,9 +73,7 @@ def generate_summary(
     name="classify_article",
     description="Classify article using BGE",
 )
-def classify_article(
-    context: OpExecutionContext, article: Dict[str, Any]
-) -> Dict[str, Any]:
+def classify_article(context: OpExecutionContext, article: Dict[str, Any]) -> Dict[str, Any]:
     """Classify article into categories."""
     if not article.get("success"):
         return article
@@ -104,9 +100,7 @@ def classify_article(
     name="persist_article",
     description="Save processed article to storage",
 )
-def persist_article(
-    context: OpExecutionContext, article: Dict[str, Any]
-) -> Dict[str, Any]:
+def persist_article(context: OpExecutionContext, article: Dict[str, Any]) -> Dict[str, Any]:
     """Persist processed article to JSON file."""
     if not article.get("success"):
         return article
@@ -125,9 +119,7 @@ def persist_article(
     article["version"] = "v1"
 
     try:
-        safe_title = (
-            article.get("title", "article")[:50].replace(" ", "_").replace("/", "_")
-        )
+        safe_title = article.get("title", "article")[:50].replace(" ", "_").replace("/", "_")
         output_file = output_dir / f"{safe_title}.json"
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(article, f, ensure_ascii=False, indent=2)
@@ -142,9 +134,7 @@ def persist_article(
     name="generate_report",
     description="Generate daily report",
 )
-def generate_report(
-    context: OpExecutionContext, articles: List[Dict[str, Any]]
-) -> Dict[str, Any]:
+def generate_report(context: OpExecutionContext, articles: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Generate daily report from processed articles."""
     from scripts.report_generator import ReportGenerator
 

@@ -25,7 +25,7 @@ def test_article_model_creation():
         tags=["ai"],
         summary="Test summary",
         raw_markdown="# Test",
-        ingested_at=now
+        ingested_at=now,
     )
 
     assert article["id"] == "test-123"
@@ -73,7 +73,7 @@ def test_local_db_adapter_basic():
         content="Content",
         url="https://example.com/2",
         source="test",
-        ingested_at=now
+        ingested_at=now,
     )
 
     adapter.upsert_article(article)

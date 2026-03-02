@@ -35,11 +35,7 @@ class RaceExtractor:
                 return None
 
             try:
-                result = (
-                    extractor.extract(url)
-                    if hasattr(extractor, "extract")
-                    else extractor(url)
-                )
+                result = extractor.extract(url) if hasattr(extractor, "extract") else extractor(url)
 
                 with self._result_lock:
                     if self._result["content"] is None and result:
@@ -54,9 +50,7 @@ class RaceExtractor:
                         self._result["error"] = str(e)
                 return None
 
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=len(self.extractors)
-        ) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.extractors)) as executor:
             futures = [
                 executor.submit(try_extractor, extractor, idx)
                 for idx, extractor in enumerate(self.extractors)
@@ -88,8 +82,7 @@ class FastExtractor:
 
         # Trafilatura 和 Jina 竞速
         self.race_extractor = RaceExtractor(
-            [trafilatura_extractor, jina_extractor],
-            timeout=self.timeout
+            [trafilatura_extractor, jina_extractor], timeout=self.timeout
         )
 
     def extract(self, url: str, use_race: bool = True) -> tuple[Optional[str], str]:

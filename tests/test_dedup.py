@@ -4,11 +4,11 @@ from scripts.content_processor import ContentProcessor
 
 def test_dedup_across_runs(tmp_path):
     # Ensure DRY_RUN mode to avoid real network I/O
-    os.environ['DRY_RUN'] = '1'
+    os.environ["DRY_RUN"] = "1"
 
     articles = [
-        {'url': 'https://example.com/article1', 'title': '示例文章1'},
-        {'url': 'https://example.com/article2', 'title': '示例文章2'},
+        {"url": "https://example.com/article1", "title": "示例文章1"},
+        {"url": "https://example.com/article2", "title": "示例文章2"},
     ]
 
     # First run: should process both

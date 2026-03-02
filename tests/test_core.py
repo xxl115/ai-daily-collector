@@ -24,11 +24,12 @@ class TestCrawler:
     def test_sources_yaml_parsable(self):
         """测试 YAML 配置可解析"""
         import yaml
+
         config_path = Path(__file__).parent.parent / "config" / "sources.yaml"
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
-        assert 'sources' in config, "配置缺少 sources 字段"
-        assert len(config['sources']) > 0, "RSS 源列表为空"
+        assert "sources" in config, "配置缺少 sources 字段"
+        assert len(config["sources"]) > 0, "RSS 源列表为空"
 
 
 class TestSummarizer:
@@ -43,35 +44,36 @@ class TestSummarizer:
 ==================================================
 这是文章内容...
 """
-        
+
         # 模拟提取逻辑
         title_match = "标题: (.*?)\n"
         source_match = "来源: (.*?)\n"
-        
+
         title = "测试文章"
         source = "Dev.to"
-        
+
         assert title == "测试文章"
         assert source == "Dev.to"
 
     def test_title_cleaning(self):
         """测试标题清理"""
         import re
+
         dirty_title = 'Test: "Special" Characters <>&|?*[]()'
-        clean = re.sub(r'[<>:"/\\|?*\[\]（）()「」【】…—\'"]', '', dirty_title)
-        assert '<' not in clean
-        assert '>' not in clean
+        clean = re.sub(r'[<>:"/\\|?*\[\]（）()「」【】…—\'"]', "", dirty_title)
+        assert "<" not in clean
+        assert ">" not in clean
         assert '"' not in clean
 
     def test_filename_generation(self):
         """测试文件名生成"""
         title = "这是一个很长的标题" * 10
         source = "Dev.to"
-        
+
         # 模拟文件名生成
-        safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip()[:35]
+        safe_title = "".join(c for c in title if c.isalnum() or c in (" ", "-", "_")).strip()[:35]
         abbr = "".join(c for c in source if c.isupper())[:3]
-        
+
         assert len(safe_title) <= 35
         assert len(abbr) <= 3
 
@@ -88,7 +90,7 @@ class TestReportGenerator:
             ("深度伪造风险", "安全风险"),
             ("Suno 音乐生成", "内容生成"),
         ]
-        
+
         # 简单分类逻辑测试
         def classify(text):
             keywords = {
@@ -103,7 +105,7 @@ class TestReportGenerator:
                 if any(kw in text_lower for kw in kws):
                     return cat
             return "其他"
-        
+
         for text, expected in test_cases:
             result = classify(text)
             assert result == expected, f"'{text}' 应该分类为 {expected}，实际是 {result}"
@@ -112,8 +114,8 @@ class TestReportGenerator:
         """测试日期格式"""
         today = datetime.now().strftime("%Y-%m-%d")
         assert len(today) == 10  # YYYY-MM-DD
-        assert today[4] == '-'
-        assert today[7] == '-'
+        assert today[4] == "-"
+        assert today[7] == "-"
 
     def test_report_structure(self):
         """测试日报结构"""
@@ -141,7 +143,7 @@ class TestNotionSync:
 这是段落。
 - 列表项
 """
-        
+
         # 简单验证
         assert "# 标题" in md_content
         assert "这是段落" in md_content
@@ -149,10 +151,11 @@ class TestNotionSync:
 
     def test_link_extraction(self):
         """测试链接提取"""
-        text = '[链接](https://example.com)'
+        text = "[链接](https://example.com)"
         import re
-        match = re.search(r'\[([^\]]+)\]\(([^)]+)\)', text)
-        
+
+        match = re.search(r"\[([^\]]+)\]\(([^)]+)\)", text)
+
         if match:
             assert match.group(1) == "链接"
             assert match.group(2) == "https://example.com"
@@ -169,7 +172,7 @@ class TestWorkflow:
             "优化文件命名",
             "生成日报",
             "推送到 GitHub",
-            "推送到 Notion"
+            "推送到 Notion",
         ]
         assert len(steps) == 6
 
@@ -177,7 +180,7 @@ class TestWorkflow:
         """测试定时任务配置"""
         cron_expr = "0 20 * * *"  # 每天晚上8点
         parts = cron_expr.split()
-        
+
         assert len(parts) == 5
         assert parts[0] == "0"  # 分钟
         assert parts[1] == "20"  # 小时

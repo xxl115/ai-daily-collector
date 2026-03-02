@@ -37,8 +37,9 @@ async def on_fetch(request, env):
         if path == "/extract" and query:
             # 解析 url 参数
             from urllib.parse import parse_qs
+
             params = parse_qs(query)
-            if 'url' not in params or not params['url']:
+            if "url" not in params or not params["url"]:
                 return Response(
                     json.dumps({"error": "Missing url parameter"}),
                     headers=[
@@ -47,7 +48,7 @@ async def on_fetch(request, env):
                     ],
                 )
 
-            target_url = params['url'][0]
+            target_url = params["url"][0]
             target_url = unquote(target_url)
 
             # 通过 env 获取 secret（Cloudflare Workers 正确方式）

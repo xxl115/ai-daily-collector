@@ -14,6 +14,7 @@ class TrafilaturaExtractor:
         self._module = None
         try:
             import trafilatura as _t
+
             self._module = _t
         except Exception:
             self._module = None
@@ -22,7 +23,7 @@ class TrafilaturaExtractor:
         max_retries=3,
         initial_delay=1.0,
         exceptions=(TimeoutError, ConnectionError, OSError),
-        on_retry=lambda e, n: logger.warning(f"提取重试 {n}: {e}")
+        on_retry=lambda e, n: logger.warning(f"提取重试 {n}: {e}"),
     )
     def extract(self, url: str) -> Optional[str]:
         if not self._module:
@@ -33,10 +34,10 @@ class TrafilaturaExtractor:
                 return None
             text = self._module.extract(
                 html,
-                target_language='zh',
+                target_language="zh",
                 include_comments=False,
                 include_tables=False,
-                deduplicate=True
+                deduplicate=True,
             )
             if text and len(text) > 100:
                 return text.strip()

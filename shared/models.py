@@ -20,6 +20,7 @@ try:
         summary: Optional[str] = None
         raw_markdown: Optional[str] = None
         ingested_at: datetime
+
 except Exception:
     # Fallback minimal dict-based structure if pydantic is unavailable
     class ArticleModel(dict):

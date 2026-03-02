@@ -11,6 +11,7 @@ PROJECT_ROOT = Path(__file__).parent
 # 数据目录
 DATA_DIR = Path(os.environ.get("DATA_DIR", PROJECT_ROOT / "data"))
 
+
 # API 配置
 class APIConfig:
     host = os.environ.get("API_HOST", "0.0.0.0")
@@ -53,10 +54,7 @@ class CrawlerConfig:
 class ReportConfig:
     focus_article_limit = 1
     category_article_limit = 5
-    summary_length = {
-        "focus": 150,
-        "normal": 100
-    }
+    summary_length = {"focus": 150, "normal": 100}
 
 
 # 日志配置
@@ -67,32 +65,37 @@ class LogConfig:
 
 
 # 导出配置实例
-config = type("Config", (), {
-    "api": APIConfig,
-    "zhipu": ZhipuConfig,
-    "notion": NotionConfig,
-    "github": GitHubConfig,
-    "crawler": CrawlerConfig,
-    "report": ReportConfig,
-    "log": LogConfig,
-    "data_dir": DATA_DIR,
-    "project_root": PROJECT_ROOT
-})()
+config = type(
+    "Config",
+    (),
+    {
+        "api": APIConfig,
+        "zhipu": ZhipuConfig,
+        "notion": NotionConfig,
+        "github": GitHubConfig,
+        "crawler": CrawlerConfig,
+        "report": ReportConfig,
+        "log": LogConfig,
+        "data_dir": DATA_DIR,
+        "project_root": PROJECT_ROOT,
+    },
+)()
 
 
 def get_source_config(name: str) -> Optional[dict]:
     """获取指定 RSS 源配置"""
     import yaml
+
     config_path = PROJECT_ROOT / "config" / "sources.yaml"
-    
+
     if not config_path.exists():
         return None
-    
-    with open(config_path, 'r', encoding='utf-8') as f:
+
+    with open(config_path, "r", encoding="utf-8") as f:
         config_data = yaml.safe_load(f)
-    
-    for source in config_data.get('sources', []):
-        if source.get('name') == name:
+
+    for source in config_data.get("sources", []):
+        if source.get("name") == name:
             return source
-    
+
     return None

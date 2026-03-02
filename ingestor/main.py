@@ -152,12 +152,8 @@ def main() -> int:
         default="config/sources.yaml",
         help="Path to sources config YAML",
     )
-    parser.add_argument(
-        "--dry-run", action="store_true", help="Run without persisting data"
-    )
-    parser.add_argument(
-        "--source-type", type=str, help="Only process specific source type"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="Run without persisting data")
+    parser.add_argument("--source-type", type=str, help="Only process specific source type")
     parser.add_argument("--log-file", type=str, help="Optional log file path")
     args = parser.parse_args()
 
@@ -224,9 +220,7 @@ def main() -> int:
                 try:
                     article = transform(it)
                     article_obj = (
-                        article
-                        if isinstance(article, ArticleModel)
-                        else ArticleModel(**article)
+                        article if isinstance(article, ArticleModel) else ArticleModel(**article)
                     )
 
                     if not args.dry_run:

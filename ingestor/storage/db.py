@@ -30,9 +30,7 @@ class StorageAdapter(ABC):
         pass
 
     @abstractmethod
-    def fetch_articles(
-        self, filters: dict, limit: int = 50, offset: int = 0
-    ) -> List[ArticleModel]:
+    def fetch_articles(self, filters: dict, limit: int = 50, offset: int = 0) -> List[ArticleModel]:
         pass
 
 
@@ -62,7 +60,8 @@ class LocalDBAdapter(StorageAdapter):
     def _init_db(self) -> None:
         """Initialize database schema."""
         with self._get_connection() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS articles (
                     id TEXT PRIMARY KEY,
                     title TEXT NOT NULL,
@@ -76,9 +75,11 @@ class LocalDBAdapter(StorageAdapter):
                     raw_markdown TEXT,
                     ingested_at TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS crawl_logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     source_name TEXT NOT NULL,
@@ -90,21 +91,28 @@ class LocalDBAdapter(StorageAdapter):
                     crawled_at TEXT NOT NULL,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Create indexes for common queries
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_articles_source 
                 ON articles(source)
-            """)
-            conn.execute("""
+            """
+            )
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_articles_ingested_at 
                 ON articles(ingested_at DESC)
-            """)
-            conn.execute("""
+            """
+            )
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_crawl_logs_crawled_at 
                 ON crawl_logs(crawled_at)
-            """)
+            """
+            )
             conn.commit()
 
     def ensure_schema(self) -> None:
@@ -124,9 +132,7 @@ class LocalDBAdapter(StorageAdapter):
             json.dumps(article.tags) if article.tags else "[]",
             article.summary,
             getattr(article, "raw_markdown", None),
-            article.ingested_at.isoformat()
-            if article.ingested_at
-            else datetime.now().isoformat(),
+            article.ingested_at.isoformat() if article.ingested_at else datetime.now().isoformat(),
         )
 
     def _row_to_article(self, row: sqlite3.Row) -> ArticleModel:
@@ -136,17 +142,17 @@ class LocalDBAdapter(StorageAdapter):
             title=row["title"],
             content=row["content"] or "",
             url=row["url"],
-            published_at=datetime.fromisoformat(row["published_at"])
-            if row["published_at"]
-            else None,
+            published_at=(
+                datetime.fromisoformat(row["published_at"]) if row["published_at"] else None
+            ),
             source=row["source"] or "",
             categories=json.loads(row["categories"]) if row["categories"] else [],
             tags=json.loads(row["tags"]) if row["tags"] else [],
             summary=row["summary"],
             raw_markdown=row["raw_markdown"],
-            ingested_at=datetime.fromisoformat(row["ingested_at"])
-            if row["ingested_at"]
-            else datetime.now(),
+            ingested_at=(
+                datetime.fromisoformat(row["ingested_at"]) if row["ingested_at"] else datetime.now()
+            ),
         )
 
     def write_article(self, article: ArticleModel) -> None:
@@ -179,9 +185,7 @@ class LocalDBAdapter(StorageAdapter):
             )
             conn.commit()
 
-    def fetch_articles(
-        self, filters: dict, limit: int = 50, offset: int = 0
-    ) -> List[ArticleModel]:
+    def fetch_articles(self, filters: dict, limit: int = 50, offset: int = 0) -> List[ArticleModel]:
         """Fetch articles with optional filtering and pagination."""
         filters = filters or {}
 
@@ -214,9 +218,7 @@ class LocalDBAdapter(StorageAdapter):
             total = cursor.fetchone()["total"]
 
             # Sources
-            cursor = conn.execute(
-                "SELECT source, COUNT(*) as count FROM articles GROUP BY source"
-            )
+            cursor = conn.execute("SELECT source, COUNT(*) as count FROM articles GROUP BY source")
             sources = {row["source"]: row["count"] for row in cursor.fetchall()}
 
             return {

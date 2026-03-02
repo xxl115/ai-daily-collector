@@ -31,10 +31,7 @@ class TestContentProcessor:
         processor = ContentProcessor()
 
         assert processor._detect_source("https://36kr.com/news") == "36氪"
-        assert (
-            processor._detect_source("https://news.ycombinator.com/item?id=123")
-            == "Hacker News"
-        )
+        assert processor._detect_source("https://news.ycombinator.com/item?id=123") == "Hacker News"
         assert processor._detect_source("https://arxiv.org/abs/2301.12345") == "ArXiv"
         assert processor._detect_source("https://unknown-site.com") == "其他"
 
@@ -176,9 +173,7 @@ class TestDataContract:
                             ]
 
                             for field in required_fields:
-                                assert field in result, (
-                                    f"Missing required field: {field}"
-                                )
+                                assert field in result, f"Missing required field: {field}"
 
 
 class TestErrorHandling:
@@ -214,9 +209,7 @@ class TestErrorHandling:
                             mock_clf.return_value = classifier
 
                             processor = ContentProcessor()
-                            result = processor.process_article(
-                                "https://ex.com", "Fallback Title"
-                            )
+                            result = processor.process_article("https://ex.com", "Fallback Title")
 
                             # Should use title as content fallback
                             assert result["content"] == "Fallback Title"

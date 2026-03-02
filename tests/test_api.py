@@ -151,9 +151,7 @@ class TestAPIResponseModels:
         """Test HealthResponse model"""
         from api.v2.routes_d1 import HealthResponse
 
-        health = HealthResponse(
-            status="ok", database="d1", timestamp="2026-01-01T00:00:00Z"
-        )
+        health = HealthResponse(status="ok", database="d1", timestamp="2026-01-01T00:00:00Z")
 
         assert health.status == "ok"
         assert health.database == "d1"

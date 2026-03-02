@@ -335,9 +335,9 @@ async def call_mcp_tool(request: MCPRequest):
                         "title": a.title,
                         "url": a.url,
                         "source": a.source,
-                        "content_preview": a.content[:300] + "..."
-                        if len(a.content) > 300
-                        else a.content,
+                        "content_preview": (
+                            a.content[:300] + "..." if len(a.content) > 300 else a.content
+                        ),
                         "content_length": len(a.content) if a.content else 0,
                     }
                 )
@@ -497,9 +497,11 @@ async def get_articles_needing_summary(limit: int = 10):
                 "title": article.title,
                 "url": article.url,
                 "source": article.source,
-                "content_preview": article.content[:300] + "..."
-                if article.content and len(article.content) > 300
-                else article.content,
+                "content_preview": (
+                    article.content[:300] + "..."
+                    if article.content and len(article.content) > 300
+                    else article.content
+                ),
                 "content_length": len(article.content) if article.content else 0,
             }
         )
