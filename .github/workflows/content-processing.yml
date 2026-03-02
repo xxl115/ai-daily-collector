@@ -47,6 +47,8 @@ jobs:
           pip install trafilatura requests beautifulsoup4 jieba pyyaml
           pip install sentence-transformers transformers accelerate
           pip install ollama
+          pip install crawl4ai playwright
+          playwright install chromium || true
 
       - name: Install and start Ollama
         run: |

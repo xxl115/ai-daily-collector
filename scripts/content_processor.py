@@ -74,19 +74,26 @@ class ContentProcessor:
     _semaphore = SemaphoreLimiter(max_concurrent=5)
     _rate_limiter = RateLimiter(max_calls=120, period=60.0)  # 每分钟120次请求，提高速度
 
-    def __init__(self, max_articles: int = 30, mode: str = "full", d1_adapter=None):
+    def __init__(
+        self,
+        max_articles: int = 30,
+        mode: str = "full",
+        d1_adapter=None,
+        use_crawl4ai_batch: bool = False,
+    ):
         self.max_articles = max_articles
         self.mode = mode
         self.d1_adapter = d1_adapter
+        self.use_crawl4ai_batch = use_crawl4ai_batch  # 新增：是否使用 Crawl4AI 批量模式
 
         trafilatura = TrafilaturaExtractor()
         jina = JinaExtractor(api_key=os.environ.get("JINA_API_KEY", ""))
-        crawl4ai = Crawl4AIExtractor()
+        self.crawl4ai = Crawl4AIExtractor()  # 保存引用供批量使用
 
-        self.fast_extractor = FastExtractor(trafilatura, jina, crawl4ai)
+        self.fast_extractor = FastExtractor(trafilatura, jina, self.crawl4ai)
         self.extractor = trafilatura
         self.fallback_extractor = jina
-        self.fallback_extractor_2 = crawl4ai
+        self.fallback_extractor_2 = self.crawl4ai
 
         self.summarizer = OllamaSummarizer()
         self.classifier = BGEClassifier()
@@ -187,8 +194,13 @@ class ContentProcessor:
         except Exception as e:
             logger.warning(f"写入 metrics 失败: {e}")
 
-    def process_article(self, url: str, title: str, original_id: str = None) -> Dict:
-        # 使用原始 ID（如果是 D1）或生成新 UUID
+    def process_article(
+        self,
+        url: str,
+        title: str,
+        original_id: str = None,
+        pre_extracted_content: str = None,
+    ) -> Dict:
         article_id = original_id if original_id else str(uuid.uuid4())
         extracted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -216,6 +228,12 @@ class ContentProcessor:
         if os.environ.get("DRY_RUN", "0") == "1":
             content = f"占位文本，原文 {url}"
             extraction_method = "dry-run"
+        elif pre_extracted_content:
+            content = pre_extracted_content
+            extraction_method = "crawl4ai-batch"
+            if content:
+                self.extraction_stats["crawl4ai_success"] += 1
+                logger.info(f"Crawl4AI 批量提取成功: {url}")
         else:
             try:
                 content, extraction_method = self.fast_extractor.extract(url)
@@ -283,6 +301,31 @@ class ContentProcessor:
         results: List[Dict] = []
         errors: List[Dict] = []
         seen = self._load_seen()
+
+        # 批量 Crawl4AI 模式：先抓取所有内容
+        pre_extracted = {}
+        if self.use_crawl4ai_batch:
+            # 收集需要处理的 URLs（排除已处理的）
+            urls_to_crawl = []
+            articles_to_process = []
+            for article in articles[: self.max_articles]:
+                url = article.get("url")
+                if not url or url in seen:
+                    continue
+                urls_to_crawl.append(url)
+                articles_to_process.append(article)
+
+            if urls_to_crawl:
+                logger.info(f"Crawl4AI 批量抓取: {len(urls_to_crawl)} URLs")
+                pre_extracted = self.crawl4ai.extract_many(
+                    urls_to_crawl,
+                    callback=lambda c, t: logger.info(f"抓取进度: {c}/{t}"),
+                )
+                logger.info(
+                    f"Crawl4AI 批量完成: {len([v for v in pre_extracted.values() if v])}/{len(urls_to_crawl)} 成功"
+                )
+
+        # 处理每篇文章
         for i, article in enumerate(articles[: self.max_articles]):
             url = article.get("url")
             if not url:
@@ -302,8 +345,14 @@ class ContentProcessor:
             with self._semaphore:
                 try:
                     start = time.time()
+                    pre_content = (
+                        pre_extracted.get(url) if self.use_crawl4ai_batch else None
+                    )
                     result = self.process_article(
-                        article["url"], article.get("title", ""), article.get("id")
+                        article["url"],
+                        article.get("title", ""),
+                        article.get("id"),
+                        pre_content,
                     )
                     elapsed = time.time() - start
                     logger.info(f"处理耗时: {elapsed:.2f}s")
@@ -382,6 +431,11 @@ def main():
     parser.add_argument(
         "--d1-api-token", type=str, default=os.environ.get("CF_API_TOKEN", "")
     )
+    parser.add_argument(
+        "--use-crawl4ai-batch",
+        action="store_true",
+        help="Use Crawl4AI batch mode for extraction",
+    )
     args = parser.parse_args()
 
     input_dir = Path(args.input)
@@ -458,7 +512,10 @@ def main():
         )
 
     processor = ContentProcessor(
-        max_articles=args.max_articles, mode=args.mode, d1_adapter=d1_adapter
+        max_articles=args.max_articles,
+        mode=args.mode,
+        d1_adapter=d1_adapter,
+        use_crawl4ai_batch=args.use_crawl4ai_batch,
     )
     results, errors = processor.process_batch(articles)
 
