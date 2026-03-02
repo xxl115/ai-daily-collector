@@ -458,6 +458,16 @@ class Default(WorkerEntrypoint):
                 "description": "初始化默认分类和标签数据",
                 "parameters": {"type": "object", "properties": {}},
             },
+            {
+                "name": "get_articles_with_empty_summary",
+                "description": "查询所有 summary 为空的文章（包括没有 content 的文章）",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "limit": {"type": "number", "description": "返回文章数量，默认10"},
+                    },
+                },
+            },
         ]
 
         return self._json_response({"tools": tools})
@@ -876,6 +886,22 @@ class Default(WorkerEntrypoint):
                 return {"error": "Missing id"}
             result = await storage.delete_tag(tag_id) if storage else None
             return {"success": True, "message": f"Deleted tag: {tag_id}"}
+
+        elif tool_name == "get_articles_with_empty_summary":
+            # 直接查询所有 summary 为空的文章（不限制必须有 content）
+            limit = arguments.get("limit", 10)
+            articles = []
+
+            # 使用 SQL 直接查询
+            if storage:
+                sql = "SELECT * FROM articles WHERE summary IS NULL OR summary = '' LIMIT ?"
+                result = await storage._execute_sql(sql, [limit])
+
+                if result.get("success"):
+                    for row in result.get("results", []):
+                        articles.append(storage._row_to_dict(row))
+
+            return {"success": True, "count": len(articles), "articles": articles}
 
         elif tool_name == "init_default_categories":
             # 初始化默认分类和标签

@@ -196,6 +196,7 @@ def main():
     parser.add_argument(
         "--force", action="store_true", help="强制重新总结已有摘要的文章"
     )
+    parser.add_argument("--yes", action="store_true", help="跳过确认，直接处理")
     parser.add_argument("--output", help="输出结果到 JSON 文件")
     args = parser.parse_args()
 
@@ -248,20 +249,21 @@ def main():
 
     # 确认
     if not args.dry_run:
-        if args.force:
-            print(f"\n警告: --force 模式将重新总结所有 {len(articles)} 篇文章！")
-            print("确认要处理这些文章吗？(yes/no): ", end="")
-            confirm = input().strip().lower()
-            if confirm != "yes":
-                print("已取消")
-                return 0
-        else:
-            print(f"\n将处理 {no_summary_count} 篇无摘要的文章。")
-            print("确认要处理这些文章吗？(y/n): ", end="")
-            confirm = input().strip().lower()
-            if confirm != "y":
-                print("已取消")
-                return 0
+        if not args.yes:
+            if args.force:
+                print(f"\n警告: --force 模式将重新总结所有 {len(articles)} 篇文章！")
+                print("确认要处理这些文章吗？(yes/no): ", end="")
+                confirm = input().strip().lower()
+                if confirm != "yes":
+                    print("已取消")
+                    return 0
+            else:
+                print(f"\n将处理 {no_summary_count} 篇无摘要的文章。")
+                print("确认要处理这些文章吗？(y/n): ", end="")
+                confirm = input().strip().lower()
+                if confirm != "y":
+                    print("已取消")
+                    return 0
 
     # 批量总结
     print("\n" + "=" * 60)
