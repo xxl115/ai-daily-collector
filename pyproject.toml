@@ -74,6 +74,8 @@ exclude = ["tests*", "docs*"]
 [tool.black]
 line-length = 100
 target-version = ['py312']
+# 避免单双引号差异导致的格式问题
+skip-string-normalization = true
 
 [tool.isort]
 profile = "black"
