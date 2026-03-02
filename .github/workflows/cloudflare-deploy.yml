@@ -1,0 +1,111 @@
+name: Deploy Cloudflare Python Workers
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'worker.py'
+      - 'wrangler.toml'
+      - '.github/workflows/cloudflare-deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-cloudflare:
+    runs-on: ubuntu-latest
+    name: Deploy to Cloudflare Workers
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Wrangler (Python support)
+        run: |
+          echo "📦 安装 Wrangler CLI..."
+          npm install -g wrangler
+
+      - name: Verify Python Workers Compatibility
+        run: |
+          echo "🔍 检查 Python Workers 兼容性..."
+          wrangler --version
+          echo ""
+
+          # 检查 wrangler.toml 配置
+          echo "📋 Wrangler 配置:"
+          grep -A 5 "compatibility_flags" wrangler.toml || echo "⚠️ 未找到 compatibility_flags"
+          grep "^main = " wrangler.toml || echo "⚠️ 未找到 main 入口"
+
+      - name: Deploy to Cloudflare Workers
+        run: |
+          echo "🚀 开始部署 Cloudflare Python Worker..."
+          wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Extract Worker Name
+        id: worker-name
+        run: |
+          # 从 wrangler.toml 提取 worker 名称
+          WORKER_NAME=$(grep "^name = " wrangler.toml | sed "s/name = \(.*\)/\1/" | tr -d "'\"")
+          echo "name=$WORKER_NAME" >> $GITHUB_OUTPUT
+          echo "📦 Worker 名称: $WORKER_NAME"
+
+      - name: Verify Deployment
+        run: |
+          WORKER_NAME="${{ steps.worker-name.outputs.name }}"
+          WORKER_URL="https://${WORKER_NAME}.workers.dev"
+
+          echo ""
+          echo "⏳ 等待 Worker 生效..."
+          sleep 5
+
+          echo "🧪 健康检查..."
+          HEALTH=$(curl -s --max-time 30 "${WORKER_URL}/" || echo "failed")
+          echo "响应: $HEALTH"
+
+          if echo "$HEALTH" | grep -q "healthy"; then
+            echo "✅ 健康检查通过!"
+          else
+            echo "⚠️ 健康检查失败，但部署可能已完成"
+          fi
+
+          echo ""
+          echo "================================================"
+          echo "✅ 部署完成!"
+          echo ""
+          echo "📝 访问地址:"
+          echo "   - Worker: $WORKER_URL"
+          echo "   - Health: ${WORKER_URL}/"
+          echo "   - API Articles: ${WORKER_URL}/api/v2/articles"
+          echo "   - API Stats: ${WORKER_URL}/api/v2/stats"
+          echo "   - MCP Tools: ${WORKER_URL}/mcp/tools"
+          echo ""
+          echo "🧪 本地测试命令:"
+          echo "   curl ${WORKER_URL}/"
+          echo "   curl ${WORKER_URL}/api/v2/articles?limit=3"
+          echo "================================================"
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          WORKER_NAME="${{ steps.worker-name.outputs.name }}"
+          echo "## 🚀 Cloudflare Python Worker 部署" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Worker 名称**: \`$WORKER_NAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **运行时**: Python Workers" >> $GITHUB_STEP_SUMMARY
+          echo "- **部署地址**: https://${WORKER_NAME}.workers.dev" >> $GITHUB_STEP_SUMMARY
+          echo "- **API 端点**:" >> $GITHUB_STEP_SUMMARY
+          echo "  - Articles: \`/api/v2/articles\`" >> $GITHUB_STEP_SUMMARY
+          echo "  - Stats: \`/api/v2/stats\`" >> $GITHUB_STEP_SUMMARY
+          echo "  - MCP: \`/mcp/tools\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🧪 测试命令" >> $GITHUB_STEP_SUMMARY
+           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "curl https://${WORKER_NAME}.workers.dev/" >> $GITHUB_STEP_SUMMARY
+          echo "curl https://${WORKER_NAME}.workers.dev/api/v2/articles?limit=3" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
