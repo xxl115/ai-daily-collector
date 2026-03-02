@@ -41,9 +41,7 @@ class RateLimiter:
 
         with self.lock:
             # 清理过期请求
-            self.requests[client_id] = [
-                t for t in self.requests[client_id] if t > window_start
-            ]
+            self.requests[client_id] = [t for t in self.requests[client_id] if t > window_start]
 
             if len(self.requests[client_id]) >= self.requests_per_minute:
                 return False
