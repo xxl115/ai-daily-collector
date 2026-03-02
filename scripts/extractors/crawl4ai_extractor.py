@@ -1,6 +1,7 @@
 """Crawl4AI 提取器 - 批量并发方案"""
 
 import asyncio
+import atexit
 import logging
 import os
 from typing import Optional, List, Dict
@@ -10,6 +11,27 @@ logger = logging.getLogger(__name__)
 # 全局爬虫实例（类级别复用）
 _crawler = None
 _crawler_config = None
+_event_loop = None
+
+
+def _get_event_loop():
+    """获取或创建事件循环，避免重复创建"""
+    global _event_loop
+    if _event_loop is None or _event_loop.is_closed():
+        _event_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(_event_loop)
+    return _event_loop
+
+
+def _cleanup():
+    """清理事件循环"""
+    global _event_loop
+    if _event_loop and not _event_loop.is_closed():
+        _event_loop.close()
+        _event_loop = None
+
+
+atexit.register(_cleanup)
 
 
 def _init_crawler():
@@ -79,7 +101,8 @@ class Crawl4AIExtractor:
     def extract(self, url: str) -> Optional[str]:
         """单 URL 提取（同步接口，保持兼容）"""
         try:
-            result = asyncio.run(self._extract_async(url))
+            loop = _get_event_loop()
+            result = loop.run_until_complete(self._extract_async(url))
             return result
         except Exception as e:
             logger.error(f"Crawl4AI 提取失败 {url}: {e}")
@@ -103,7 +126,8 @@ class Crawl4AIExtractor:
             return {}
 
         try:
-            results = asyncio.run(
+            loop = _get_event_loop()
+            results = loop.run_until_complete(
                 self._extract_many_async(urls, callback, progress_interval)
             )
             return results
