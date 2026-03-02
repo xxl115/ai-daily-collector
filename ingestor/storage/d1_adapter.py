@@ -49,7 +49,9 @@ class D1StorageAdapter(StorageAdapter):
             "Content-Type": "application/json",
         }
 
-    def _execute_sql(self, sql: str, params: Optional[List[Any]] = None) -> Dict[str, Any]:
+    def _execute_sql(
+        self, sql: str, params: Optional[List[Any]] = None
+    ) -> Dict[str, Any]:
         """Execute SQL query via D1 API.
 
         Args:
@@ -68,7 +70,9 @@ class D1StorageAdapter(StorageAdapter):
 
         data = json.dumps(payload).encode("utf-8")
 
-        req = urllib.request.Request(url, data=data, headers=self._headers(), method="POST")
+        req = urllib.request.Request(
+            url, data=data, headers=self._headers(), method="POST"
+        )
 
         try:
             with urllib.request.urlopen(req, timeout=30) as response:
@@ -76,7 +80,11 @@ class D1StorageAdapter(StorageAdapter):
 
             if not result.get("success", False):
                 errors = result.get("errors", [])
-                error_msg = errors[0].get("message", "Unknown error") if errors else "Unknown error"
+                error_msg = (
+                    errors[0].get("message", "Unknown error")
+                    if errors
+                    else "Unknown error"
+                )
                 raise Exception(f"D1 API error: {error_msg}")
 
             return result
@@ -221,7 +229,9 @@ class D1StorageAdapter(StorageAdapter):
         tags = get("tags", [])
 
         # Convert lists to JSON strings
-        categories_json = json.dumps(categories, ensure_ascii=False) if categories else "[]"
+        categories_json = (
+            json.dumps(categories, ensure_ascii=False) if categories else "[]"
+        )
         tags_json = json.dumps(tags, ensure_ascii=False) if tags else "[]"
 
         published_at = get("published_at")
@@ -313,7 +323,7 @@ class D1StorageAdapter(StorageAdapter):
         """Fetch articles with optional filtering.
 
         Args:
-            filters: Optional filters (source, id, etc.)
+            filters: Optional filters (source, id, date_start, date_end, etc.)
             limit: Maximum results
             offset: Pagination offset
 
@@ -333,6 +343,15 @@ class D1StorageAdapter(StorageAdapter):
         if "id" in filters:
             sql += " AND id = ?"
             params.append(filters["id"])
+
+        # Date range filters
+        if "date_start" in filters:
+            sql += " AND ingested_at >= ?"
+            params.append(filters["date_start"])
+
+        if "date_end" in filters:
+            sql += " AND ingested_at <= ?"
+            params.append(filters["date_end"])
 
         # Add ordering and pagination
         sql += " ORDER BY ingested_at DESC LIMIT ? OFFSET ?"
@@ -367,7 +386,9 @@ class D1StorageAdapter(StorageAdapter):
 
         return None
 
-    def update_article_content(self, article_id: str, content: str, extraction_method: str) -> None:
+    def update_article_content(
+        self, article_id: str, content: str, extraction_method: str
+    ) -> None:
         """Update article content after extraction.
 
         Args:

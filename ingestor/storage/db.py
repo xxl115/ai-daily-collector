@@ -30,7 +30,9 @@ class StorageAdapter(ABC):
         pass
 
     @abstractmethod
-    def fetch_articles(self, filters: dict, limit: int = 50, offset: int = 0) -> List[ArticleModel]:
+    def fetch_articles(
+        self, filters: dict, limit: int = 50, offset: int = 0
+    ) -> List[ArticleModel]:
         pass
 
 
@@ -132,7 +134,9 @@ class LocalDBAdapter(StorageAdapter):
             json.dumps(article.tags) if article.tags else "[]",
             article.summary,
             getattr(article, "raw_markdown", None),
-            article.ingested_at.isoformat() if article.ingested_at else datetime.now().isoformat(),
+            article.ingested_at.isoformat()
+            if article.ingested_at
+            else datetime.now().isoformat(),
         )
 
     def _row_to_article(self, row: sqlite3.Row) -> ArticleModel:
@@ -143,7 +147,9 @@ class LocalDBAdapter(StorageAdapter):
             content=row["content"] or "",
             url=row["url"],
             published_at=(
-                datetime.fromisoformat(row["published_at"]) if row["published_at"] else None
+                datetime.fromisoformat(row["published_at"])
+                if row["published_at"]
+                else None
             ),
             source=row["source"] or "",
             categories=json.loads(row["categories"]) if row["categories"] else [],
@@ -151,7 +157,9 @@ class LocalDBAdapter(StorageAdapter):
             summary=row["summary"],
             raw_markdown=row["raw_markdown"],
             ingested_at=(
-                datetime.fromisoformat(row["ingested_at"]) if row["ingested_at"] else datetime.now()
+                datetime.fromisoformat(row["ingested_at"])
+                if row["ingested_at"]
+                else datetime.now()
             ),
         )
 
@@ -185,7 +193,9 @@ class LocalDBAdapter(StorageAdapter):
             )
             conn.commit()
 
-    def fetch_articles(self, filters: dict, limit: int = 50, offset: int = 0) -> List[ArticleModel]:
+    def fetch_articles(
+        self, filters: dict, limit: int = 50, offset: int = 0
+    ) -> List[ArticleModel]:
         """Fetch articles with optional filtering and pagination."""
         filters = filters or {}
 
@@ -200,6 +210,15 @@ class LocalDBAdapter(StorageAdapter):
         if "id" in filters:
             sql += " AND id = ?"
             params.append(filters["id"])
+
+        # Date range filters
+        if "date_start" in filters:
+            sql += " AND ingested_at >= ?"
+            params.append(filters["date_start"])
+
+        if "date_end" in filters:
+            sql += " AND ingested_at <= ?"
+            params.append(filters["date_end"])
 
         # Order by ingestion time, newest first
         sql += " ORDER BY ingested_at DESC LIMIT ? OFFSET ?"
@@ -218,7 +237,9 @@ class LocalDBAdapter(StorageAdapter):
             total = cursor.fetchone()["total"]
 
             # Sources
-            cursor = conn.execute("SELECT source, COUNT(*) as count FROM articles GROUP BY source")
+            cursor = conn.execute(
+                "SELECT source, COUNT(*) as count FROM articles GROUP BY source"
+            )
             sources = {row["source"]: row["count"] for row in cursor.fetchall()}
 
             return {
