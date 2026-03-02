@@ -238,9 +238,7 @@ def _init_crawler():
         # 调度器：适中并发，避免被封
         dispatcher = MemoryAdaptiveDispatcher(
             max_session_permit=10,
-            rate_limiter=RateLimiter(
-                base_delay=(1.0, 2.0), max_delay=10.0, max_retries=2
-            ),
+            rate_limiter=RateLimiter(base_delay=(1.0, 2.0), max_delay=10.0, max_retries=2),
             memory_threshold_percent=80.0,
         )
 

@@ -167,9 +167,7 @@ class MultiMethodExtractor:
             soup = BeautifulSoup(html, "html.parser")
 
             # 移除噪声标签
-            for tag in soup(
-                ["script", "style", "nav", "footer", "header", "aside", "iframe"]
-            ):
+            for tag in soup(["script", "style", "nav", "footer", "header", "aside", "iframe"]):
                 tag.decompose()
 
             # 尝试找到主要内容区域
