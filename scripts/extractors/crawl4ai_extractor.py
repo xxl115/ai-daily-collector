@@ -34,7 +34,6 @@ def _init_crawler():
         browser_config = BrowserConfig(
             headless=True,
             verbose=False,
-            timeout=20000,
             browser_mode="builtin",
         )
 
