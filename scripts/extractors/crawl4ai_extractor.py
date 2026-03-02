@@ -4,6 +4,8 @@ import asyncio
 import atexit
 import logging
 import os
+import signal
+import sys
 from typing import Optional, List, Dict
 
 logger = logging.getLogger(__name__)
@@ -23,15 +25,45 @@ def _get_event_loop():
     return _event_loop
 
 
+async def _close_crawler_async():
+    """异步关闭爬虫"""
+    global _crawler
+    if _crawler is not None:
+        try:
+            await _crawler.close()
+        except Exception:
+            pass
+        _crawler = None
+
+
 def _cleanup():
-    """清理事件循环"""
-    global _event_loop
-    if _event_loop and not _event_loop.is_closed():
+    """清理资源"""
+    global _event_loop, _crawler
+
+    # 先尝试关闭爬虫
+    if _crawler is not None and _event_loop is not None and not _event_loop.is_closed():
+        try:
+            _event_loop.run_until_complete(_close_crawler_async())
+        except Exception:
+            pass
+
+    # 再关闭事件循环
+    if _event_loop is not None and not _event_loop.is_closed():
         _event_loop.close()
-        _event_loop = None
+
+    _event_loop = None
+    _crawler = None
+
+
+def _signal_handler(signum, frame):
+    """信号处理"""
+    _cleanup()
+    sys.exit(0)
 
 
 atexit.register(_cleanup)
+signal.signal(signal.SIGINT, _signal_handler)
+signal.signal(signal.SIGTERM, _signal_handler)
 
 
 def _init_crawler():
