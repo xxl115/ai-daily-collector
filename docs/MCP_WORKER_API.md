@@ -18,79 +18,45 @@ AI Daily Collector 支持两种部署方式：
 ```bash
 WORKER_URL="https://ai-daily-collector.xxl185.workers.dev"
 
-# 1. 获取需要摘要的文章
+# 1. 获取需要处理的文章（需要总结、分类或标签）
 curl -X POST "$WORKER_URL/mcp" \
   -H "Content-Type: application/json" \
-  -d '{"tool": "get_articles_needing_summary", "arguments": {"limit": 5}}'
+  -d '{"tool": "get_articles_needing_processing", "arguments": {"limit": 5}}'
 
-# 2. 手动撰写摘要后提交更新
+# 2. 手动撰写摘要后提交更新（可手动指定标签）
 curl -X POST "$WORKER_URL/mcp" \
   -H "Content-Type: application/json" \
   -d '{
-    "tool": "update_article_summary_and_category",
+    "tool": "update_article_summary",
     "arguments": {
       "article_id": "雷峰网-07f58b44",
       "summary": "三星发布Galaxy S26系列，强化与Gemini系统整合...",
-      "category": "AI/大模型",
-      "tags": ["三星", "谷歌", "Gemini"],
-      "auto_classify": false
+      "auto_classify": true,
+      "tags": ["三星", "谷歌", "Gemini"]
     }
   }'
 ```
 
 ---
 
-## Cloudflare Worker API
+## MCP 工具
 
-Worker 部署后可直接调用，无需启动本地服务器。
+### 工具列表
 
-### API 基础信息
+| 工具 | 说明 |
+|------|------|
+| `get_articles_needing_processing` | 获取需要处理的文章列表（需要总结、分类或标签） |
+| `update_article_summary` | 更新文章摘要（支持自动分类和手动指定标签） |
+| `classify_article` | 自动分类文章 |
+| `list_categories` | 列出分类规则 |
 
-```
-Worker URL: https://ai-daily-collector.xxl185.workers.dev
-（根据你的 Cloudflare 配置可能不同）
-```
-
-> ⚠️ **网络说明**: 国内访问可能需要代理
-> ```bash
-> curl --socks5-hostname 127.0.0.1:1080 "https://ai-daily-collector.xxl185.workers.dev/..."
-> ```
-
-### MCP 端点
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/mcp` | POST | 执行 MCP 工具 |
-| `/mcp/tools` | GET | 获取工具列表 |
-
-### 1. 获取工具列表
-
-```bash
-# 查看可用的 MCP 工具
-curl "https://ai-daily-collector.xxl185.workers.dev/mcp/tools"
-```
-
-**响应示例：**
-```json
-{
-  "tools": [
-    {"name": "get_articles_needing_summary", "description": "获取需要总结的文章列表"},
-    {"name": "update_article_summary_and_category", "description": "更新摘要并自动分类"},
-    {"name": "classify_article", "description": "自动分类文章"},
-    {"name": "list_categories", "description": "列出分类规则"}
-  ]
-}
-```
-
----
-
-### 2. 获取需要处理的文章
+### 1. 获取需要处理的文章
 
 ```bash
 curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
   -H "Content-Type: application/json" \
   -d '{
-    "tool": "get_articles_needing_summary",
+    "tool": "get_articles_needing_processing",
     "arguments": {"limit": 10}
   }'
 ```
@@ -106,204 +72,108 @@ curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
       "title": "文章标题",
       "url": "https://...",
       "source": "36kr",
-      "content_preview": "文章内容前300字符..."
+      "needs_summary": true,
+      "needs_category": false,
+      "needs_tags": false,
+      "content_preview": "文章内容前300字符...",
+      "content_length": 450
     }
   ]
 }
 ```
 
-### 3. 提交摘要并自动分类
+**字段说明：**
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `needs_summary` | boolean | 是否需要总结（summary 为空） |
+| `needs_category` | boolean | 是否需要分类（categories 为空） |
+| `needs_tags` | boolean | 是否需要标签（tags 为空） |
+| `content_preview` | string | 文章内容前 300 字符预览 |
+| `content_length` | number | 文章内容总长度 |
+
+---
+
+### 2. 提交摘要（支持自动分类和手动指定标签）
+
+#### 方式一：自动分类
 
 ```bash
 curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
   -H "Content-Type: application/json" \
   -d '{
-    "tool": "update_article_summary_and_category",
+    "tool": "update_article_summary",
     "arguments": {
-      "article_id": "文章ID",
-      "summary": "你撰写的中文摘要",
-      "category": "大厂/人物",
-      "tags": ["LLM", "中国"],
+      "article_id": "https://36kr.com/newsflashes/xxx",
+      "summary": "本文介绍了 OpenAI GPT-5 的最新特性，包括多模态理解能力和100万token的上下文长度。",
       "auto_classify": true
     }
   }'
 ```
 
+#### 方式二：手动指定标签
+
+```bash
+curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "update_article_summary",
+    "arguments": {
+      "article_id": "https://36kr.com/newsflashes/xxx",
+      "summary": "本文介绍了 OpenAI GPT-5 的最新特性...",
+      "auto_classify": false,
+      "tags": ["LLM", "多模态", "发布", "研究"]
+    }
+  }'
+```
+
+#### 方式三：自动分类 + 手动指定标签（标签覆盖自动分类）
+
+```bash
+curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "update_article_summary",
+    "arguments": {
+      "article_id": "https://36kr.com/newsflashes/xxx",
+      "summary": "本文介绍了 OpenAI GPT-5 的最新特性...",
+      "auto_classify": true,
+      "tags": ["LLM", "发布", "国际"]
+    }
+  }'
+```
+
 **参数说明：**
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| article_id | string | 文章唯一标识（URL） |
-| summary | string | 中文摘要（用户手工撰写） |
-| category | string | 手动指定分类，优先级高于自动分类 |
-| tags | array | 手动指定标签数组 |
-| auto_classify | boolean | 是否自动分类，默认 true |
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `article_id` | string | ✅ | 文章唯一标识（URL） |
+| `summary` | string | ✅ | 中文摘要（用户手工撰写） |
+| `auto_classify` | boolean | ❌ | 是否自动分类，默认 true |
+| `tags` | array | ❌ | 手动指定标签数组 |
 
-**响应示例：**
-```json
-{
-  "success": true,
-  "message": "Updated article xxx",
-  "category": "大厂/人物",
-  "tags": ["LLM", "中国", "融资"]
-}
-```
+**标签优先级：**
+1. 如果提供 `tags` 参数，使用手动指定的标签
+2. 如果未提供 `tags` 且 `auto_classify=true`，使用自动分类的标签
+3. 如果 `auto_classify=false`，不修改分类和标签
 
 ---
 
-### 4. 单独分类文章
+### 3. 按日期总结文章
 
 ```bash
-curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool": "classify_article",
-    "arguments": {
-      "article_id": "文章ID"
-    }
-  }'
-```
+# 总结昨天的文章
+python scripts/summarize_by_date.py
 
----
+# 总结指定日期的文章
+python scripts/summarize_by_date.py --date 2026-03-01
 
-### 5. 查看分类规则
+# 总结日期范围的文章
+python scripts/summarize_by_date.py --date-start 2026-03-01 --date-end 2026-03-07
 
-```bash
-# 查看所有分类
-curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{"tool": "list_categories"}'
-```
+# 预览模式
+python scripts/summarize_by_date.py --date 2026-03-01 --dry-run
 
----
-
-## 分类和标签配置（数据库管理）
-
-> 新增功能：分类和标签规则存储在数据库中，可通过 API 动态管理。
-
-### 分类管理 API
-
-#### 获取所有分类
-
-```bash
-curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{"tool": "get_categories"}'
-```
-
-**响应示例：**
-```json
-{
-  "success": true,
-  "categories": [
-    {"id": 1, "name": "大厂/人物", "keywords": ["OpenAI", "Anthropic", "Google", ...]},
-    {"id": 2, "name": "Agent工作流", "keywords": ["Agent", "MCP", "A2A", ...]}
-  ]
-}
-```
-
-#### 创建分类
-
-```bash
-curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool": "create_category",
-    "arguments": {
-      "name": "新分类名称",
-      "keywords": ["关键词1", "关键词2", "关键词3"]
-    }
-  }'
-```
-
-#### 更新分类
-
-```bash
-curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool": "update_category",
-    "arguments": {
-      "id": 1,
-      "name": "新分类名称",
-      "keywords": ["新关键词1", "新关键词2"]
-    }
-  }'
-```
-
-#### 删除分类
-
-```bash
-curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool": "delete_category",
-    "arguments": {"id": 1}
-  }'
-```
-
-### 标签管理 API
-
-#### 获取所有标签
-
-```bash
-curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{"tool": "get_tags"}'
-```
-
-#### 创建标签
-
-```bash
-curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool": "create_tag",
-    "arguments": {
-      "name": "新标签名称",
-      "keywords": ["关键词1", "关键词2"]
-    }
-  }'
-```
-
-#### 更新标签
-
-```bash
-curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool": "update_tag",
-    "arguments": {
-      "id": 1,
-      "name": "新标签名称",
-      "keywords": ["新关键词"]
-    }
-  }'
-```
-
-#### 删除标签
-
-```bash
-curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool": "delete_tag",
-    "arguments": {"id": 1}
-  }'
-```
-
-### 初始化默认数据
-
-首次部署或表为空时，可以初始化默认分类和标签：
-
-```bash
-curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{"tool": "init_default_categories"}'
-```
-
-**响应：**
-```json
-{"success": true, "message": "Initialized 16 categories/tags"}
+# 输出结果到 JSON
+python scripts/summarize_by_date.py --date 2026-03-01 --output reports/summary.json
 ```
 
 ---
@@ -336,175 +206,9 @@ curl -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
 | 融资 | 融资, 投资, 估值, IPO |
 | 财报 | 财报, 营收, 利润, 业绩 |
 | 中国 | 中国, 国产, 北京, 上海, 深圳 |
-| 国际 | 美国, 欧洲, 日本, 海外 |
+| 国际 | 美国, 欧洲, 日本, 海外, 全球 |
 | 创业 | 创业, 创始人, CEO |
 | IPO | IPO, 港交所, 上市 |
-
----
-
-## 手动操作流程
-
-### 使用 Cloudflare Worker API（推荐）
-
-```bash
-WORKER_URL="https://ai-daily-collector.xxl185.workers.dev"
-
-# 1. 获取待处理文章
-curl -X POST "$WORKER_URL/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{"tool": "get_articles_needing_summary", "arguments": {"limit": 5}}'
-
-# 2. 手工撰写摘要后提交
-curl -X POST "$WORKER_URL/mcp" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool": "update_article_summary_and_category",
-    "arguments": {
-      "article_id": "https://example.com/article",
-      "summary": "本文介绍了...",
-      "auto_classify": true
-    }
-  }'
-```
-
-### 使用本地 API（开发测试）
-
-```bash
-# 启动本地 API
-make api
-
-# 然后使用 localhost:8000
-curl "http://localhost:8000/mcp/articles/need-summary?limit=5"
-```
-
-### Python 脚本示例
-
-```python
-import requests
-
-WORKER_URL = "https://ai-daily-collector.xxl185.workers.dev"
-
-# 获取待处理文章
-response = requests.post(
-    f"{WORKER_URL}/mcp",
-    json={"tool": "get_articles_needing_summary", "arguments": {"limit": 5}}
-)
-articles = response.json()["articles"]
-
-# 处理每篇文章
-for article in articles:
-    article_id = article["id"]
-    content = article.get("content_preview", "")
-    
-    # 手工撰写摘要
-    summary = input(f"请为 '{article['title']}' 撰写摘要: ")
-    
-    # 提交
-    result = requests.post(
-        f"{WORKER_URL}/mcp",
-        json={
-            "tool": "update_article_summary_and_category",
-            "arguments": {
-                "article_id": article_id,
-                "summary": summary,
-                "auto_classify": True
-            }
-        }
-    )
-    print(result.json())
-```
-
----
-
-## 数据库修复（编码问题）
-
-### 问题描述
-
-早期版本存在双重编码问题，中文被存储为 Unicode 转义序列：
-- **错误**: `\u949b\u5a92\u4f53\u5206\u6790`
-- **正确**: `钛媒体分析`
-
-### 解决方案
-
-代码中已添加 `_decode_double_encoded()` 方法自动处理：
-
-```python
-# ingestor/storage/d1_adapter.py
-
-def _decode_double_encoded(self, text: str) -> str:
-    """Decode double-encoded Unicode strings."""
-    if not text or '\\u' not in text:
-        return text
-    try:
-        return text.encode('utf-8').decode('unicode_escape')
-    except Exception:
-        return text
-```
-
-### 手动修复现有数据
-
-```bash
-# 查看有问题的数据
-npx wrangler d1 execute ai-daily-collector \
-  --command "SELECT id, summary FROM articles WHERE summary LIKE '%\\u%'" \
-  --remote
-```
-
----
-
-## 快速参考
-
-### Cloudflare Worker（生产）
-
-| 操作 | 命令 |
-|------|------|
-| 工具列表 | `curl https://your-worker.workers.dev/mcp/tools` |
-| 获取待处理 | `curl -X POST https://your-worker.workers.dev/mcp -d '{"tool":"get_articles_needing_summary"}'` |
-| 提交摘要 | `curl -X POST https://your-worker.workers.dev/mcp -d '{"tool":"update_article_summary_and_category",...}'` |
-| 获取分类 | `curl -X POST https://your-worker.workers.dev/mcp -d '{"tool":"get_categories"}'` |
-| 创建分类 | `curl -X POST https://your-worker.workers.dev/mcp -d '{"tool":"create_category",...}'` |
-| 获取标签 | `curl -X POST https://your-worker.workers.dev/mcp -d '{"tool":"get_tags"}'` |
-| 部署 Worker | `npx wrangler deploy` |
-
-### 本地开发
-
-| 操作 | 命令 |
-|------|------|
-| 启动 API | `make api` |
-| 获取待处理 | `curl localhost:8000/mcp/articles/need-summary` |
-| 提交摘要 | `curl -X POST localhost:8000/mcp/call -d '{"tool":"update_article_summary_and_category",...}''` |
-
----
-
-## 部署 Cloudflare Worker
-
-### 1. 配置环境变量
-
-```bash
-# 设置 Cloudflare API Token
-wrangler secret put CF_API_TOKEN
-# 输入你的 Cloudflare API Token
-
-# 设置 D1 数据库 ID
-wrangler secret put CF_D1_DATABASE_ID
-# 输入 D1 数据库 ID: 62f5766f-e837-402c-9237-390d4dbbdb52
-```
-
-### 2. 部署 Worker
-
-```bash
-npx wrangler deploy
-```
-
-### 3. 测试部署
-
-```bash
-# 健康检查
-curl "https://your-worker.workers.dev/health"
-
-# 获取工具列表
-curl "https://your-worker.workers.dev/mcp/tools"
-```
 
 ---
 
@@ -512,8 +216,5 @@ curl "https://your-worker.workers.dev/mcp/tools"
 
 | 文件 | 说明 |
 |------|------|
-| `worker.py` | Cloudflare Worker 主文件（含 MCP 逻辑） |
 | `api/mcp.py` | 本地 FastAPI MCP 接口 |
-| `scripts/classifiers/rule_classifier.py` | 规则分类器 |
-| `ingestor/storage/d1_adapter.py` | D1 数据库适配器 |
-| `wrangler.toml` | Cloudflare Worker 配置 |
+| `scripts/summarize_by_date.py` | 按日期批量总结脚本 |
