@@ -30,11 +30,12 @@ def _init_crawler():
         )
         from crawl4ai import LXMLWebScrapingStrategy
 
-        # 浏览器配置
+        # 浏览器配置：使用内置浏览器模式，复用浏览器实例
         browser_config = BrowserConfig(
             headless=True,
             verbose=False,
             timeout=30000,
+            browser_mode="builtin",  # 复用内置浏览器，加快启动
         )
 
         # 爬取配置：使用 LXML 解析，速度提升 20x

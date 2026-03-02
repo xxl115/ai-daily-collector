@@ -32,16 +32,34 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-extract-v1-${{ hashFiles('pyproject.toml') }}
+          key: ${{ runner.os }}-pip-extract-v2-${{ hashFiles('pyproject.toml', 'requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-extract-v2-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-v1-chromium
+          restore-keys: |
+            ${{ runner.os }}-playwright-v1-
+
+      - name: Cache Crawl4AI
+        uses: actions/cache@v4
+        with:
+          path: ~/.crawl4ai
+          key: ${{ runner.os }}-crawl4ai-v1
+          restore-keys: |
+            ${{ runner.os }}-crawl4ai-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install trafilatura requests beautifulsoup4 jieba pyyaml
-          pip install crawl4ai
-          pip install cloudflare
+          pip install crawl4ai cloudflare
           pip install playwright
-          playwright install chromium --with-deps
+          playwright install chromium --with-deps || true
+          crawl4ai-setup || true
 
       - name: Run extraction from D1
         timeout-minutes: 45
