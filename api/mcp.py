@@ -287,6 +287,7 @@ class MCPRequest(BaseModel):
 class ArticleSummaryRequest(BaseModel):
     summary: str
     auto_classify: bool = True
+    tags: list[str] | None = None
 
 
 @router.get("/tools")
@@ -295,11 +296,11 @@ async def list_tools():
         "tools": [
             {
                 "name": "get_articles_needing_processing",
-                "description": "获取需要处理的文章列表（需要总结或分类）",
+                "description": "获取需要处理的文章列表（需要总结、分类或标签）",
             },
             {
                 "name": "update_article_summary",
-                "description": "更新文章摘要（支持自动分类）",
+                "description": "更新文章摘要（支持自动分类和手动指定标签）",
             },
             {"name": "classify_article", "description": "自动分类文章"},
             {"name": "list_categories", "description": "列出分类规则"},
@@ -319,7 +320,7 @@ async def call_mcp_tool(request: MCPRequest):
         return {"error": "Storage not configured"}
 
     if tool_name == "get_articles_needing_processing":
-        # 统一获取需要处理的文章（需要总结或分类）
+        # 统一获取需要处理的文章（需要总结、分类或标签）
         limit = arguments.get("limit", 10)
         articles = dao.fetch_articles(limit=100)
         result = []
@@ -327,8 +328,9 @@ async def call_mcp_tool(request: MCPRequest):
             if a.content:
                 needs_summary = not a.summary or a.summary == ""
                 needs_category = not a.categories or len(a.categories) == 0
+                needs_tags = not a.tags or len(a.tags) == 0
                 # 只返回需要处理的文章
-                if needs_summary or needs_category:
+                if needs_summary or needs_category or needs_tags:
                     result.append(
                         {
                             "id": a.id,
@@ -337,6 +339,7 @@ async def call_mcp_tool(request: MCPRequest):
                             "source": a.source,
                             "needs_summary": needs_summary,
                             "needs_category": needs_category,
+                            "needs_tags": needs_tags,
                             "content_preview": (
                                 a.content[:300] + "..."
                                 if len(a.content) > 300
@@ -353,6 +356,7 @@ async def call_mcp_tool(request: MCPRequest):
         article_id = arguments.get("article_id")
         summary = arguments.get("summary")
         auto_classify = arguments.get("auto_classify", True)
+        tags = arguments.get("tags")
 
         if not article_id or not summary:
             return {"error": "Missing article_id or summary"}
@@ -371,13 +375,17 @@ async def call_mcp_tool(request: MCPRequest):
             article.categories = [category_result["category"]]
             article.tags = category_result["tags"]
 
+        # 手动指定标签（可选）
+        if tags is not None:
+            article.tags = tags if isinstance(tags, list) else [tags]
+
         storage.upsert_article(article)
 
         return {
             "success": True,
             "message": f"Updated article {article_id}",
             "category": category_result["category"] if category_result else None,
-            "tags": category_result["tags"] if category_result else [],
+            "tags": article.tags if article.tags else [],
         }
 
     elif tool_name == "classify_article":
@@ -434,7 +442,8 @@ async def get_articles_needing_processing(limit: int = 10):
         if a.content:
             needs_summary = not a.summary or a.summary == ""
             needs_category = not a.categories or len(a.categories) == 0
-            if needs_summary or needs_category:
+            needs_tags = not a.tags or len(a.tags) == 0
+            if needs_summary or needs_category or needs_tags:
                 result.append(
                     {
                         "id": a.id,
@@ -443,6 +452,7 @@ async def get_articles_needing_processing(limit: int = 10):
                         "source": a.source,
                         "needs_summary": needs_summary,
                         "needs_category": needs_category,
+                        "needs_tags": needs_tags,
                         "content_preview": (
                             a.content[:300] + "..."
                             if a.content and len(a.content) > 300
@@ -535,13 +545,17 @@ async def update_summary(article_id: str, request: ArticleSummaryRequest):
         article.categories = [category_result["category"]]
         article.tags = category_result["tags"]
 
+    # 手动指定标签（可选）
+    if request.tags is not None:
+        article.tags = request.tags
+
     storage.upsert_article(article)
 
     return {
         "success": True,
         "message": f"Updated article {article_id}",
         "category": category_result["category"] if category_result else None,
-        "tags": category_result["tags"] if category_result else [],
+        "tags": article.tags if article.tags else [],
     }
 
 
