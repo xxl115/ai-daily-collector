@@ -5,7 +5,80 @@ import logging
 import threading
 from typing import Optional, List, Callable
 
+import requests
+
 logger = logging.getLogger(__name__)
+
+
+def extract_from_google_cache(url: str, timeout: float = 10.0) -> Optional[str]:
+    """
+    从 Google Cache 提取内容
+
+    Args:
+        url: 原始 URL
+        timeout: 请求超时时间
+
+    Returns:
+        提取的内容，失败返回 None
+    """
+    try:
+        cache_url = f"https://webcache.googleusercontent.com/search?q=cache:{url}"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        response = requests.get(
+            cache_url, headers=headers, timeout=timeout, allow_redirects=True
+        )
+
+        if response.status_code == 200 and len(response.text) > 500:
+            # 从 Cache 页面中提取主要内容
+            text = response.text
+            # Google Cache 页面结构：主要内容在 <pre> 或 <div class="rich-content"> 中
+            import re
+
+            # 尝试提取 pre 标签内容
+            match = re.search(r"<pre[^>]*>(.*?)</pre>", text, re.DOTALL | re.IGNORECASE)
+            if match:
+                content = match.group(1)
+                # 清理 HTML 实体
+                content = (
+                    content.replace("&lt;", "<")
+                    .replace("&gt;", ">")
+                    .replace("&amp;", "&")
+                )
+                if len(content) > 200:
+                    logger.info(f"Google Cache 提取成功: {url}")
+                    return content.strip()
+
+            # 尝试提取 div.sh-message 之外的主要内容
+            match = re.search(
+                r'<div[^>]*class="[^"]*rich-content[^"]*"[^>]*>(.*?)</div>',
+                text,
+                re.DOTALL | re.IGNORECASE,
+            )
+            if match:
+                content = match.group(1)
+                # 简单清理 HTML
+                content = re.sub(r"<[^>]+>", "", content)
+                content = (
+                    content.replace("&nbsp;", " ")
+                    .replace("&lt;", "<")
+                    .replace("&gt;", ">")
+                    .replace("&amp;", "&")
+                )
+                if len(content) > 200:
+                    logger.info(f"Google Cache 提取成功: {url}")
+                    return content.strip()
+
+            logger.warning(f"Google Cache 内容过短: {url}")
+            return None
+
+        logger.warning(f"Google Cache 返回 {response.status_code}: {url}")
+        return None
+
+    except Exception as e:
+        logger.debug(f"Google Cache 提取失败: {url} - {e}")
+        return None
 
 
 class RaceExtractor:
@@ -35,7 +108,11 @@ class RaceExtractor:
                 return None
 
             try:
-                result = extractor.extract(url) if hasattr(extractor, "extract") else extractor(url)
+                result = (
+                    extractor.extract(url)
+                    if hasattr(extractor, "extract")
+                    else extractor(url)
+                )
 
                 with self._result_lock:
                     if self._result["content"] is None and result:
@@ -50,7 +127,9 @@ class RaceExtractor:
                         self._result["error"] = str(e)
                 return None
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.extractors)) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=len(self.extractors)
+        ) as executor:
             futures = [
                 executor.submit(try_extractor, extractor, idx)
                 for idx, extractor in enumerate(self.extractors)
@@ -118,6 +197,15 @@ class FastExtractor:
                     return content, "crawl4ai"
             except Exception as e:
                 logger.debug(f"Crawl4AI failed: {e}")
+
+        # 第三轮：降级到 Google Cache
+        try:
+            content = extract_from_google_cache(url)
+            if content:
+                logger.info(f"Google Cache 提取成功: {url}")
+                return content, "google-cache"
+        except Exception as e:
+            logger.debug(f"Google Cache failed: {e}")
 
         logger.info(f"所有提取器失败: {url}")
         return "-1", "failed"
