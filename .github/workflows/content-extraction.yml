@@ -10,7 +10,7 @@ on:
         type: number
         description: 'Maximum articles to process'
         required: false
-        default: 100
+        default: 150
 
 env:
   PYTHON_VERSION: "3.12"
@@ -71,7 +71,7 @@ jobs:
           python scripts/content_processor.py \
             --source d1 \
             --mode extract-only \
-            --max-articles ${{ inputs.max_articles || 30 }} \
+            --max-articles ${{ inputs.max_articles || 150 }} \
             --use-crawl4ai-batch \
             --d1-account-id ${{ secrets.CF_ACCOUNT_ID }} \
             --d1-database-id ${{ secrets.CF_D1_DATABASE_ID }} \
