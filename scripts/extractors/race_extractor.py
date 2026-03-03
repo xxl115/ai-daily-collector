@@ -2,6 +2,7 @@
 
 import concurrent.futures
 import logging
+import os
 import threading
 from typing import Optional, List, Callable
 
@@ -13,34 +14,40 @@ logger = logging.getLogger(__name__)
 def extract_from_google_cache(url: str, timeout: float = 10.0) -> Optional[str]:
     """
     从 Google Cache 提取内容
-
-    Args:
-        url: 原始 URL
-        timeout: 请求超时时间
-
-    Returns:
-        提取的内容，失败返回 None
     """
     try:
         cache_url = f"https://webcache.googleusercontent.com/search?q=cache:{url}"
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
         }
+
+        proxies = {}
+        proxy = (
+            os.environ.get("JINA_PROXY_URL")
+            or os.environ.get("http_proxy")
+            or os.environ.get("HTTP_PROXY")
+            or os.environ.get("socks_proxy")
+            or os.environ.get("SOCKS_PROXY")
+        )
+        if proxy:
+            proxies = {"http": proxy, "https": proxy}
+
         response = requests.get(
-            cache_url, headers=headers, timeout=timeout, allow_redirects=True
+            cache_url,
+            headers=headers,
+            timeout=timeout,
+            allow_redirects=True,
+            proxies=proxies if proxies else None,
         )
 
         if response.status_code == 200 and len(response.text) > 500:
-            # 从 Cache 页面中提取主要内容
             text = response.text
-            # Google Cache 页面结构：主要内容在 <pre> 或 <div class="rich-content"> 中
             import re
 
-            # 尝试提取 pre 标签内容
             match = re.search(r"<pre[^>]*>(.*?)</pre>", text, re.DOTALL | re.IGNORECASE)
             if match:
                 content = match.group(1)
-                # 清理 HTML 实体
                 content = (
                     content.replace("&lt;", "<")
                     .replace("&gt;", ">")
@@ -50,7 +57,6 @@ def extract_from_google_cache(url: str, timeout: float = 10.0) -> Optional[str]:
                     logger.info(f"Google Cache 提取成功: {url}")
                     return content.strip()
 
-            # 尝试提取 div.sh-message 之外的主要内容
             match = re.search(
                 r'<div[^>]*class="[^"]*rich-content[^"]*"[^>]*>(.*?)</div>',
                 text,
@@ -58,7 +64,6 @@ def extract_from_google_cache(url: str, timeout: float = 10.0) -> Optional[str]:
             )
             if match:
                 content = match.group(1)
-                # 简单清理 HTML
                 content = re.sub(r"<[^>]+>", "", content)
                 content = (
                     content.replace("&nbsp;", " ")
@@ -78,6 +83,172 @@ def extract_from_google_cache(url: str, timeout: float = 10.0) -> Optional[str]:
 
     except Exception as e:
         logger.debug(f"Google Cache 提取失败: {url} - {e}")
+        return None
+
+
+def extract_from_wayback(url: str, timeout: float = 10.0) -> Optional[str]:
+    """
+    从 Wayback Machine 提取内容
+    """
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+
+        proxies = {}
+        proxy = (
+            os.environ.get("JINA_PROXY_URL")
+            or os.environ.get("http_proxy")
+            or os.environ.get("HTTP_PROXY")
+        )
+        if proxy:
+            proxies = {"http": proxy, "https": proxy}
+
+        # 先获取最近的 snapshot
+        api_url = f"https://archive.org/wayback/available?url={url}"
+        response = requests.get(
+            api_url,
+            headers=headers,
+            timeout=timeout,
+            proxies=proxies if proxies else None,
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("archived_snapshots", {}).get("closest"):
+                snapshot_url = data["archived_snapshots"]["closest"]["url"]
+                # 获取 snapshot 内容
+                snap_response = requests.get(
+                    snapshot_url,
+                    headers=headers,
+                    timeout=timeout,
+                    proxies=proxies if proxies else None,
+                )
+                if snap_response.status_code == 200 and len(snap_response.text) > 500:
+                    text = snap_response.text
+                    import re
+
+                    # 尝试提取 article 或 main 内容
+                    match = re.search(
+                        r"<article[^>]*>(.*?)</article>",
+                        text,
+                        re.DOTALL | re.IGNORECASE,
+                    )
+                    if not match:
+                        match = re.search(
+                            r"<main[^>]*>(.*?)</main>", text, re.DOTALL | re.IGNORECASE
+                        )
+                    if not match:
+                        match = re.search(
+                            r'<div[^>]*class="[^"]*article[^"]*"[^>]*>(.*?)</div>',
+                            text,
+                            re.DOTALL | re.IGNORECASE,
+                        )
+
+                    if match:
+                        content = match.group(1)
+                        content = re.sub(r"<[^>]+>", "", content)
+                        content = (
+                            content.replace("&nbsp;", " ")
+                            .replace("&lt;", "<")
+                            .replace("&gt;", ">")
+                            .replace("&amp;", "&")
+                        )
+                        content = re.sub(r"\s+", " ", content).strip()
+                        if len(content) > 200:
+                            logger.info(f"Wayback Machine 提取成功: {url}")
+                            return content
+
+        logger.debug(f"Wayback Machine 无可用快照: {url}")
+        return None
+
+    except Exception as e:
+        logger.debug(f"Wayback Machine 提取失败: {url} - {e}")
+        return None
+
+
+def extract_with_bypass(url: str, timeout: float = 10.0) -> Optional[str]:
+    """
+    尝试通过修改请求头绕过付费墙
+    """
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "DNT": "1",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Cache-Control": "max-age=0",
+        }
+
+        proxies = {}
+        proxy = (
+            os.environ.get("JINA_PROXY_URL")
+            or os.environ.get("http_proxy")
+            or os.environ.get("HTTP_PROXY")
+        )
+        if proxy:
+            proxies = {"http": proxy, "https": proxy}
+
+        response = requests.get(
+            url, headers=headers, timeout=timeout, proxies=proxies if proxies else None
+        )
+
+        if response.status_code == 200 and len(response.text) > 500:
+            import re
+
+            text = response.text
+
+            # 尝试提取 article/main/body 内容
+            match = re.search(
+                r"<article[^>]*>(.*?)</article>", text, re.DOTALL | re.IGNORECASE
+            )
+            if not match:
+                match = re.search(
+                    r"<main[^>]*>(.*?)</main>", text, re.DOTALL | re.IGNORECASE
+                )
+            if not match:
+                match = re.search(
+                    r"<body[^>]*>(.*?)</body>", text, re.DOTALL | re.IGNORECASE
+                )
+
+            if match:
+                content = match.group(1)
+                content = re.sub(
+                    r"<script[^>]*>.*?</script>",
+                    "",
+                    content,
+                    flags=re.DOTALL | re.IGNORECASE,
+                )
+                content = re.sub(
+                    r"<style[^>]*>.*?</style>",
+                    "",
+                    content,
+                    flags=re.DOTALL | re.IGNORECASE,
+                )
+                content = re.sub(r"<[^>]+>", "", content)
+                content = (
+                    content.replace("&nbsp;", " ")
+                    .replace("&lt;", "<")
+                    .replace("&gt;", ">")
+                    .replace("&amp;", "&")
+                )
+                content = re.sub(r"\s+", " ", content).strip()
+                if len(content) > 200:
+                    logger.info(f"Bypass 提取成功: {url}")
+                    return content
+
+        logger.debug(f"Bypass 返回 {response.status_code}: {url}")
+        return None
+
+    except Exception as e:
+        logger.debug(f"Bypass 提取失败: {url} - {e}")
         return None
 
 
@@ -206,6 +377,24 @@ class FastExtractor:
                 return content, "google-cache"
         except Exception as e:
             logger.debug(f"Google Cache failed: {e}")
+
+        # 第四轮：降级到 Wayback Machine
+        try:
+            content = extract_from_wayback(url)
+            if content:
+                logger.info(f"Wayback Machine 提取成功: {url}")
+                return content, "wayback"
+        except Exception as e:
+            logger.debug(f"Wayback Machine failed: {e}")
+
+        # 第五轮：尝试绕过付费墙
+        try:
+            content = extract_with_bypass(url)
+            if content:
+                logger.info(f"Bypass 提取成功: {url}")
+                return content, "bypass"
+        except Exception as e:
+            logger.debug(f"Bypass failed: {e}")
 
         logger.info(f"所有提取器失败: {url}")
         return "-1", "failed"
