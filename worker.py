@@ -172,7 +172,9 @@ class Default(WorkerEntrypoint):
                 filters["source"] = source
 
             offset = (page - 1) * page_size
-            articles = await storage.fetch_articles(filters=filters, limit=page_size, offset=offset)
+            articles = await storage.fetch_articles(
+                filters=filters, limit=page_size, offset=offset
+            )
             stats = await storage.get_stats()
 
             return self._json_response(
@@ -184,7 +186,9 @@ class Default(WorkerEntrypoint):
                 }
             )
         except Exception as e:
-            return self._json_response({"error": str(e), "total": 0, "articles": []}, status=500)
+            return self._json_response(
+                {"error": str(e), "total": 0, "articles": []}, status=500
+            )
 
     async def _article_detail_response(self, path, storage):
         """单篇文章详情响应"""
@@ -215,7 +219,8 @@ class Default(WorkerEntrypoint):
                 {
                     "total_articles": stats.get("total", 0),
                     "sources": [
-                        {"source": k, "count": v} for k, v in stats.get("sources", {}).items()
+                        {"source": k, "count": v}
+                        for k, v in stats.get("sources", {}).items()
                     ],
                     "last_updated": datetime.utcnow().isoformat() + "Z",
                 }
@@ -237,7 +242,9 @@ class Default(WorkerEntrypoint):
     async def _crawl_logs_response(self, parsed_url, storage):
         """抓取日志响应"""
         if not storage:
-            return self._json_response({"total": 0, "logs": [], "page": 1, "page_size": 20})
+            return self._json_response(
+                {"total": 0, "logs": [], "page": 1, "page_size": 20}
+            )
 
         try:
             query_params = parse_qs(parsed_url.query)
@@ -464,7 +471,10 @@ class Default(WorkerEntrypoint):
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "limit": {"type": "number", "description": "返回文章数量，默认10"},
+                        "limit": {
+                            "type": "number",
+                            "description": "返回文章数量，默认10",
+                        },
                     },
                 },
             },
@@ -481,7 +491,9 @@ class Default(WorkerEntrypoint):
             arguments = body.get("arguments", {})
 
             if not tool_name:
-                return self._json_response({"error": "Missing 'tool' parameter"}, status=400)
+                return self._json_response(
+                    {"error": "Missing 'tool' parameter"}, status=400
+                )
 
             # 执行工具
             result = await self._execute_mcp_tool(tool_name, arguments, storage)
@@ -692,7 +704,7 @@ class Default(WorkerEntrypoint):
         # 执行对应的工具
         if tool_name == "get_articles_needing_processing":
             # 统一获取需要处理的文章（需要总结、分类或标签）
-            limit = arguments.get("limit", 10)
+            limit = arguments.get("limit", 150)
             articles = []
             rows = await storage.fetch_articles(limit=100) if storage else []
 
@@ -700,8 +712,13 @@ class Default(WorkerEntrypoint):
                 if row.get("content"):
                     # 检查是否需要处理
                     needs_summary = not row.get("summary") or row.get("summary") == ""
-                    needs_category = row.get("categories") is None or len(row.get("categories", [])) == 0
-                    needs_tags = row.get("tags") is None or len(row.get("tags", [])) == 0
+                    needs_category = (
+                        row.get("categories") is None
+                        or len(row.get("categories", [])) == 0
+                    )
+                    needs_tags = (
+                        row.get("tags") is None or len(row.get("tags", [])) == 0
+                    )
 
                     # 只返回需要处理的文章
                     if needs_summary or needs_category or needs_tags:
@@ -719,7 +736,9 @@ class Default(WorkerEntrypoint):
                                     if len(row["content"]) > 300
                                     else row["content"]
                                 ),
-                                "content_length": len(row["content"]) if row["content"] else 0,
+                                "content_length": len(row["content"])
+                                if row["content"]
+                                else 0,
                                 "ingested_at": row["ingested_at"],
                             }
                         )
@@ -762,7 +781,9 @@ class Default(WorkerEntrypoint):
                     )
                 else:
                     # 回退到默认规则
-                    category_result = classify(article.get("content", "") + " " + summary)
+                    category_result = classify(
+                        article.get("content", "") + " " + summary
+                    )
                 article["categories"] = [category_result["category"]]
 
             if manual_tags:
@@ -777,7 +798,9 @@ class Default(WorkerEntrypoint):
             return {
                 "success": True,
                 "message": f"Updated article {article_id}",
-                "category": article["categories"][0] if article.get("categories") else None,
+                "category": article["categories"][0]
+                if article.get("categories")
+                else None,
                 "tags": article.get("tags", []),
             }
 
@@ -795,7 +818,9 @@ class Default(WorkerEntrypoint):
             # 如果没有传入 content，从文章获取
             if not content:
                 content = (
-                    (article.get("content", "") or "") + " " + (article.get("title", "") or "")
+                    (article.get("content", "") or "")
+                    + " "
+                    + (article.get("title", "") or "")
                 )
 
             result = classify(content)
@@ -848,7 +873,11 @@ class Default(WorkerEntrypoint):
             keywords = arguments.get("keywords", [])
             if not category_id or not name:
                 return {"error": "Missing id or name"}
-            result = await storage.update_category(category_id, name, keywords) if storage else None
+            result = (
+                await storage.update_category(category_id, name, keywords)
+                if storage
+                else None
+            )
             return {"success": True, "message": f"Updated category: {name}"}
 
         elif tool_name == "delete_category":
@@ -877,7 +906,9 @@ class Default(WorkerEntrypoint):
             keywords = arguments.get("keywords", [])
             if not tag_id or not name:
                 return {"error": "Missing id or name"}
-            result = await storage.update_tag(tag_id, name, keywords) if storage else None
+            result = (
+                await storage.update_tag(tag_id, name, keywords) if storage else None
+            )
             return {"success": True, "message": f"Updated tag: {name}"}
 
         elif tool_name == "delete_tag":
@@ -889,7 +920,7 @@ class Default(WorkerEntrypoint):
 
         elif tool_name == "get_articles_with_empty_summary":
             # 直接查询所有 summary 为空的文章（不限制必须有 content）
-            limit = arguments.get("limit", 10)
+            limit = arguments.get("limit", 150)
             articles = []
 
             # 使用 SQL 直接查询
@@ -1044,7 +1075,9 @@ class WorkersD1StorageAdapter:
                             "id": row.get("id"),
                             "name": row.get("name"),
                             "keywords": (
-                                json.loads(row.get("keywords", "[]")) if row.get("keywords") else []
+                                json.loads(row.get("keywords", "[]"))
+                                if row.get("keywords")
+                                else []
                             ),
                         }
                     )
@@ -1099,7 +1132,9 @@ class WorkersD1StorageAdapter:
                             "id": row.get("id"),
                             "name": row.get("name"),
                             "keywords": (
-                                json.loads(row.get("keywords", "[]")) if row.get("keywords") else []
+                                json.loads(row.get("keywords", "[]"))
+                                if row.get("keywords")
+                                else []
                             ),
                         }
                     )
@@ -1258,14 +1293,18 @@ class WorkersD1StorageAdapter:
         """Get database statistics"""
         try:
             # Get total count
-            count_result = await self._execute_sql("SELECT COUNT(*) as total FROM articles")
+            count_result = await self._execute_sql(
+                "SELECT COUNT(*) as total FROM articles"
+            )
             total = 0
             if count_result.get("success") and count_result.get("results"):
                 row = count_result["results"][0]
                 if isinstance(row, dict):
                     total = row.get("total", 0)
                 else:
-                    total = getattr(row, "total", None) or getattr(row, "COUNT(*)", 0) or 0
+                    total = (
+                        getattr(row, "total", None) or getattr(row, "COUNT(*)", 0) or 0
+                    )
 
             # Get sources breakdown
             sources_result = await self._execute_sql(
@@ -1288,7 +1327,9 @@ class WorkersD1StorageAdapter:
     async def _list_tables(self):
         """List all tables in the database"""
         try:
-            result = await self._execute_sql("SELECT name FROM sqlite_master WHERE type='table'")
+            result = await self._execute_sql(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
             if result.get("success"):
                 return [row.get("name") for row in result.get("results", [])]
             return []
@@ -1327,7 +1368,9 @@ class WorkersD1StorageAdapter:
             "title": str(get_value("title", "")),
             "content": str(get_value("content", "")),
             "url": str(get_value("url", "")),
-            "published_at": str(get_value("published_at")) if get_value("published_at") else None,
+            "published_at": str(get_value("published_at"))
+            if get_value("published_at")
+            else None,
             "source": str(get_value("source", "")),
             "categories": categories,
             "tags": tags,
@@ -1354,7 +1397,9 @@ class WorkersD1StorageAdapter:
         """获取抓取统计"""
         try:
             # Total crawls
-            total_result = await self._execute_sql("SELECT COUNT(*) as total FROM crawl_logs")
+            total_result = await self._execute_sql(
+                "SELECT COUNT(*) as total FROM crawl_logs"
+            )
             total = 0
             if total_result.get("success") and total_result.get("results"):
                 total = total_result["results"][0].get("total", 0) or 0
