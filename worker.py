@@ -320,6 +320,23 @@ class Default(WorkerEntrypoint):
                 },
             },
             {
+                "name": "get_articles_by_date",
+                "description": "获取指定日期的文章列表，可按日期筛选",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "date": {
+                            "type": "string",
+                            "description": "日期，格式如 2026-03-09",
+                        },
+                        "limit": {
+                            "type": "number",
+                            "description": "返回文章数量，默认20",
+                        }
+                    },
+                },
+            },
+            {
                 "name": "update_article_summary_and_category",
                 "description": "更新文章摘要并自动分类，或手动指定分类和标签",
                 "parameters": {
@@ -746,6 +763,45 @@ class Default(WorkerEntrypoint):
                         break
 
             return {"success": True, "count": len(articles), "articles": articles}
+
+        elif tool_name == "get_articles_by_date":
+            # 获取指定日期的文章
+            date_str = arguments.get("date")  # 格式: 2026-03-09
+            limit = arguments.get("limit", 20)
+
+            if not date_str:
+                return {"success": False, "error": "需要指定日期，格式如 2026-03-09"}
+
+            # 解析日期
+            try:
+                from datetime import datetime, timezone
+                target_date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                date_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
+                date_end = target_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            except ValueError:
+                return {"success": False, "error": "日期格式错误，请使用 YYYY-MM-DD 格式"}
+
+            # 查询指定日期的文章
+            filters = {
+                "date_start": date_start.isoformat(),
+                "date_end": date_end.isoformat()
+            }
+            rows = await storage.fetch_articles(filters=filters, limit=limit) if storage else []
+
+            articles = []
+            for row in rows:
+                articles.append({
+                    "id": row["id"],
+                    "title": row["title"],
+                    "url": row["url"],
+                    "source": row["source"],
+                    "summary": row.get("summary", ""),
+                    "categories": row.get("categories", []),
+                    "tags": row.get("tags", []),
+                    "ingested_at": row["ingested_at"],
+                })
+
+            return {"success": True, "date": date_str, "count": len(articles), "articles": articles}
 
         elif tool_name == "update_article_summary_and_category":
             article_id = arguments.get("article_id")
