@@ -795,6 +795,8 @@ class Default(WorkerEntrypoint):
                     "title": row["title"],
                     "url": row["url"],
                     "source": row["source"],
+                    "content": row.get("content", ""),
+                    "raw_markdown": row.get("raw_markdown", ""),
                     "summary": row.get("summary", ""),
                     "categories": row.get("categories", []),
                     "tags": row.get("tags", []),
