@@ -186,6 +186,13 @@ class D1StorageAdapter(StorageAdapter):
         self._execute_sql(create_index_date_sql)
         self._execute_sql(create_crawl_logs_index_sql)
 
+        # 迁移：添加 is_ai_related 字段
+        try:
+            self._execute_sql("ALTER TABLE articles ADD COLUMN is_ai_related INTEGER DEFAULT 0")
+        except Exception:
+            # 字段已存在，忽略错误
+            pass
+
     def _decode_double_encoded(self, text: str) -> str:
         """Decode double-encoded Unicode strings.
 
