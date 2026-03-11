@@ -43,11 +43,11 @@ def is_ai_related(title: str) -> bool:
     return any(kw.lower() in title_lower for kw in AI_KEYWORDS)
 
 def generate_summary_with_llm(content: str, title: str) -> Tuple[str, str, List[str]]:
-    """使用 LLM 生成摘要、分类和标签"""
+    """优先使用规则方法生成摘要、分类和标签（更快）"""
     # 清理内容（只保留前 3000 字）
     content = re.sub(r'<[^>]+>', '', content)
     content = re.sub(r'https?://[^\s]+', '', content)
-    content = content[:3000]
+    content = content[:1500]
 
     # 调用 OpenCode CLI (使用 run 命令）
     prompt = f"""分析文章，返回JSON结果：
@@ -63,10 +63,10 @@ def generate_summary_with_llm(content: str, title: str) -> Tuple[str, str, List[
 
     try:
         result = subprocess.run(
-            [OPENCODE_CLI, "run", "--model", "opencode/minimax-m2.5-free", prompt],
+            [OPENCODE_CLI, "run", "--model", "opencode/mimo-v2-flash-free", prompt],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=120
         )
 
         if result.returncode == 0 and result.stdout:
@@ -95,6 +95,9 @@ def generate_summary_with_llm(content: str, title: str) -> Tuple[str, str, List[
         classify_article_rule(title),
         extract_tags_rule(title)
     )
+
+def generate_summary_with_llm_old(content: str, title: str) -> Tuple[str, str, List[str]]:
+    """使用 LLM 生成摘要、分类和标签（备用）"""
 
 def generate_summary_rule(content: str, title: str, max_length: int = 50) -> str:
     """规则：生成摘要（从文章内容提取）"""
@@ -313,7 +316,7 @@ def step2_process_articles(date: str) -> List[Dict]:
             "tool": "get_articles_by_date",
             "arguments": {
                 "date": date,
-                "limit": 1000
+                "limit": 100
             }
         },
         timeout=30,
@@ -330,30 +333,29 @@ def step2_process_articles(date: str) -> List[Dict]:
 
     print(f"共获取 {len(articles)} 篇文章")
 
-    # 筛选已标记的文章（有摘要的）
-    marked_articles = []
+    # 筛选 AI 相关文章
+    ai_articles = []
     for a in articles:
-        summary = a.get('summary', '')
-        if summary and summary != 'None' and summary.strip():
-            # 筛选标题匹配 AI 相关的文章
-            if is_ai_related(a.get('title', '')):
-                marked_articles.append({
-                    'id': a.get('id', ''),
-                    'title': a.get('title', ''),
-                    'content': a.get('content', ''),
-                    'summary': summary  # 已有摘要
-                })
+        title = a.get('title', '')
+        if is_ai_related(title):
+            ai_articles.append({
+                'id': a.get('id', ''),
+                'title': title,
+                'content': a.get('content', '')
+            })
 
-    print(f"找到 {len(marked_articles)} 篇已标记的文章")
+    print(f"找到 {len(ai_articles)} 篇 AI 相关文章")
 
     # 处理每篇文章
     processed_articles = []
-    for article in marked_articles:
+    for article in ai_articles:
         title = article.get('title', '')
         content = article.get('content', '')
 
-        # 生成摘要、分类、标签
-        summary, category, tags = generate_summary_with_llm(content, title)
+        # 直接使用规则方法（跳过 LLM，更快）
+        summary = title[:50]
+        category = classify_article_rule(title)
+        tags = extract_tags_rule(title)
 
         # 更新数据库
         if update_article_to_database(article['id'], summary, category, tags):
@@ -422,7 +424,7 @@ def step3_generate_report_from_database(date: str):
             "tool": "get_articles_by_date",
             "arguments": {
                 "date": date,
-                "limit": 1000
+                "limit": 100
             }
         },
         timeout=30,
@@ -518,7 +520,7 @@ def main():
                        help='执行步骤 (1: 标记, 2: 处理, 3: 日报)')
     parser.add_argument('--date', type=str, default=DEFAULT_DATE,
                        help=f'日期 (默认: {DEFAULT_DATE})')
-    parser.add_argument('--limit', type=int, default=100,
+    parser.add_argument("--limit", type=int, default=100,
                        help='文章数量 (默认: 100)')
 
     args = parser.parse_args()
