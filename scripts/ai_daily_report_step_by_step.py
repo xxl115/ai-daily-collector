@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-AI 日报生成 - 分步执行
+AI 日报生成 - 分步执行（全部通过数据库）
 
-步骤 1: 筛选 AI 相关文章，标记 is_ai_related 字段
-步骤 2: 处理已标记的文章（摘要、分类、标签）
-步骤 3: 从数据库获取文章并生成 AI 日报
+步骤 1: 筛选 AI 相关文章，更新数据库标记
+步骤 2: 从数据库获取已标记文章，生成摘要、分类、标签并更新
+步骤 3: 从数据库获取已处理文章，生成 AI 日报
 """
 
 import json
@@ -205,43 +205,8 @@ def extract_tags_rule(title: str, max_tags: int = 3) -> list:
 
 # ==================== 主步骤函数 ====================
 
-def update_ai_related_flag(article: Dict) -> bool:
-    """更新数据库中的 is_ai_related 标记"""
-    env = os.environ.copy()
-    env.pop('http_proxy', None)
-    env.pop('https_proxy', None)
-
-    response = requests.post(
-        f"{WORKER_URL}/mcp",
-        json={
-            "tool": "update_article_summary_and_category",
-            "arguments": {
-                "article_id": article['id'],
-                "summary": article.get('summary', ''),  # 保持原值
-                "category": article.get('categories', ['其他'])[0] if article.get('categories') else '其他',  # 保持原值
-                "tags": article.get('tags', []),  # 保持原值
-                "auto_classify": False  # 不自动分类
-            }
-        },
-        timeout=30,
-        proxies=None,
-        verify=True
-    )
-
-    if response.status_code != 200:
-        print(f"  ✗ 更新失败: {article['id'][:30]}")
-        return False
-
-    result = response.json()
-    if result.get('success'):
-        print(f"  ✓ 标记 AI 相关: {article['title'][:40]}")
-        return True
-    else:
-        print(f"  ✗ 更新失败: {result.get('error', '未知错误')}")
-        return False
-
 def step1_mark_ai_articles(date: str, limit: int = 100) -> List[Dict]:
-    """步骤 1: 筛选 AI 相关文章，标记 is_ai_related 字段（更新数据库）"""
+    """步骤 1: 筛选 AI 相关文章，更新数据库标记"""
     print(f"\n{'='*60}")
     print(f"步骤 1: 筛选 AI 相关文章并标记到数据库")
     print(f"{'='*60}")
@@ -275,48 +240,28 @@ def step1_mark_ai_articles(date: str, limit: int = 100) -> List[Dict]:
 
     print(f"共获取 {len(articles)} 篇文章")
 
-    # 筛选 AI 相关
+    # 筛选 AI 相关并立即标记到数据库
     ai_articles = []
+    success_count = 0
     for a in articles:
         title = a.get('title', '')
         if is_ai_related(title):
-            article_data = {
-                'id': a.get('id', ''),
-                'title': title,
-                'url': a.get('url', ''),
-                'source': a.get('source', ''),
-                'content': a.get('content', ''),
-                'summary': a.get('summary', ''),
-                'categories': a.get('categories', []),
-                'tags': a.get('tags', []),
-                'is_ai_related': True
-            }
-            ai_articles.append(article_data)
+            # 立即更新数据库标记
+            if update_ai_related_flag(a):
+                success_count += 1
+                ai_articles.append({
+                    'id': a.get('id', ''),
+                    'title': title,
+                    'content': a.get('content', '')
+                })
 
     print(f"筛选出 {len(ai_articles)} 篇 AI 相关文章")
-
-    # 保存到文件（用于步骤 2）
-    reports_dir = Path("~/code/ai-daily-collector/docs/reports").expanduser()
-    reports_dir.mkdir(parents=True, exist_ok=True)
-
-    ai_articles_file = reports_dir / f"ai_articles_{date.replace('-', '')}.json"
-    with open(ai_articles_file, 'w', encoding='utf-8') as f:
-        json.dump(ai_articles, f, ensure_ascii=False, indent=2)
-
-    # 更新数据库中的标记
-    print(f"\n开始更新数据库标记...")
-    success_count = 0
-    for article in ai_articles:
-        if update_ai_related_flag(article):
-            success_count += 1
-
-    print(f"\n✅ 步骤 1 完成，共标记 {success_count}/{len(ai_articles)} 篇文章")
-    print(f"已保存到: {ai_articles_file}")
+    print(f"\n✅ 步骤 1 完成，共标记 {success_count}/{len(ai_articles)} 篇文章到数据库")
 
     return ai_articles
 
-def update_article_to_database(article: Dict) -> bool:
-    """更新文章的摘要、分类、标签到数据库"""
+def update_ai_related_flag(article: Dict) -> bool:
+    """更新数据库中的 AI 相关标记"""
     env = os.environ.copy()
     env.pop('http_proxy', None)
     env.pop('https_proxy', None)
@@ -327,10 +272,10 @@ def update_article_to_database(article: Dict) -> bool:
             "tool": "update_article_summary_and_category",
             "arguments": {
                 "article_id": article['id'],
-                "summary": article.get('summary', ''),
-                "category": article.get('category', '其他'),
-                "tags": article.get('tags', []),
-                "auto_classify": False  # 使用手动指定的分类和标签
+                "summary": article.get('summary', ''),  # 保持原值
+                "category": article.get('categories', ['其他'])[0] if article.get('categories') else '其他',  # 保持原值
+                "tags": article.get('tags', []),  # 保持原值
+                "auto_classify": False  # 不自动分类
             }
         },
         timeout=30,
@@ -344,73 +289,19 @@ def update_article_to_database(article: Dict) -> bool:
 
     result = response.json()
     if result.get('success'):
-        print(f"  ✓ 更新成功: {article['title'][:40]}")
+        print(f"  ✓ 标记 AI 相关: {article['title'][:40]}")
         return True
     else:
         print(f"  ✗ 更新失败: {result.get('error', '未知错误')}")
         return False
 
 def step2_process_articles(date: str) -> List[Dict]:
-    """步骤 2: 处理已标记的文章（摘要、分类、标签）并更新到数据库"""
+    """步骤 2: 从数据库获取已标记文章，处理并更新"""
     print(f"\n{'='*60}")
-    print(f"步骤 2: 处理 AI 文章（摘要、分类、标签）并更新到数据库")
+    print(f"步骤 2: 从数据库获取已标记文章，生成摘要、分类、标签并更新")
     print(f"{'='*60}")
 
-    # 读取已标记的文章
-    reports_dir = Path("~/code/ai-daily-collector/docs/reports").expanduser()
-    ai_articles_file = reports_dir / f"ai_articles_{date.replace('-', '')}.json"
-
-    if not ai_articles_file.exists():
-        print(f"错误: 文件不存在 {ai_articles_file}")
-        print("请先运行步骤 1")
-        return []
-
-    with open(ai_articles_file, 'r', encoding='utf-8') as f:
-        ai_articles = json.load(f)
-
-    print(f"读取 {len(ai_articles)} 篇 AI 文章")
-
-    # 处理文章
-    processed_articles = []
-    for article in ai_articles:
-        title = article.get('title', '')
-        content = article.get('content', '')
-
-        # 生成摘要、分类、标签
-        summary, category, tags = generate_summary_with_llm(content, title)
-
-        # 更新文章数据
-        processed_article = {
-            'id': article['id'],
-            'title': title,
-            'url': article['url'],
-            'source': article['source'],
-            'summary': summary,
-            'category': category,
-            'tags': tags
-        }
-        processed_articles.append(processed_article)
-
-        # 更新数据库
-        update_article_to_database(processed_article)
-
-    # 保存处理后的文章
-    processed_file = reports_dir / f"processed_articles_{date.replace('-', '')}.json"
-    with open(processed_file, 'w', encoding='utf-8') as f:
-        json.dump(processed_articles, f, ensure_ascii=False, indent=2)
-
-    print(f"\n✅ 步骤 2 完成，已处理并更新 {len(processed_articles)} 篇文章")
-    print(f"已保存到: {processed_file}")
-
-    return processed_articles
-
-def step3_generate_report_from_database(date: str):
-    """步骤 3: 从数据库获取文章并生成 AI 日报"""
-    print(f"\n{'='*60}")
-    print(f"步骤 3: 从数据库获取文章并生成 AI 日报")
-    print(f"{'='*60}")
-
-    # 获取指定日期的所有文章
+    # 从数据库获取指定日期的所有文章
     print(f"\n获取 {date} 的文章...")
     env = os.environ.copy()
     env.pop('http_proxy', None)
@@ -422,7 +313,116 @@ def step3_generate_report_from_database(date: str):
             "tool": "get_articles_by_date",
             "arguments": {
                 "date": date,
-                "limit": 1000  # 获取所有文章
+                "limit": 1000
+            }
+        },
+        timeout=30,
+        proxies=None,
+        verify=True
+    )
+
+    if response.status_code != 200:
+        print(f"获取失败: {response.status_code}")
+        return []
+
+    data = response.json()
+    articles = data.get('articles', [])
+
+    print(f"共获取 {len(articles)} 篇文章")
+
+    # 筛选已标记的文章（有摘要的）
+    marked_articles = []
+    for a in articles:
+        summary = a.get('summary', '')
+        if summary and summary != 'None' and summary.strip():
+            # 筛选标题匹配 AI 相关的文章
+            if is_ai_related(a.get('title', '')):
+                marked_articles.append({
+                    'id': a.get('id', ''),
+                    'title': a.get('title', ''),
+                    'content': a.get('content', ''),
+                    'summary': summary  # 已有摘要
+                })
+
+    print(f"找到 {len(marked_articles)} 篇已标记的文章")
+
+    # 处理每篇文章
+    processed_articles = []
+    for article in marked_articles:
+        title = article.get('title', '')
+        content = article.get('content', '')
+
+        # 生成摘要、分类、标签
+        summary, category, tags = generate_summary_with_llm(content, title)
+
+        # 更新数据库
+        if update_article_to_database(article['id'], summary, category, tags):
+            processed_articles.append({
+                'id': article['id'],
+                'title': title,
+                'summary': summary,
+                'category': category,
+                'tags': tags
+            })
+
+    print(f"\n✅ 步骤 2 完成，已处理并更新 {len(processed_articles)} 篇文章到数据库")
+
+    return processed_articles
+
+def update_article_to_database(article_id: str, summary: str, category: str, tags: List) -> bool:
+    """更新文章的摘要、分类、标签到数据库"""
+    env = os.environ.copy()
+    env.pop('http_proxy', None)
+    env.pop('https_proxy', None)
+
+    response = requests.post(
+        f"{WORKER_URL}/mcp",
+        json={
+            "tool": "update_article_summary_and_category",
+            "arguments": {
+                "article_id": article_id,
+                "summary": summary,
+                "category": category,
+                "tags": tags,
+                "auto_classify": False  # 使用手动指定的分类和标签
+            }
+        },
+        timeout=30,
+        proxies=None,
+        verify=True
+    )
+
+    if response.status_code != 200:
+        print(f"  ✗ 更新失败: {article_id[:30]}")
+        return False
+
+    result = response.json()
+    if result.get('success'):
+        print(f"  ✓ 更新成功")
+        return True
+    else:
+        print(f"  ✗ 更新失败: {result.get('error', '未知错误')}")
+        return False
+
+def step3_generate_report_from_database(date: str):
+    """步骤 3: 从数据库获取文章并生成 AI 日报"""
+    print(f"\n{'='*60}")
+    print(f"步骤 3: 从数据库获取文章并生成 AI 日报")
+    print(f"{'='*60}")
+
+    # 从数据库获取指定日期的所有文章
+    print(f"\n获取 {date} 的文章...")
+    env = os.environ.copy()
+    env.pop('http_proxy', None)
+    env.pop('https_proxy', None)
+
+    response = requests.post(
+        f"{WORKER_URL}/mcp",
+        json={
+            "tool": "get_articles_by_date",
+            "arguments": {
+                "date": date,
+                "limit": 1000
             }
         },
         timeout=30,
@@ -442,11 +442,12 @@ def step3_generate_report_from_database(date: str):
     # 筛选有摘要的文章（已处理过的 AI 相关文章）
     processed_articles = []
     for a in articles:
+        title = a.get('title', '')
         summary = a.get('summary', '')
-        if summary and summary != 'None':
+        if summary and summary != 'None' and summary.strip() and is_ai_related(title):
             processed_articles.append({
                 'id': a.get('id', ''),
-                'title': a.get('title', ''),
+                'title': title,
                 'url': a.get('url', ''),
                 'source': a.get('source', ''),
                 'summary': summary,
@@ -512,7 +513,7 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='AI 日报生成 - 分步执行')
+    parser = argparse.ArgumentParser(description='AI 日报生成 - 全部通过数据库')
     parser.add_argument('--step', type=int, choices=[1, 2, 3],
                        help='执行步骤 (1: 标记, 2: 处理, 3: 日报)')
     parser.add_argument('--date', type=str, default=DEFAULT_DATE,
@@ -524,7 +525,7 @@ def main():
 
     if args.step == 1:
         ai_articles = step1_mark_ai_articles(args.date, args.limit)
-        print(f"\n✅ 步骤 1 完成，共标记 {len(ai_articles)} 篇文章")
+        print(f"\n✅ 步骤 1 完成")
     elif args.step == 2:
         processed_articles = step2_process_articles(args.date)
     elif args.step == 3:
