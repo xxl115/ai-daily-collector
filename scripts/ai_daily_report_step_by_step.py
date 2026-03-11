@@ -383,11 +383,12 @@ def step2_process_articles(date: str) -> List[Dict]:
     for a in articles:
         title = a.get('title', '')
         summary = a.get('summary', '') or ''
+        is_ai_flag = a.get('is_ai_related', False)
         
         # 两种情况：
         # 1. 已经被标记（is_ai_related = True）
         # 2. 标题匹配 AI 关键词
-        is_marked = False  # 需要从数据库读取 is_ai_related 字段
+        is_marked = is_ai_flag  # 从数据库读取
         is_ai_keyword = is_ai_related(title)
         
         if is_marked or is_ai_keyword:
