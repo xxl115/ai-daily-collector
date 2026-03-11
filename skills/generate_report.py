@@ -40,7 +40,7 @@ def is_ai_related(title: str) -> bool:
     return any(kw.lower() in title_lower for kw in AI_KEYWORDS)
 
 def generate_summary(content: str, title: str, max_length: int = MAX_SUMMARY_LENGTH) -> str:
-    """生成摘要（从文章内容提取）"""
+    """生成摘要（从文章内容提取关键信息）"""
     if not content:
         return title[:max_length] + ('...' if len(title) > max_length else '')
 
@@ -54,7 +54,8 @@ def generate_summary(content: str, title: str, max_length: int = MAX_SUMMARY_LEN
     # 去除明显的导航元素
     lines = content.split('\n')
     content_lines = []
-    skip_prefixes = ['首页', '登录', '注册', '搜索', '百度', '推荐', 'V2EX', 'way to explore', 'Skip to']
+    skip_prefixes = ['首页', '登录', '注册', '搜索', '百度', '推荐', 'V2EX', 'way to explore',
+                     'Skip to', 'Promoted', 'PRO', 'Copyright', '版权']
 
     for line in lines:
         line = line.strip()
@@ -62,31 +63,65 @@ def generate_summary(content: str, title: str, max_length: int = MAX_SUMMARY_LEN
             continue
         if any(line.startswith(p) for p in skip_prefixes):
             continue
-        if line in ['Promoted', 'PRO']:
+        if len(line) < 10:  # 太短的行
             continue
         content_lines.append(line)
 
     content = ' '.join(content_lines)
 
-    # 分割成句子
+    # 提取关键句子的优先级
+    candidates = []
+
+    # 1. 找包含数字和具体信息的句子（通常是关键信息）
+    import re
     sentences = [s.strip() for s in content.replace('！', '。').replace('？', '。').split('。') if s.strip()]
 
-    # 找第一个有意义的句子（长度适中，包含数字或中文）
     for s in sentences:
-        # 过滤导航
-        if len(s) < 20:  # 太短
+        if len(s) < 20 or len(s) > 300:
             continue
-        if len(s) > 200:  # 太长
-            continue
-        if '强烈建议' in s or '浏览器' in s:  # 导航提示
-            continue
-        if not any('\u4e00' <= c <= '\u9fff' for c in s):  # 无中文
+        if '强烈建议' in s or '浏览器' in s or '登录' in s:
             continue
 
-        # 找到了，返回前 max_length 字
-        return s[:max_length] + ('...' if len(s) > max_length else '')
+        score = 0
 
-    # 都没找到，用标题
+        # 包含数字（加权重）
+        if re.search(r'\d+', s):
+            score += 3
+
+        # 包含金额/百分比（高权重）
+        if re.search(r'[¥$€]\s*\d+|\d+\s*%', s):
+            score += 5
+
+        # 包含中文（保证内容质量）
+        if any('\u4e00' <= c <= '\u9fff' for c in s):
+            score += 2
+
+        # 包含关键动词
+        action_words = ['发布', '推出', '宣布', '推出', '完成', '实现', '获得', '达成',
+                       '突破', '增长', '提升', '研发', '开发', '上线', '启动']
+        if any(w in s for w in action_words):
+            score += 4
+
+        # 包含公司/机构
+        org_words = ['公司', '集团', '科技', '实验室', '研究院', '大学', 'AI', 'OpenAI']
+        if any(w in s for w in org_words):
+            score += 3
+
+        if score > 0:
+            candidates.append((score, s))
+
+    # 按评分排序，取最高分的
+    if candidates:
+        candidates.sort(key=lambda x: -x[0])
+        summary = candidates[0][1]
+        return summary[:max_length] + ('...' if len(summary) > max_length else '')
+
+    # 都没找到，找第一个长句子
+    for s in sentences:
+        if 50 <= len(s) <= 200 and any('\u4e00' <= c <= '\u9fff' for c in s):
+            return s[:max_length] + ('...' if len(s) > max_length else '')
+
+    # 最后，用标题
     return title[:max_length] + ('...' if len(title) > max_length else '')
 
 def classify_article(title: str) -> str:
