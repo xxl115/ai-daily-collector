@@ -391,6 +391,9 @@ def step2_process_articles(date: str) -> List[Dict]:
         }
         processed_articles.append(processed_article)
 
+        # 更新数据库
+        update_article_to_database(processed_article)
+
     # 保存处理后的文章
     processed_file = reports_dir / f"processed_articles_{date.replace('-', '')}.json"
     with open(processed_file, 'w', encoding='utf-8') as f:
@@ -403,7 +406,7 @@ def step2_process_articles(date: str) -> List[Dict]:
         if update_article_to_database(article):
             success_count += 1
 
-    print(f"\n✅ 步骤 2 完成，已处理 {success_count}/{len(processed_articles)} 篇文章")
+    print(f"\n✅ 步骤 2 完成，已处理并更新 {success_count}/{len(processed_articles)} 篇文章")
     print(f"已保存到: {processed_file}")
 
     return processed_articles
