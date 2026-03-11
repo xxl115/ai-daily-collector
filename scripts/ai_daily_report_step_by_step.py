@@ -310,26 +310,40 @@ def step1_mark_ai_articles(date: str, limit: int = 100) -> List[Dict]:
 
 def update_ai_related_flag(article: Dict) -> bool:
     """更新数据库中的 AI 相关标记 - 使用 is_ai_related 字段"""
+    import time
+    
     env = os.environ.copy()
     env.pop('http_proxy', None)
     env.pop('https_proxy', None)
 
-    # 使用 is_ai_related 参数标记
-    response = requests.post(
-        f"{WORKER_URL}/mcp",
-        json={
-            "tool": "update_article_summary_and_category",
-            "arguments": {
-                "article_id": article['id'],
-                "summary": "",  # 空摘要
-                "is_ai_related": True,  # 新字段
-                "auto_classify": False
-            }
-        },
-        timeout=30,
-        proxies=None,
-        verify=True
-    )
+    # 重试 3 次
+    for attempt in range(3):
+        try:
+            response = requests.post(
+                f"{WORKER_URL}/mcp",
+                json={
+                    "tool": "update_article_summary_and_category",
+                    "arguments": {
+                        "article_id": article['id'],
+                        "summary": "",  # 空摘要
+                        "is_ai_related": True,  # 新字段
+                        "auto_classify": False
+                    }
+                },
+                timeout=30,
+                proxies=None,
+                verify=True
+            )
+            if response.status_code == 200:
+                break
+        except Exception as e:
+            if attempt < 2:
+                time.sleep(2)  # 等待 2 秒后重试
+            else:
+                print(f"  ✗ 更新失败: {article['id'][:30]} - {e}")
+                return False
+    
+    time.sleep(1)  # 每请求间隔 1 秒
 
     if response.status_code != 200:
         print(f"  ✗ 更新失败: {article['id'][:30]}")
