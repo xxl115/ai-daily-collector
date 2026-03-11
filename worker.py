@@ -1343,8 +1343,8 @@ class WorkersD1StorageAdapter:
             if not check_result.get("results"):
                 # No existing row, do INSERT
                 insert_sql = """
-                    INSERT INTO articles (id, title, content, url, published_at, source, categories, tags, summary, ingested_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO articles (id, title, content, url, published_at, source, categories, tags, summary, ingested_at, is_ai_related)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
                 insert_params = [
                     article_id,
@@ -1357,6 +1357,7 @@ class WorkersD1StorageAdapter:
                     json.dumps(article.get("tags", [])),
                     val(article.get("summary")),
                     val(article.get("ingested_at")),
+                    1 if article.get("is_ai_related") else 0,
                 ]
                 return await self._execute_sql(insert_sql, insert_params)
 
