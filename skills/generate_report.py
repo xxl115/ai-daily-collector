@@ -39,8 +39,54 @@ def is_ai_related(title: str) -> bool:
     title_lower = title.lower()
     return any(kw.lower() in title_lower for kw in AI_KEYWORDS)
 
-def generate_summary(title: str, max_length: int = MAX_SUMMARY_LENGTH) -> str:
-    """生成摘要（使用标题作为摘要）"""
+def generate_summary(content: str, title: str, max_length: int = MAX_SUMMARY_LENGTH) -> str:
+    """生成摘要（从文章内容提取）"""
+    if not content:
+        return title[:max_length] + ('...' if len(title) > max_length else '')
+
+    # 清理内容
+    import re
+    content = re.sub(r'<[^>]+>', '', content)  # 去除 HTML
+    content = re.sub(r'https?://[^\s]+', '', content)  # 去除链接
+    content = re.sub(r'\[.*?\]\(.*?\)', '', content)  # 去除 MD 链接
+    content = re.sub(r'!\[.*?\]\([^)]+\)', '', content)  # 去除图片
+
+    # 去除明显的导航元素
+    lines = content.split('\n')
+    content_lines = []
+    skip_prefixes = ['首页', '登录', '注册', '搜索', '百度', '推荐', 'V2EX', 'way to explore', 'Skip to']
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if any(line.startswith(p) for p in skip_prefixes):
+            continue
+        if line in ['Promoted', 'PRO']:
+            continue
+        content_lines.append(line)
+
+    content = ' '.join(content_lines)
+
+    # 分割成句子
+    sentences = [s.strip() for s in content.replace('！', '。').replace('？', '。').split('。') if s.strip()]
+
+    # 找第一个有意义的句子（长度适中，包含数字或中文）
+    for s in sentences:
+        # 过滤导航
+        if len(s) < 20:  # 太短
+            continue
+        if len(s) > 200:  # 太长
+            continue
+        if '强烈建议' in s or '浏览器' in s:  # 导航提示
+            continue
+        if not any('\u4e00' <= c <= '\u9fff' for c in s):  # 无中文
+            continue
+
+        # 找到了，返回前 max_length 字
+        return s[:max_length] + ('...' if len(s) > max_length else '')
+
+    # 都没找到，用标题
     return title[:max_length] + ('...' if len(title) > max_length else '')
 
 def classify_article(title: str) -> str:
@@ -198,6 +244,7 @@ def main():
     ai_articles = []
     for a in articles:
         title = a.get('title', '')
+        content = a.get('content', '')
         if is_ai_related(title):
             # 处理文章
             article_data = {
@@ -205,7 +252,7 @@ def main():
                 'title': title,
                 'url': a.get('url', ''),
                 'source': a.get('source', ''),
-                'summary': generate_summary(title),
+                'summary': generate_summary(content, title),
                 'category': classify_article(title),
                 'tags': extract_tags(title)
             }
