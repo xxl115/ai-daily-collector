@@ -35,6 +35,30 @@ WORKER_URL = "https://ai-daily-collector.xxl185.workers.dev"
 OPENCODE_CLI = "/home/young/.opencode/bin/opencode"
 DEFAULT_DATE = datetime.now().strftime('%Y-%m-%d')
 
+# 可用模型列表（按优先级）
+LLM_MODELS = [
+    "opencode/mimo-v2-flash-free",  # 最快
+    "opencode/minimax-m2.5-free",  # 备用
+    "google/gemini-2.0-flash",     # 备用（需要 API key）
+]
+
+def call_llm_with_fallback(prompt: str) -> str:
+    """尝试多个模型，自动切换"""
+    for model in LLM_MODELS:
+        try:
+            result = subprocess.run(
+                [OPENCODE_CLI, "run", "--model", model, prompt],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            if result.returncode == 0 and result.stdout:
+                return result.stdout.strip()
+        except Exception as e:
+            print(f"  模型 {model} 失败: {e}")
+            continue
+    return ""
+
 # ==================== 辅助函数 ====================
 
 def is_ai_related(title: str) -> bool:
