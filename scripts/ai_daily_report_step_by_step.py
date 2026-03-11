@@ -62,7 +62,28 @@ def call_llm_with_fallback(prompt: str) -> str:
 # ==================== 辅助函数 ====================
 
 def is_ai_related(title: str) -> bool:
-    """判断文章是否为 AI 相关"""
+    """使用 LLM 判断文章是否为 AI 相关"""
+    prompt = '判断以下标题是否为AI相关文章（AI、大模型、GPT、机器学习、自动驾驶、机器人等）：' + title + '回答格式：{"is_ai": true/false}'
+    
+    try:
+        result = subprocess.run(
+            [OPENCODE_CLI, "run", "--model", "opencode/mimo-v2-flash-free", prompt],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        
+        if result.returncode == 0 and result.stdout:
+            import re, json
+            match = re.search(r'\{.*?\}', result.stdout)
+            if match:
+                data = json.loads(match.group(0))
+                if data.get('is_ai'):
+                    return True
+    except:
+        pass
+    
+    # 失败时回退到关键词匹配
     title_lower = title.lower()
     return any(kw.lower() in title_lower for kw in AI_KEYWORDS)
 
