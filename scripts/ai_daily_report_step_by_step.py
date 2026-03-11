@@ -288,10 +288,18 @@ def step1_mark_ai_articles(date: str, limit: int = 100) -> List[Dict]:
     return ai_articles
 
 def update_ai_related_flag(article: Dict) -> bool:
-    """更新数据库中的 AI 相关标记"""
+    """更新数据库中的 AI 相关标记 - 设置 is_ai_related = True"""
     env = os.environ.copy()
     env.pop('http_proxy', None)
     env.pop('https_proxy', None)
+
+    # 标记格式: "[AI]" 前缀表示已标记为 AI 相关
+    # 如果已有摘要，前面加 [AI]
+    existing_summary = article.get('summary', '') or ''
+    if existing_summary.startswith('[AI]'):
+        # 已经标记过
+        return True
+    marked_summary = f"[AI] {existing_summary}" if existing_summary else "[AI]"
 
     response = requests.post(
         f"{WORKER_URL}/mcp",
@@ -299,10 +307,10 @@ def update_ai_related_flag(article: Dict) -> bool:
             "tool": "update_article_summary_and_category",
             "arguments": {
                 "article_id": article['id'],
-                "summary": article.get('summary', ''),  # 保持原值
-                "category": article.get('categories', ['其他'])[0] if article.get('categories') else '其他',  # 保持原值
-                "tags": article.get('tags', []),  # 保持原值
-                "auto_classify": False  # 不自动分类
+                "summary": marked_summary,
+                "category": "AI",
+                "tags": ["AI"],
+                "auto_classify": False
             }
         },
         timeout=30,
@@ -357,15 +365,27 @@ def step2_process_articles(date: str) -> List[Dict]:
 
     print(f"共获取 {len(articles)} 篇文章")
 
-    # 筛选 AI 相关文章
+    # 筛选 AI 相关文章（检查 [AI] 标记或标题匹配）
     ai_articles = []
     for a in articles:
         title = a.get('title', '')
-        if is_ai_related(title):
+        summary = a.get('summary', '') or ''
+        
+        # 两种情况：
+        # 1. 已经被标记（summary 以 [AI] 开头）
+        # 2. 标题匹配 AI 关键词
+        is_marked = summary.startswith('[AI]')
+        is_ai_keyword = is_ai_related(title)
+        
+        if is_marked or is_ai_keyword:
+            # 去掉 [AI] 前缀获取真实摘要
+            real_summary = summary[4:].strip() if summary.startswith('[AI]') else summary
+            
             ai_articles.append({
                 'id': a.get('id', ''),
                 'title': title,
-                'content': a.get('content', '')
+                'content': a.get('content', ''),
+                'existing_summary': real_summary
             })
 
     print(f"找到 {len(ai_articles)} 篇 AI 相关文章")
@@ -376,7 +396,12 @@ def step2_process_articles(date: str) -> List[Dict]:
         title = article.get('title', '')
         content = article.get('content', '')
 
-        # 直接使用规则方法（跳过 LLM，更快）
+        # 如果已有摘要（已处理过），跳过
+        if article.get('existing_summary'):
+            print(f"  → 跳过（已处理）: {title[:30]}")
+            continue
+
+        # 使用规则方法
         summary = title[:50]
         category = classify_article_rule(title)
         tags = extract_tags_rule(title)
