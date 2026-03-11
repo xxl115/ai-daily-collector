@@ -148,6 +148,7 @@ class D1StorageAdapter(StorageAdapter):
             summary TEXT,
             raw_markdown TEXT,
             ingested_at TEXT NOT NULL,
+            is_ai_related INTEGER DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
         """
@@ -254,6 +255,7 @@ class D1StorageAdapter(StorageAdapter):
             self._decode_double_encoded(get("summary")) if get("summary") else None,
             get("raw_markdown"),
             ingested_at or datetime.utcnow().isoformat(),
+            1 if get("is_ai_related") else 0,
         )
 
     def _row_to_article(self, row: Dict[str, Any]) -> ArticleModel:
@@ -292,8 +294,8 @@ class D1StorageAdapter(StorageAdapter):
         sql = """
         INSERT INTO articles (
             id, title, content, url, published_at, source,
-            categories, tags, summary, raw_markdown, ingested_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            categories, tags, summary, raw_markdown, ingested_at, is_ai_related
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
         row = self._article_to_row(article)
@@ -310,8 +312,8 @@ class D1StorageAdapter(StorageAdapter):
         sql = """
         INSERT OR REPLACE INTO articles (
             id, title, content, url, published_at, source,
-            categories, tags, summary, raw_markdown, ingested_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            categories, tags, summary, raw_markdown, ingested_at, is_ai_related
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
         row = self._article_to_row(article)

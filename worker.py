@@ -1313,7 +1313,8 @@ class WorkersD1StorageAdapter:
         sql = """
             UPDATE articles SET
                 title = ?, content = ?, url = ?, published_at = ?,
-                source = ?, categories = ?, tags = ?, summary = ?, ingested_at = ?
+                source = ?, categories = ?, tags = ?, summary = ?, 
+                ingested_at = ?, is_ai_related = ?
             WHERE id = ?
         """
 
