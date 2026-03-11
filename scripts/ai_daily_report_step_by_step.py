@@ -205,10 +205,45 @@ def extract_tags_rule(title: str, max_tags: int = 3) -> list:
 
 # ==================== 主步骤函数 ====================
 
+def update_ai_related_flag(article: Dict) -> bool:
+    """更新数据库中的 is_ai_related 标记"""
+    env = os.environ.copy()
+    env.pop('http_proxy', None)
+    env.pop('https_proxy', None)
+
+    response = requests.post(
+        f"{WORKER_URL}/mcp",
+        json={
+            "tool": "update_article_summary_and_category",
+            "arguments": {
+                "article_id": article['id'],
+                "summary": article.get('summary', ''),  # 保持原值
+                "category": article.get('categories', ['其他'])[0] if article.get('categories') else '其他',  # 保持原值
+                "tags": article.get('tags', []),  # 保持原值
+                "auto_classify": False  # 不自动分类
+            }
+        },
+        timeout=30,
+        proxies=None,
+        verify=True
+    )
+
+    if response.status_code != 200:
+        print(f"  ✗ 更新失败: {article['id'][:30]}")
+        return False
+
+    result = response.json()
+    if result.get('success'):
+        print(f"  ✓ 标记 AI 相关: {article['title'][:40]}")
+        return True
+    else:
+        print(f"  ✗ 更新失败: {result.get('error', '未知错误')}")
+        return False
+
 def step1_mark_ai_articles(date: str, limit: int = 100) -> List[Dict]:
-    """步骤 1: 筛选 AI 相关文章，标记 is_ai_related 字段"""
+    """步骤 1: 筛选 AI 相关文章，标记 is_ai_related 字段（更新数据库）"""
     print(f"\n{'='*60}")
-    print(f"步骤 1: 筛选并标记 AI 相关文章")
+    print(f"步骤 1: 筛选 AI 相关文章并标记到数据库")
     print(f"{'='*60}")
 
     # 获取文章
@@ -245,18 +280,22 @@ def step1_mark_ai_articles(date: str, limit: int = 100) -> List[Dict]:
     for a in articles:
         title = a.get('title', '')
         if is_ai_related(title):
-            ai_articles.append({
+            article_data = {
                 'id': a.get('id', ''),
                 'title': title,
                 'url': a.get('url', ''),
                 'source': a.get('source', ''),
                 'content': a.get('content', ''),
+                'summary': a.get('summary', ''),
+                'categories': a.get('categories', []),
+                'tags': a.get('tags', []),
                 'is_ai_related': True
-            })
+            }
+            ai_articles.append(article_data)
 
     print(f"筛选出 {len(ai_articles)} 篇 AI 相关文章")
 
-    # 保存到文件
+    # 保存到文件（用于步骤 2）
     reports_dir = Path("~/code/ai-daily-collector/docs/reports").expanduser()
     reports_dir.mkdir(parents=True, exist_ok=True)
 
@@ -264,14 +303,57 @@ def step1_mark_ai_articles(date: str, limit: int = 100) -> List[Dict]:
     with open(ai_articles_file, 'w', encoding='utf-8') as f:
         json.dump(ai_articles, f, ensure_ascii=False, indent=2)
 
+    # 更新数据库中的标记
+    print(f"\n开始更新数据库标记...")
+    success_count = 0
+    for article in ai_articles:
+        if update_ai_related_flag(article):
+            success_count += 1
+
+    print(f"\n✅ 步骤 1 完成，共标记 {success_count}/{len(ai_articles)} 篇文章")
     print(f"已保存到: {ai_articles_file}")
 
     return ai_articles
 
+def update_article_to_database(article: Dict) -> bool:
+    """更新文章的摘要、分类、标签到数据库"""
+    env = os.environ.copy()
+    env.pop('http_proxy', None)
+    env.pop('https_proxy', None)
+
+    response = requests.post(
+        f"{WORKER_URL}/mcp",
+        json={
+            "tool": "update_article_summary_and_category",
+            "arguments": {
+                "article_id": article['id'],
+                "summary": article.get('summary', ''),
+                "category": article.get('category', '其他'),
+                "tags": article.get('tags', []),
+                "auto_classify": False  # 使用手动指定的分类和标签
+            }
+        },
+        timeout=30,
+        proxies=None,
+        verify=True
+    )
+
+    if response.status_code != 200:
+        print(f"  ✗ 更新失败: {article['id'][:30]}")
+        return False
+
+    result = response.json()
+    if result.get('success'):
+        print(f"  ✓ 更新成功: {article['title'][:40]}")
+        return True
+    else:
+        print(f"  ✗ 更新失败: {result.get('error', '未知错误')}")
+        return False
+
 def step2_process_articles(date: str) -> List[Dict]:
-    """步骤 2: 处理已标记的文章（摘要、分类、标签）"""
+    """步骤 2: 处理 AI 文章（摘要、分类、标签）并更新数据库"""
     print(f"\n{'='*60}")
-    print(f"步骤 2: 处理 AI 文章（摘要、分类、标签）")
+    print(f"步骤 2: 处理 AI 文章（摘要、分类、标签）并更新数据库")
     print(f"{'='*60}")
 
     # 读取已标记的文章
@@ -314,7 +396,14 @@ def step2_process_articles(date: str) -> List[Dict]:
     with open(processed_file, 'w', encoding='utf-8') as f:
         json.dump(processed_articles, f, ensure_ascii=False, indent=2)
 
-    print(f"\n✅ 步骤 2 完成，已处理 {len(processed_articles)} 篇文章")
+    # 更新数据库
+    print(f"\n开始更新数据库...")
+    success_count = 0
+    for article in processed_articles:
+        if update_article_to_database(article):
+            success_count += 1
+
+    print(f"\n✅ 步骤 2 完成，已处理 {success_count}/{len(processed_articles)} 篇文章")
     print(f"已保存到: {processed_file}")
 
     return processed_articles
