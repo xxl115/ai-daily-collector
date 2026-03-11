@@ -1329,6 +1329,7 @@ class WorkersD1StorageAdapter:
             json.dumps(article.get("tags", [])),
             val(article.get("summary")),
             val(article.get("ingested_at")),
+            1 if article.get("is_ai_related") else 0,
             article_id,
         ]
 
