@@ -4,7 +4,7 @@ AI 日报生成 - 分步执行
 
 步骤 1: 筛选 AI 相关文章，标记 is_ai_related 字段
 步骤 2: 处理已标记的文章（摘要、分类、标签）
-步骤 3: 生成 AI 日报
+步骤 3: 从数据库获取文章并生成 AI 日报
 """
 
 import json
@@ -351,9 +351,9 @@ def update_article_to_database(article: Dict) -> bool:
         return False
 
 def step2_process_articles(date: str) -> List[Dict]:
-    """步骤 2: 处理 AI 文章（摘要、分类、标签）并更新数据库"""
+    """步骤 2: 处理已标记的文章（摘要、分类、标签）并更新到数据库"""
     print(f"\n{'='*60}")
-    print(f"步骤 2: 处理 AI 文章（摘要、分类、标签）并更新数据库")
+    print(f"步骤 2: 处理 AI 文章（摘要、分类、标签）并更新到数据库")
     print(f"{'='*60}")
 
     # 读取已标记的文章
@@ -399,31 +399,70 @@ def step2_process_articles(date: str) -> List[Dict]:
     with open(processed_file, 'w', encoding='utf-8') as f:
         json.dump(processed_articles, f, ensure_ascii=False, indent=2)
 
-    # 更新数据库
-    print(f"\n开始更新数据库...")
-    success_count = 0
-    for article in processed_articles:
-        if update_article_to_database(article):
-            success_count += 1
-
-    print(f"\n✅ 步骤 2 完成，已处理并更新 {success_count}/{len(processed_articles)} 篇文章")
+    print(f"\n✅ 步骤 2 完成，已处理并更新 {len(processed_articles)} 篇文章")
     print(f"已保存到: {processed_file}")
 
     return processed_articles
 
-def step3_generate_report(date: str, articles: List[Dict]):
-    """步骤 3: 生成 AI 日报"""
+def step3_generate_report_from_database(date: str):
+    """步骤 3: 从数据库获取文章并生成 AI 日报"""
     print(f"\n{'='*60}")
-    print(f"步骤 3: 生成 AI 日报")
+    print(f"步骤 3: 从数据库获取文章并生成 AI 日报")
     print(f"{'='*60}")
 
-    if not articles:
-        print("没有文章，跳过")
+    # 获取指定日期的所有文章
+    print(f"\n获取 {date} 的文章...")
+    env = os.environ.copy()
+    env.pop('http_proxy', None)
+    env.pop('https_proxy', None)
+
+    response = requests.post(
+        f"{WORKER_URL}/mcp",
+        json={
+            "tool": "get_articles_by_date",
+            "arguments": {
+                "date": date,
+                "limit": 1000  # 获取所有文章
+            }
+        },
+        timeout=30,
+        proxies=None,
+        verify=True
+    )
+
+    if response.status_code != 200:
+        print(f"获取失败: {response.status_code}")
+        return
+
+    data = response.json()
+    articles = data.get('articles', [])
+
+    print(f"共获取 {len(articles)} 篇文章")
+
+    # 筛选有摘要的文章（已处理过的 AI 相关文章）
+    processed_articles = []
+    for a in articles:
+        summary = a.get('summary', '')
+        if summary and summary != 'None':
+            processed_articles.append({
+                'id': a.get('id', ''),
+                'title': a.get('title', ''),
+                'url': a.get('url', ''),
+                'source': a.get('source', ''),
+                'summary': summary,
+                'category': a.get('categories', ['其他'])[0] if a.get('categories') else '其他',
+                'tags': a.get('tags', [])
+            })
+
+    print(f"找到 {len(processed_articles)} 篇已处理的文章")
+
+    if not processed_articles:
+        print("没有已处理的文章，请先运行步骤 2")
         return
 
     # 统计
     category_count = {}
-    for a in articles:
+    for a in processed_articles:
         cat = a.get('category', '其他')
         category_count[cat] = category_count.get(cat, 0) + 1
 
@@ -434,7 +473,7 @@ def step3_generate_report(date: str, articles: List[Dict]):
 
 | 指标 | 数值 |
 |------|------|
-| 总文章数 | {len(articles)} 篇 |
+| 总文章数 | {len(processed_articles)} 篇 |
 
 ## 分类统计
 
@@ -447,7 +486,7 @@ def step3_generate_report(date: str, articles: List[Dict]):
     # 按分类组织
     categories = ['大厂', '人物', '产品', '技术', '商业', '学术', '其他']
     for cat in categories:
-        cat_articles = [a for a in articles if a.get('category') == cat]
+        cat_articles = [a for a in processed_articles if a.get('category') == cat]
         if not cat_articles:
             continue
 
@@ -489,16 +528,7 @@ def main():
     elif args.step == 2:
         processed_articles = step2_process_articles(args.date)
     elif args.step == 3:
-        # 读取处理后的文章
-        reports_dir = Path("~/code/ai-daily-collector/docs/reports").expanduser()
-        processed_file = reports_dir / f"processed_articles_{args.date.replace('-', '')}.json"
-        if processed_file.exists():
-            with open(processed_file, 'r', encoding='utf-8') as f:
-                articles = json.load(f)
-            step3_generate_report(args.date, articles)
-        else:
-            print(f"错误: 文件不存在 {processed_file}")
-            print("请先运行步骤 2")
+        step3_generate_report_from_database(args.date)
     else:
         parser.print_help()
 
