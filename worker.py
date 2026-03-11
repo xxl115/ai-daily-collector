@@ -357,6 +357,10 @@ class Default(WorkerEntrypoint):
                             "type": "boolean",
                             "description": "当未指定category时是否自动分类，默认true",
                         },
+                        "is_ai_related": {
+                            "type": "boolean",
+                            "description": "标记是否为AI相关文章",
+                        },
                     },
                     "required": ["article_id", "summary"],
                 },
@@ -811,9 +815,13 @@ class Default(WorkerEntrypoint):
             manual_category = arguments.get("category")  # 手动指定的分类
             manual_tags = arguments.get("tags")  # 手动指定的标签
             auto_classify = arguments.get("auto_classify", True)
+            is_ai_related = arguments.get("is_ai_related")  # AI 文章标记
 
-            if not article_id or not summary:
-                return {"error": "Missing article_id or summary"}
+            # 如果提供了 is_ai_related 参数但没有提供 summary，使用空字符串
+            if not article_id:
+                return {"error": "Missing article_id"}
+            if not summary and is_ai_related is None:
+                return {"error": "Missing summary or is_ai_related"}
 
             article = await storage.fetch_article_by_id(article_id) if storage else None
             if not article:
@@ -821,6 +829,10 @@ class Default(WorkerEntrypoint):
 
             # article is a dict, update fields
             article["summary"] = summary
+
+            # 处理 is_ai_related 标记
+            if is_ai_related is not None:
+                article["is_ai_related"] = is_ai_related
 
             # 处理分类和标签
             category_result = None
