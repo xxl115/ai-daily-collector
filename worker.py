@@ -1450,6 +1450,7 @@ class WorkersD1StorageAdapter:
             "tags": tags,
             "summary": str(get_value("summary", "")),
             "ingested_at": str(get_value("ingested_at", "")),
+            "is_ai_related": bool(get_value("is_ai_related", 0)),
         }
 
     async def get_crawl_logs(self, limit=50, offset=0):
