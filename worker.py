@@ -805,6 +805,7 @@ class Default(WorkerEntrypoint):
                     "categories": row.get("categories", []),
                     "tags": row.get("tags", []),
                     "ingested_at": row["ingested_at"],
+                    "is_ai_related": bool(row.get("is_ai_related", 0)),
                 })
 
             return {"success": True, "date": date_str, "count": len(articles), "articles": articles}
