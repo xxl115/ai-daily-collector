@@ -4,14 +4,162 @@
     "title": "AI原生的6G，为什么是高通近20年最大的机会？",
     "url": "https://www.leiphone.com/category/chips/FkmtxEJsPCPpVC1v.html",
     "source": "雷峰网",
-    "summary": "AI原生6G将成高通20年最大机遇，引领通信技术新变革",
+    "summary": "高通视6G为20年最大机遇，AI原生网络契合其技术路线",
     "category": "技术",
     "tags": [
       "6G",
       "高通",
-      "AI原生",
+      "AI",
       "移动通信",
-      "MWC 2026"
+      "技术趋势"
+    ]
+  },
+  {
+    "id": "雷峰网-5947ddd2",
+    "title": "易点天下「可见性峰会」圆满收官，以GEO+GEM构筑AI时代品牌全球化护城河",
+    "url": "https://www.leiphone.com/category/industrynews/7T5R0aIBcn5PqAUE.html",
+    "source": "雷峰网",
+    "summary": "易点天下举办可见性峰会，探讨AI时代品牌全球化与GEO优化",
+    "category": "商业",
+    "tags": [
+      "AI营销",
+      "GEO",
+      "品牌全球化",
+      "数字营销",
+      "出海",
+      "峰会",
+      "可见性增长"
+    ]
+  },
+  {
+    "id": "雷峰网-acf09300",
+    "title": "千问AI眼镜G1爆卖！3小时全平台登顶第一、部分渠道已售罄",
+    "url": "https://www.leiphone.com/category/industrynews/ZUMbCfjunVUDdGhU.html",
+    "source": "雷峰网",
+    "summary": "千问AI眼镜G1开售3小时登顶热销榜，部分渠道售罄，到手1997元",
+    "category": "产品",
+    "tags": [
+      "千问",
+      "AI眼镜",
+      "G1",
+      "热销",
+      "开售"
+    ]
+  },
+  {
+    "id": "雷峰网-c7f26ce4",
+    "title": "机器人主持发布会，海信把话语权交给用户",
+    "url": "https://www.leiphone.com/category/smarthome/6cC74UXgODIndKCG.html",
+    "source": "雷峰网",
+    "summary": "海信发布会机器人主持，AI产品走向用户共创时代",
+    "category": "大厂",
+    "tags": [
+      "人工智能",
+      "用户运营"
+    ]
+  },
+  {
+    "id": "雷峰网-e3a41f25",
+    "title": "「微光点亮」获红杉、蓝驰、蚂蚁、鼎晖等超亿元融资，宋紫薇入局AI时尚硬件",
+    "url": "https://www.leiphone.com/category/weiwu/xb78XJ6ie0mQCARn.html",
+    "source": "雷峰网",
+    "summary": "长城汽车哈弗总经理赵永坡接任魏牌C ...]( 关注半导体、芯片 | 微信号：Yolanda_Zuu...",
+    "category": "商业",
+    "tags": [
+      "AI"
+    ]
+  },
+  {
+    "id": "雷峰网-cbccad53",
+    "title": "独家丨直指2000 Tokens/s，北大系「流式推理芯片」公司完成数千万元融资",
+    "url": "https://www.leiphone.com/category/chips/SMIG5HNXO304w3np.html",
+    "source": "雷峰网",
+    "summary": "北大系寒序科技完成数千万元融资，流式推理芯片目标2000 Tokens/s",
+    "category": "商业",
+    "tags": [
+      "寒序科技",
+      "流式推理芯片",
+      "融资",
+      "AI芯片",
+      "算力",
+      "北大"
+    ]
+  },
+  {
+    "id": "雷峰网-e053d348",
+    "title": "OpenClaw创始人点赞！深圳千人「龙虾聚会」，藏着 AI 硬件 5 大潜在趋势",
+    "url": "https://www.leiphone.com/category/weiwu/1u8xeRYB2T6RfWdu.html",
+    "source": "雷峰网",
+    "summary": "OpenClaw深圳千人大会召开，揭示AI硬件五大潜在趋势",
+    "category": "技术",
+    "tags": [
+      "OpenClaw",
+      "AI硬件",
+      "AI智能体",
+      "深圳",
+      "行业趋势"
+    ]
+  },
+  {
+    "id": "雷峰网-a6c285c0",
+    "title": "53.5%市占率背后：中国自动驾驶仿真赛道的头部格局正在形成",
+    "url": "https://www.leiphone.com/category/transportation/3D2cLFqe7pohcQub.html",
+    "source": "雷峰网",
+    "summary": "自动驾驶仿真市场快速发展，51Sim以53.5%份额位居第一，头部格局正在形成",
+    "category": "商业",
+    "tags": [
+      "自动驾驶",
+      "仿真",
+      "51Sim",
+      "市场格局",
+      "物理AI",
+      "智驾",
+      "沙利文"
+    ]
+  },
+  {
+    "id": "雷峰网-03019ccf",
+    "title": "突发！薪资谈判破裂，芯片巨头8.9万人要罢工；养龙虾的第一批受害者出现了！OpenClaw给装惨用户自动转了笔钱；腾讯视频回应收视率造假",
+    "url": "https://www.leiphone.com/category/zaobao/Qv1K7AeGqwTPvqlL.html",
+    "source": "雷峰网",
+    "summary": "三星8.9万人罢工危机；OpenClaw平台AI龙虾现诈骗风险；多品牌手机拟涨价",
+    "category": "商业",
+    "tags": [
+      "三星",
+      "罢工",
+      "OpenClaw",
+      "手机涨价",
+      "腾讯视频"
+    ]
+  },
+  {
+    "id": "雷峰网-d93b32dc",
+    "title": "告别部署难题！MTT AIBOOK：OpenClaw“养虾”利器，让你的AI智能体又快又稳！",
+    "url": "https://www.leiphone.com/category/industrynews/Myhx2C2X2AmZoZXF.html",
+    "source": "雷峰网",
+    "summary": "MTT AIBOOK是OpenClaw专属运行平台，让AI智能体部署简单、运行稳定",
+    "category": "产品",
+    "tags": [
+      "摩尔线程",
+      "MTT AIBOOK",
+      "OpenClaw",
+      "AI智能体",
+      "Linux",
+      "国产芯片"
+    ]
+  },
+  {
+    "id": "钛媒体引领未来商业与生活新知-4b334852",
+    "title": "县城里的AI招牌",
+    "url": "https://www.tmtpost.com/7906982.html",
+    "source": "钛媒体：引领未来商业与生活新知",
+    "summary": "县城涌现AI美肤、智习室等店铺，多为营销包装非真AI，反映下沉市场对科技概念的追逐与消费心理。",
+    "category": "商业",
+    "tags": [
+      "AI",
+      "县城",
+      "下沉市场",
+      "营销"
     ]
   }
 ]
