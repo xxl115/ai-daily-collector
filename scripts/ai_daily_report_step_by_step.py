@@ -27,7 +27,8 @@ AI_KEYWORDS = [
     '千问', '通义', '文心', '智谱', 'MiniMax', '阶跃', '月之暗面',
     'Sora', 'Runway', 'Pika', 'Midjourney', 'DALL-E',
     '自动驾驶', '智能驾驶', 'FSD', 'NOA',
-    '大模型', '参数', '训练', '推理', '微调', 'RAG', '向量数据库'
+    '大模型', '参数', '训练', '推理', '微调', 'RAG', '向量数据库',
+    'Diffusion', '扩散模型', 'Latent Diffusion', 'Latent', '扩散'
 ]
 
 # 配置
