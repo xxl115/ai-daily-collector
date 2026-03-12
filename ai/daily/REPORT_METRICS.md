@@ -228,3 +228,26 @@
   }
 }
 ```
+
+
+## Metrics Snapshot @ 2026-03-12 22:18:42
+```json
+{
+  "timestamp": "2026-03-12 22:18:42",
+  "metrics": {
+    "start_time": null,
+    "pages_processed": 0,
+    "duplicates_skipped": 0,
+    "total_articles_seen": 0,
+    "category_counts": {},
+    "content_lengths": [],
+    "summary_lengths": [],
+    "processing_times": []
+  },
+  "averages": {
+    "avg_processing_time_s": 0,
+    "avg_content_len": 0,
+    "avg_summary_len": 0
+  }
+}
+```
