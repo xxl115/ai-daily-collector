@@ -1273,6 +1273,14 @@ class WorkersD1StorageAdapter:
             sql += " AND id = ?"
             params.append(filters["id"])
 
+        # 日期过滤 (ingested_at)
+        if "date_start" in filters:
+            sql += " AND ingested_at >= ?"
+            params.append(filters["date_start"])
+        if "date_end" in filters:
+            sql += " AND ingested_at <= ?"
+            params.append(filters["date_end"])
+
         sql += " ORDER BY ingested_at DESC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
 
