@@ -70,3 +70,5 @@ htmlcov/
 *~
 .env.development
 .env.development.local
+data/articles/
+docs/reports/
