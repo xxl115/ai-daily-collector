@@ -1,0 +1,291 @@
+name: AI Daily Processing
+
+on:
+  schedule:
+    # 每天多次执行: 02:00, 08:00, 14:00, 20:00
+    - cron: '0 2,8,14,20 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: '指定日期 (YYYY-MM-DD)，默认昨天'
+        required: false
+        default: ''
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    name: AI Daily Process
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install requests
+
+      - name: Determine target date
+        id: date
+        run: |
+          if [ -n "${{ inputs.date }}" ]; then
+            TARGET_DATE="${{ inputs.date }}"
+          else
+            TARGET_DATE=$(date -d 'yesterday' +%Y-%m-%d)
+          fi
+          echo "date=$TARGET_DATE" >> $GITHUB_OUTPUT
+          echo "📅 处理日期: $TARGET_DATE"
+
+      - name: Get articles from Worker
+        id: fetch
+        run: |
+          echo "📥 获取文章..."
+          curl -s -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
+            -H "Content-Type: application/json" \
+            -d "{\"tool\": \"get_articles_by_date\", \"arguments\": {\"date\": \"${{ steps.date.outputs.date }}\", \"limit\": 1000}}" \
+            -o /tmp/articles.json
+          
+          ARTICLE_COUNT=$(jq '.articles | length' /tmp/articles.json 2>/dev/null || echo "0")
+          echo "✅ 获取文章: $ARTICLE_COUNT 篇"
+          echo "count=$ARTICLE_COUNT" >> $GITHUB_OUTPUT
+
+      - name: AI filtering & mark non-AI
+        id: filter
+        run: |
+          echo "🔍 AI关键词筛选..."
+          python3 << 'PYEOF'
+          import json, requests, time
+
+          with open('/tmp/articles.json') as f:
+              data = json.load(f)
+
+          articles = data.get('articles', [])
+          
+          AI_KEYWORDS = [
+              'AI', '人工智能', 'LLM', '大模型', 'GPT', 'Claude', 'Gemini', 'OpenAI',
+              'Machine Learning', 'Deep Learning', '神经网络', '模型', '算法',
+              'ChatGPT', 'RAG', 'Embedding', 'Transformer', 'MCP', 'AIGC',
+              '生成式AI', '文生图', '文生视频', '多模态', 'LangChain', 'LlamaIndex',
+              '智能体', 'Agent', 'Sora'
+          ]
+
+          ai_articles = []
+          non_ai_articles = []
+          
+          for a in articles:
+              text = (a.get('title', '') + ' ' + a.get('summary', '')).lower()
+              if any(kw.lower() in text for kw in AI_KEYWORDS):
+                  ai_articles.append(a)
+              else:
+                  non_ai_articles.append(a)
+
+          print(f'AI文章: {len(ai_articles)}/{len(articles)}')
+          print(f'非AI文章: {len(non_ai_articles)}/{len(articles)}')
+
+          with open('/tmp/ai_articles.json', 'w') as f:
+              json.dump({'date': data.get('date'), 'count': len(ai_articles), 'articles': ai_articles}, f, ensure_ascii=False)
+
+          with open('/tmp/non_ai_articles.json', 'w') as f:
+              json.dump({'date': data.get('date'), 'count': len(non_ai_articles), 'articles': non_ai_articles}, f, ensure_ascii=False)
+
+          print(f'✅ AI筛选完成')
+          PYEOF
+
+      - name: Mark non-AI articles in database
+        id: mark-non-ai
+        run: |
+          echo "🏷️ 标记非AI文章..."
+          python3 << 'PYEOF'
+          import json, requests, time
+
+          with open('/tmp/non_ai_articles.json') as f:
+              data = json.load(f)
+
+          articles = data.get('articles', [])
+          if not articles:
+              print('无非AI文章')
+              exit(0)
+
+          print(f'标记 {len(articles)} 篇非AI文章...')
+
+          success = 0
+          for a in articles:
+              try:
+                  r = requests.post('https://ai-daily-collector.xxl185.workers.dev/mcp',
+                      json={
+                          'tool': 'update_article_summary_and_category',
+                          'arguments': {
+                              'url': a.get('url'),
+                              'is_ai': False
+                          }
+                      },
+                      timeout=30)
+                  if r.status_code == 200:
+                      success += 1
+              except:
+                  pass
+              time.sleep(0.03)
+
+          print(f'✅ 标记完成: {success}/{len(articles)}')
+          PYEOF
+
+      - name: LLM processing
+        id: llm
+        run: |
+          echo "🤖 LLM处理 (summary, category, tags)..."
+          python3 << 'PYEOF'
+          import json, requests, re
+          from concurrent.futures import ThreadPoolExecutor, as_completed
+          from datetime import datetime
+
+          API_KEY = '${{ secrets.SILICONFLOW_API_KEY }}'
+          API_URL = 'https://api.siliconflow.cn/v1/chat/completions'
+
+          with open('/tmp/ai_articles.json') as f:
+              data = json.load(f)
+
+          articles = data.get('articles', [])
+          target_date = data.get('date')
+
+          print(f'处理 {len(articles)} 篇文章，并发20...')
+
+          def process(article):
+              title = article.get('title', '')[:100]
+              prompt = f"""文章标题: {title}
+请直接返回JSON: {{"summary": "50字摘要", "category": "论文/技术/产品/应用/动态/其他", "tags": "3-5标签"}}"""
+
+              try:
+                  resp = requests.post(API_URL,
+                      headers={'Authorization': f'Bearer {API_KEY}', 'Content-Type': 'application/json'},
+                      json={'model': 'Qwen/Qwen2.5-7B-Instruct', 'messages': [{'role': 'user', 'content': prompt}], 'max_tokens': 512},
+                      timeout=30)
+                  if resp.status_code == 200:
+                      content = resp.json()['choices'][0]['message']['content']
+                      match = re.search(r'\{[^}]+\}', content, re.DOTALL)
+                      if match:
+                          llm = json.loads(match.group())
+                          return {
+                              'title': article.get('title', ''),
+                              'url': article.get('url', ''),
+                              'source': article.get('source', ''),
+                              'summary': llm.get('summary', ''),
+                              'category': llm.get('category', '其他'),
+                              'tags': llm.get('tags', '')
+                          }
+              except:
+                  pass
+              return article
+
+          results = []
+          with ThreadPoolExecutor(max_workers=20) as executor:
+              futures = [executor.submit(process, a) for a in articles]
+              for f in as_completed(futures):
+                  try:
+                      r = f.result()
+                      results.append(r)
+                      if len(results) % 20 == 0:
+                          print(f'进度: {len(results)}/{len(articles)}')
+                  except:
+                      pass
+
+          print(f'LLM处理完成: {len(results)}/{len(articles)}')
+
+          # 分类统计
+          cats = {}
+          for a in results:
+              cat = a.get('category', '其他').split('/')[0]
+              cats[cat] = cats.get(cat, 0) + 1
+          print('分类:', cats)
+
+          with open('/tmp/processed_articles.json', 'w') as f:
+              json.dump({'date': target_date, 'count': len(results), 'articles': results}, f, ensure_ascii=False)
+
+          print('✅ LLM处理完成')
+          PYEOF
+
+      - name: Update database
+        id: update-db
+        run: |
+          echo "💾 更新数据库..."
+          python3 << 'PYEOF'
+          import json, requests, time
+
+          with open('/tmp/processed_articles.json') as f:
+              data = json.load(f)
+
+          articles = data.get('articles', [])
+          print(f'更新 {len(articles)} 篇文章...')
+
+          success = 0
+          for a in articles:
+              try:
+                  r = requests.post('https://ai-daily-collector.xxl185.workers.dev/mcp',
+                      json={
+                          'tool': 'update_article_summary_and_category',
+                          'arguments': {
+                              'url': a.get('url'),
+                              'summary': a.get('summary', ''),
+                              'category': a.get('category', ''),
+                              'tags': a.get('tags', ''),
+                              'is_ai': True
+                          }
+                      },
+                      timeout=30)
+                  if r.status_code == 200:
+                      success += 1
+              except:
+                  pass
+              time.sleep(0.05)
+
+          print(f'✅ 数据库更新完成: {success}/{len(articles)}')
+          PYEOF
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-daily-${{ steps.date.outputs.date }}
+          path: |
+            /tmp/articles.json
+            /tmp/ai_articles.json
+            /tmp/processed_articles.json
+          retention-days: 7
+
+      - name: Commit processed data
+        run: |
+          echo "📝 提交数据..."
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          TARGET_DATE="${{ steps.date.outputs.date }}"
+          
+          # 提交处理后的文章
+          if [ -f /tmp/processed_articles.json ]; then
+            mkdir -p data/processed
+            cp /tmp/processed_articles.json "data/processed/${TARGET_DATE}.json"
+            git add "data/processed/${TARGET_DATE}.json"
+          fi
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "AI Daily: ${TARGET_DATE} processed"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:master || echo "Push failed"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 📊 AI Daily Processing Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **日期**: ${{ steps.date.outputs.date }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **触发时间**: $(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_STEP_SUMMARY
+          echo "- **触发方式**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **获取文章**: ${{ steps.fetch.outputs.count }} 篇" >> $GITHUB_STEP_SUMMARY
