@@ -29,9 +29,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install requests
+        run: pip install --upgrade pip requests jq
 
       - name: Determine target date
         id: date
@@ -50,7 +48,7 @@ jobs:
           echo "📥 获取文章..."
           curl -s -X POST "https://ai-daily-collector.xxl185.workers.dev/mcp" \
             -H "Content-Type: application/json" \
-            -d "{\"tool\": \"get_articles_by_date\", \"arguments\": {\"date\": \"${{ steps.date.outputs.date }}\", \"limit\": 1000}}" \
+            -d '{"tool": "get_articles_by_date", "arguments": {"date": "'"${{ steps.date.outputs.date }}"'", "limit": 1000}}' \
             -o /tmp/articles.json
           
           ARTICLE_COUNT=$(jq '.articles | length' /tmp/articles.json 2>/dev/null || echo "0")
@@ -60,13 +58,12 @@ jobs:
       - name: AI filtering & mark non-AI
         id: filter
         run: |
-          echo "🔍 AI关键词筛选..."
-          python3 << 'PYEOF'
-          import json, requests, time
-
+          python3 << 'ENDOFPYTHON'
+          import json
+          
           with open('/tmp/articles.json') as f:
               data = json.load(f)
-
+          
           articles = data.get('articles', [])
           
           AI_KEYWORDS = [
@@ -76,7 +73,7 @@ jobs:
               '生成式AI', '文生图', '文生视频', '多模态', 'LangChain', 'LlamaIndex',
               '智能体', 'Agent', 'Sora'
           ]
-
+          
           ai_articles = []
           non_ai_articles = []
           
@@ -86,36 +83,35 @@ jobs:
                   ai_articles.append(a)
               else:
                   non_ai_articles.append(a)
-
+          
           print(f'AI文章: {len(ai_articles)}/{len(articles)}')
           print(f'非AI文章: {len(non_ai_articles)}/{len(articles)}')
-
+          
           with open('/tmp/ai_articles.json', 'w') as f:
               json.dump({'date': data.get('date'), 'count': len(ai_articles), 'articles': ai_articles}, f, ensure_ascii=False)
-
+          
           with open('/tmp/non_ai_articles.json', 'w') as f:
               json.dump({'date': data.get('date'), 'count': len(non_ai_articles), 'articles': non_ai_articles}, f, ensure_ascii=False)
-
-          print(f'✅ AI筛选完成')
-          PYEOF
+          
+          print('✅ AI筛选完成')
+          ENDOFPYTHON
 
       - name: Mark non-AI articles in database
         id: mark-non-ai
         run: |
-          echo "🏷️ 标记非AI文章..."
-          python3 << 'PYEOF'
+          python3 << 'ENDOFPYTHON'
           import json, requests, time
-
+          
           with open('/tmp/non_ai_articles.json') as f:
               data = json.load(f)
-
+          
           articles = data.get('articles', [])
           if not articles:
               print('无非AI文章')
               exit(0)
-
+          
           print(f'标记 {len(articles)} 篇非AI文章...')
-
+          
           success = 0
           for a in articles:
               try:
@@ -133,38 +129,35 @@ jobs:
               except:
                   pass
               time.sleep(0.03)
-
+          
           print(f'✅ 标记完成: {success}/{len(articles)}')
-          PYEOF
+          ENDOFPYTHON
 
       - name: LLM processing
         id: llm
         run: |
-          echo "🤖 LLM处理 (summary, category, tags)..."
-          python3 << 'PYEOF'
+          python3 << 'ENDOFPYTHON'
           import json, requests, re
           from concurrent.futures import ThreadPoolExecutor, as_completed
-          from datetime import datetime
-
+          
           API_KEY = '${{ secrets.SILICONFLOW_API_KEY }}'
           API_URL = 'https://api.siliconflow.cn/v1/chat/completions'
-
+          
           with open('/tmp/ai_articles.json') as f:
               data = json.load(f)
-
+          
           articles = data.get('articles', [])
           target_date = data.get('date')
-
+          
           print(f'处理 {len(articles)} 篇文章，并发20...')
-
-          def process(article):
+          
+          def process_article(article):
               title = article.get('title', '')[:100]
-              prompt = f"""文章标题: {title}
-请直接返回JSON: {{"summary": "50字摘要", "category": "论文/技术/产品/应用/动态/其他", "tags": "3-5标签"}}"""
-
+              prompt = '文章标题: ' + title + '\n请直接返回JSON: {"summary": "50字摘要", "category": "论文/技术/产品/应用/动态/其他", "tags": "3-5标签"}'
+              
               try:
                   resp = requests.post(API_URL,
-                      headers={'Authorization': f'Bearer {API_KEY}', 'Content-Type': 'application/json'},
+                      headers={'Authorization': 'Bearer ' + API_KEY, 'Content-Type': 'application/json'},
                       json={'model': 'Qwen/Qwen2.5-7B-Instruct', 'messages': [{'role': 'user', 'content': prompt}], 'max_tokens': 512},
                       timeout=30)
                   if resp.status_code == 200:
@@ -183,10 +176,10 @@ jobs:
               except:
                   pass
               return article
-
+          
           results = []
           with ThreadPoolExecutor(max_workers=20) as executor:
-              futures = [executor.submit(process, a) for a in articles]
+              futures = [executor.submit(process_article, a) for a in articles]
               for f in as_completed(futures):
                   try:
                       r = f.result()
@@ -195,35 +188,33 @@ jobs:
                           print(f'进度: {len(results)}/{len(articles)}')
                   except:
                       pass
-
+          
           print(f'LLM处理完成: {len(results)}/{len(articles)}')
-
-          # 分类统计
+          
           cats = {}
           for a in results:
               cat = a.get('category', '其他').split('/')[0]
               cats[cat] = cats.get(cat, 0) + 1
           print('分类:', cats)
-
+          
           with open('/tmp/processed_articles.json', 'w') as f:
               json.dump({'date': target_date, 'count': len(results), 'articles': results}, f, ensure_ascii=False)
-
+          
           print('✅ LLM处理完成')
-          PYEOF
+          ENDOFPYTHON
 
       - name: Update database
         id: update-db
         run: |
-          echo "💾 更新数据库..."
-          python3 << 'PYEOF'
+          python3 << 'ENDOFPYTHON'
           import json, requests, time
-
+          
           with open('/tmp/processed_articles.json') as f:
               data = json.load(f)
-
+          
           articles = data.get('articles', [])
           print(f'更新 {len(articles)} 篇文章...')
-
+          
           success = 0
           for a in articles:
               try:
@@ -244,9 +235,9 @@ jobs:
               except:
                   pass
               time.sleep(0.05)
-
+          
           print(f'✅ 数据库更新完成: {success}/{len(articles)}')
-          PYEOF
+          ENDOFPYTHON
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -266,13 +257,12 @@ jobs:
           
           TARGET_DATE="${{ steps.date.outputs.date }}"
           
-          # 提交处理后的文章
           if [ -f /tmp/processed_articles.json ]; then
             mkdir -p data/processed
             cp /tmp/processed_articles.json "data/processed/${TARGET_DATE}.json"
             git add "data/processed/${TARGET_DATE}.json"
           fi
-
+          
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
