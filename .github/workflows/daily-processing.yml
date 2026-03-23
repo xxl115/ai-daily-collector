@@ -75,9 +75,8 @@ jobs:
           
           def is_ai_related(article):
               title = article.get('title', '')[:150]
-              prompt = f"""文章标题: {title}
-请判断这篇文章是否与AI人工智能相关。
-请直接返回JSON: {{"is_ai": true/false}}"""
+              json_format = '{"is_ai": true/false}'
+              prompt = '文章标题: ' + title + '\n请判断这篇文章是否与AI人工智能相关。\n请直接返回JSON: ' + json_format
               
               try:
                   resp = requests.post(
