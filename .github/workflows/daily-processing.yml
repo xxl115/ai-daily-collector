@@ -58,34 +58,57 @@ jobs:
           echo "✅ 获取文章: $ARTICLE_COUNT 篇"
           echo "count=$ARTICLE_COUNT" >> $GITHUB_OUTPUT
 
-      - name: AI filtering & mark non-AI
+      - name: AI filtering with LLM
         id: filter
         run: |
           python3 << 'ENDOFPYTHON'
-          import json
+          import json, requests
+          from concurrent.futures import ThreadPoolExecutor, as_completed
+          
+          API_KEY = '${{ secrets.SILICONFLOW_API_KEY }}'
           
           with open('/tmp/articles.json') as f:
               data = json.load(f)
           
           articles = data.get('articles', [])
+          print(f'文章总数: {len(articles)}')
           
-          AI_KEYWORDS = [
-              'AI', '人工智能', 'LLM', '大模型', 'GPT', 'Claude', 'Gemini', 'OpenAI',
-              'Machine Learning', 'Deep Learning', '神经网络', '模型', '算法',
-              'ChatGPT', 'RAG', 'Embedding', 'Transformer', 'MCP', 'AIGC',
-              '生成式AI', '文生图', '文生视频', '多模态', 'LangChain', 'LlamaIndex',
-              '智能体', 'Agent', 'Sora'
-          ]
+          def is_ai_related(article):
+              title = article.get('title', '')[:150]
+              prompt = f"""文章标题: {title}
+请判断这篇文章是否与AI人工智能相关。
+请直接返回JSON: {{"is_ai": true/false}}"""
+              
+              try:
+                  resp = requests.post(
+                      'https://api.siliconflow.cn/v1/chat/completions',
+                      headers={'Authorization': 'Bearer ' + API_KEY, 'Content-Type': 'application/json'},
+                      json={'model': 'Qwen/Qwen2.5-7B-Instruct', 'messages': [{'role': 'user', 'content': prompt}], 'max_tokens': 50},
+                      timeout=15
+                  )
+                  if resp.status_code == 200:
+                      content = resp.json()['choices'][0]['message']['content']
+                      import re
+                      match = re.search(r'"is_ai"\s*:\s*(true|false)', content, re.IGNORECASE)
+                      if match:
+                          return (article, match.group(1) == 'true')
+              except:
+                  pass
+              # 默认认为AI相关
+              return (article, True)
           
-          ai_articles = []
-          non_ai_articles = []
+          print('使用LLM判断AI相关性...')
+          results = []
+          with ThreadPoolExecutor(max_workers=10) as executor:
+              futures = [executor.submit(is_ai_related, a) for a in articles]
+              for f in as_completed(futures):
+                  try:
+                      results.append(f.result())
+                  except:
+                      results.append((articles[len(results)], True))
           
-          for a in articles:
-              text = (a.get('title', '') + ' ' + a.get('summary', '')).lower()
-              if any(kw.lower() in text for kw in AI_KEYWORDS):
-                  ai_articles.append(a)
-              else:
-                  non_ai_articles.append(a)
+          ai_articles = [r[0] for r in results if r[1]]
+          non_ai_articles = [r[0] for r in results if not r[1]]
           
           print(f'AI文章: {len(ai_articles)}/{len(articles)}')
           print(f'非AI文章: {len(non_ai_articles)}/{len(articles)}')
