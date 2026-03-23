@@ -122,8 +122,8 @@ jobs:
                       json={
                           'tool': 'update_article_summary_and_category',
                           'arguments': {
-                              'url': a.get('url'),
-                              'is_ai': False
+                              'article_id': a.get('id'),
+                              'is_ai_related': False
                           }
                       },
                       timeout=30)
@@ -169,6 +169,7 @@ jobs:
                       if match:
                           llm = json.loads(match.group())
                           return {
+                              'id': article.get('id'),
                               'title': article.get('title', ''),
                               'url': article.get('url', ''),
                               'source': article.get('source', ''),
@@ -225,11 +226,11 @@ jobs:
                       json={
                           'tool': 'update_article_summary_and_category',
                           'arguments': {
-                              'url': a.get('url'),
+                              'article_id': a.get('id'),
                               'summary': a.get('summary', ''),
-                              'category': a.get('category', ''),
+                              'categories': a.get('category', ''),
                               'tags': a.get('tags', ''),
-                              'is_ai': True
+                              'is_ai_related': True
                           }
                       },
                       timeout=30)
